@@ -1,0 +1,81 @@
+from tifffile import imread
+import numpy as np
+import sys
+import vtk
+from vtk.util.numpy_support import numpy_to_vtk
+
+
+def MarchingCubes(image,labels):
+
+    # marching cubes
+    mc = vtk.vtkDiscreteMarchingCubes()
+    mc.SetInputData(image)
+    mc.ComputeNormalsOn()
+    mc.ComputeGradientsOn()
+    mc.GenerateValues(labels.size,labels[1],labels[-1])
+    mc.Update()
+
+    # To remain largest region
+    #confilter = vtk.vtkPolyDataConnectivityFilter()
+    #confilter.SetInputData(mc.GetOutput())
+    #confilter.SetExtractionModeToLargestRegion()
+    #confilter.Update()
+
+    # reduce poly data
+    inputPoly = vtk.vtkPolyData()
+    inputPoly.ShallowCopy(mc.GetOutput())
+
+
+    # smooth surface
+    smoothFilter = vtk.vtkSmoothPolyDataFilter()
+    smoothFilter.SetInputData(inputPoly)
+    smoothFilter.SetNumberOfIterations(50)
+    smoothFilter.SetRelaxationFactor(0.1)
+    smoothFilter.FeatureEdgeSmoothingOff()
+    smoothFilter.BoundarySmoothingOn()
+    smoothFilter.Update()
+
+    finalPoly = vtk.vtkPolyData()
+    finalPoly.ShallowCopy(smoothFilter.GetOutput())
+    
+    return finalPoly#confilter.GetOutput()
+
+
+def CreateVTK(image,path_to_save,slice_thickness):
+    
+    #flip image
+    image = np.flip(image, axis=(0,2))
+
+    # get labels
+    zsh,ysh,xsh=image.shape
+    allLabels = np.unique(image)
+
+    # numpy to vtk
+    sc = numpy_to_vtk(num_array=image.ravel(), deep=True, array_type=vtk.VTK_UNSIGNED_CHAR)
+    imageData = vtk.vtkImageData()
+    imageData.SetOrigin(0, 0, 0)
+    imageData.SetSpacing(1, 1, slice_thickness)
+    #imageData.SetDimensions(zsh, ysh, xsh)
+    imageData.SetExtent(0,xsh-1,0,ysh-1,0,zsh-1)
+    imageData.GetPointData().SetScalars(sc)
+
+    # get poly data
+    poly = MarchingCubes(imageData,allLabels)
+    writer = vtk.vtkPolyDataWriter()
+    writer.SetInputData(poly)
+    writer.SetFileName(path_to_save)
+    writer.Write()
+
+if __name__ == "__main__":
+
+    # path to data
+    path_to_data = sys.argv[1]
+    slice_thickness = int(sys.argv[2])
+
+    # load data
+    data = imread(path_to_data)
+    path_to_save = path_to_data.replace('.tif','.vtk')
+
+    # create vtk file
+    CreateVTK(data, path_to_save,slice_thickness)
+
