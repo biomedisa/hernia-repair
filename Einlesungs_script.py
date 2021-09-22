@@ -15,6 +15,7 @@ from paraview.simple import *
 from datetime import datetime
 
 def paraview_screenshot(mesh):
+    Connect()
     #### disable automatic camera reset on 'Show'
     paraview.simple._DisableFirstRenderCameraReset()
 
@@ -78,6 +79,9 @@ def paraview_screenshot(mesh):
     # save screenshot
     SaveScreenshot(mesh.replace('.vtk','.png'), renderView1, ImageResolution=[590, 590],
         OverrideColorPalette='WhiteBackground')
+    #Reset the session
+    Disconnect()
+
 
 def Creat_CT_crosssection(path_to_tif,path_to_dcm):
     #get tif with labels
@@ -107,7 +111,7 @@ if __name__ == "__main__":
     #Get the raw dcm files
     files = glob.glob(path_to_dir+'/**/*', recursive=True)
     #Set the main save directory
-    main_path = "C:\\Users\\Hernienforschung\\Documents\\Python_Scripts\\Temp" 
+    main_path = "C:\\Users\\Hernienforschung\\Desktop\\Hernien_Analyse" 
     nat_exists = False   #Existence booleans
     val_exists = False
     
@@ -117,27 +121,32 @@ if __name__ == "__main__":
 
     #Loop over all dcm files
     for file in files:      
-        if os.path.isfile(file):        
-            ds = pydicom.filereader.dcmread(file)      	      #read dicom properties
-            first_level = main_path +'\\'+str(ds.PatientID)   #name first subdirectory by patient ID stored in the Dicom ID
-            if not os.path.exists(first_level):  	          #creat the directory if not existing
+        if os.path.isfile(file):
+            #read dicom properties        
+            ds = pydicom.filereader.dcmread(file)
+            #name the directory containing all results patient name + Birthdate     	      
+            first_level = main_path +'\\'+str(ds.PatientName)+'_'+str(ds.PatientBirthDate)  
+            #Set the subdirectorys
+            nativ_dir = first_level+'\\nativ'
+            valsalva_dir = first_level+'\\valsalva'
+            #Create the directorys if not existing            
+            if not os.path.exists(first_level):
                 os.mkdir(first_level)
-            
+            if not os.path.exists(nativ_dir):
+                os.mkdir(nativ_dir)
+            if not os.path.exists(valsalva_dir):					
+                os.mkdir(valsalva_dir)             
+
             #Store String of the Series Name 
             series = str(ds.SeriesDescription)
             #Extracte the horizontal nativ series
             if ('o' in series or 'nativ' in series) and ('B20s' in series) and not ('SPO' in series or 'pressen' in series or 'm' in series):
-                #Set the nativ subdirectory
-                nativ_dir = first_level+'\\'+str(ds.PatientID)+ '_'+ 'nativ'
                 nat_exists = True
                 #Set slice thickness if given
                 try:
                     slice_thickness = str(ds.SliceThickness)        
                 except:
                     slice_thickness = '1'
-                #Create the directory if not existing
-                if not os.path.exists(nativ_dir):
-                    os.mkdir(nativ_dir)
                 #Set the final path for the dcm files
                 path_to_dest = nativ_dir + '\\' + str(ds.InstanceNumber).zfill(6) + '.dcm' 
                 #Link the file if not yet linked
@@ -146,12 +155,7 @@ if __name__ == "__main__":
             
             #Extracte the horizontal valsalva series
             elif ('m' in series or 'pressen' in series) and ('B20s' in series) and not ('SPO' in series):  
-                #Set the valsalva subdirectory
-                valsalva_dir = first_level+'\\'+str(ds.PatientID)+ '_'+ 'valsalva'
                 val_exists = True
-                #create the directory if not existing
-                if not os.path.exists(valsalva_dir):					
-                    os.mkdir(valsalva_dir)
                 #Set the final path for the dcm files
                 path_to_dest = valsalva_dir + '\\' + str(ds.InstanceNumber).zfill(6) + '.dcm'
                 #Link the file if not yet linked
@@ -163,12 +167,15 @@ if __name__ == "__main__":
 
     #Execute Neural Net for nativ
     if nat_exists:
-        net1 = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py", nativ_dir , r"C:\Users\Hernienforschung\Documents\Python_Scripts\img_hernie.h5", "-p","-bs","6"])
-        nativ_tif = first_level+'\\final.' + str(ds.PatientID) + '_nativ.tif'
+        net1 = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py", 
+                    nativ_dir, r"C:\Users\Hernienforschung\Documents\Python_Scripts\img_hernie.h5", "-p","-bs","6"]
+                    )
+        nativ_tif = first_level+'\\final.nativ.tif'
 
         #Create Nativ mesh in vtk format for Paraview
-        mesh1 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\create_mesh.py", nativ_tif,slice_thickness])
-
+        mesh1 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\create_mesh.py", 
+                    nativ_tif, slice_thickness]
+                    )
         #Create Paths to the mesh and the img
         nativ_vtk = nativ_tif.replace('.tif','.vtk')
         nativ_png = nativ_tif.replace('.tif','.png')
@@ -182,11 +189,15 @@ if __name__ == "__main__":
 
     #Execute Neural Net for valsalva
     if val_exists:
-        net2 = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py", valsalva_dir , r"C:\Users\Hernienforschung\Documents\Python_Scripts\img_hernie.h5", "-p","-bs","6"])
-        valsalva_tif = first_level+'\\final.' + str(ds.PatientID) + '_valsalva.tif'
+        net2 = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py",
+                    valsalva_dir, r"C:\Users\Hernienforschung\Documents\Python_Scripts\img_hernie.h5", "-p","-bs","6"]
+                    )
+        valsalva_tif = first_level+'\\final.valsalva.tif'
     	
         #Create Valsalva mesh in vtk format for Paraview
-        mesh2 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\create_mesh.py", valsalva_tif,slice_thickness])
+        mesh2 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\create_mesh.py", 
+                    valsalva_tif, slice_thickness]
+                    )
 
         #Create Paths to the mesh and the img
         valsalva_vtk = valsalva_tif.replace('.tif','.vtk')
@@ -208,8 +219,8 @@ if __name__ == "__main__":
         #Execute Samuels Script
         sam = call(["C:\\Users\\Hernienforschung\\Documents\\Auswertungen\\Hernienauswertung_v0_11.exe", nativ_dir, valsalva_dir])
         #Set the saving paths for the optained data
-        sam_path = 'C:\\Users\\Hernienforschung\\Documents\\Python_Scripts\\Auswertung_' + day_string
-        sam_path_two = 'C:\\Users\\Hernienforschung\\Documents\\Python_Scripts\\Archiv_zur_Fehlerdiagnose_' + day_string
+        sam_path = 'Auswertung_' + day_string
+        sam_path_two = 'Archiv_zur_Fehlerdiagnose_' + day_string
 
         #Combine all images
         #Read all images
@@ -234,12 +245,12 @@ if __name__ == "__main__":
         auswertung = first_level + '\\Auswertung_' + day_string
         shutil.move(sam_path, auswertung)
         plt.imsave(auswertung + '\\Finale_Auswertung.png',combined_img)
-
-        os.system('start' + auswertung + '\\Finale_Auswertung.png')
         #Move used Data into the archiv folder
         archiv = first_level + '\\Archiv_zur_Fehlerdiagnose_' + day_string
         for file in (sam_path_two,nativ_png,valsalva_png,nativ_cross_path,valsalva_cross_path,nativ_tif,valsalva_tif,nativ_vtk,valsalva_vtk):
             shutil.move(file, archiv)
+        #show final result
+        os.system('start ' + auswertung[:auswertung.find('^')]+'^'+ auswertung[auswertung.find('^'):]+ '\\Finale_Auswertung.png')
 
     #if either scan is missing do nothing
     else:
