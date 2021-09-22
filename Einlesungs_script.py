@@ -114,33 +114,46 @@ if __name__ == "__main__":
     main_path = "C:\\Users\\Hernienforschung\\Desktop\\Hernien_Analyse" 
     nat_exists = False   #Existence booleans
     val_exists = False
+    B20s = False
     
     #create main directory if not yet existing
     if not os.path.exists(main_path):
         os.mkdir(main_path)
 
-    #Loop over all dcm files
+    #Loop over all dcm files set directory names and search for Bvalue
+    while not B20s:
+        for file in files:      
+            if os.path.isfile(file):
+                #read dicom properties        
+                ds = pydicom.filereader.dcmread(file)
+                #name the directory containing all results after patient name + Birthdate     	      
+                first_level = main_path +'\\'+str(ds.PatientName)+'_'+str(ds.PatientBirthDate)  
+                #Set the subdirectorys
+                nativ_dir = first_level+'\\nativ'
+                valsalva_dir = first_level+'\\valsalva'
+                #Create the directorys if not existing            
+                if not os.path.exists(first_level):
+                    os.mkdir(first_level)
+                if not os.path.exists(nativ_dir):
+                    os.mkdir(nativ_dir)
+                if not os.path.exists(valsalva_dir):					
+                    os.mkdir(valsalva_dir)             
+                #Store String of the Series Name 
+                series = str(ds.SeriesDescription)
+                if 'B20s' in series:
+                    Bvalue = 'B20s'                    
+                    B20s = True
+                elif 'B31s' in series:
+                    Bvalue = 'B31s'
+                 
     for file in files:      
         if os.path.isfile(file):
-            #read dicom properties        
+            #read dicom properties  
             ds = pydicom.filereader.dcmread(file)
-            #name the directory containing all results patient name + Birthdate     	      
-            first_level = main_path +'\\'+str(ds.PatientName)+'_'+str(ds.PatientBirthDate)  
-            #Set the subdirectorys
-            nativ_dir = first_level+'\\nativ'
-            valsalva_dir = first_level+'\\valsalva'
-            #Create the directorys if not existing            
-            if not os.path.exists(first_level):
-                os.mkdir(first_level)
-            if not os.path.exists(nativ_dir):
-                os.mkdir(nativ_dir)
-            if not os.path.exists(valsalva_dir):					
-                os.mkdir(valsalva_dir)             
-
             #Store String of the Series Name 
             series = str(ds.SeriesDescription)
-            #Extracte the horizontal nativ series
-            if ('o' in series or 'nativ' in series) and ('B20s' in series) and not ('SPO' in series or 'pressen' in series or 'm' in series):
+            #Extracte the horizontal nativ series coresponting to detectet Bvalue
+            if ('o' in series or 'nativ' in series) and (Bvalue in series) and not ('SPO' in series or 'pressen' in series or 'm' in series):
                 nat_exists = True
                 #Set slice thickness if given
                 try:
@@ -154,7 +167,7 @@ if __name__ == "__main__":
                     shutil.copy(file, path_to_dest)
             
             #Extracte the horizontal valsalva series
-            elif ('m' in series or 'pressen' in series) and ('B20s' in series) and not ('SPO' in series):  
+            elif ('m' in series or 'pressen' in series) and (Bvalue in series) and not ('SPO' in series):  
                 val_exists = True
                 #Set the final path for the dcm files
                 path_to_dest = valsalva_dir + '\\' + str(ds.InstanceNumber).zfill(6) + '.dcm'
