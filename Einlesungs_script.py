@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 import os
-#from Prediction import hernien_höhe
 from paraview.simple import *
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 import pydicom
@@ -10,7 +9,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import shutil
 import tkinter as tk
-
 from tkinter.filedialog import askdirectory
 from tifffile import imread
 from subprocess import call
@@ -221,7 +219,6 @@ if __name__ == "__main__":
     if nat_exists:
         #fill the height directory with 
         fill_height_dir(nativ_dir,nativ_height_dir)
-        #nativ_hernia_height = hernien_höhe(r'C:\Users\Hernienforschung\Documents\Python_Scripts\Hernien_detector_z.h5',nativ_height_dir)
         net1 = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py", 
                     nativ_dir, r"C:\Users\Hernienforschung\Documents\Python_Scripts\img_hernie.h5", "-p","-bs","6"]
                     )
@@ -245,7 +242,6 @@ if __name__ == "__main__":
     #Execute Neural Net for valsalva
     if val_exists:
         fill_height_dir(valsalva_dir,valsalva_height_dir)
-        #valsalva_hernia_height = hernien_höhe(r'C:\Users\Hernienforschung\Documents\Python_Scripts\Hernien_detector_z.h5',valsalva_height_dir)
         net2 = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py",
                     valsalva_dir, r"C:\Users\Hernienforschung\Documents\Python_Scripts\img_hernie.h5", "-p","-bs","6"]
                     )
