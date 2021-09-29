@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 import os
-from paraview.simple import *
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 import pydicom
 import glob
@@ -9,79 +8,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import shutil
 import tkinter as tk
+from math import pi
 from tkinter.filedialog import askdirectory
 from tifffile import imread
 from subprocess import call
 from datetime import datetime
-from PIL import Image
+from PIL import Image, ImageDraw
 
-def paraview_screenshot(mesh):
-    Connect()
-    #### disable automatic camera reset on 'Show'
-    paraview.simple._DisableFirstRenderCameraReset()
-
-    # create a new 'Legacy VTK Reader'
-    Paraview = LegacyVTKReader(registrationName='first', FileNames=[mesh])
-
-    # set active source
-    SetActiveSource(Paraview)
-
-    # get active view
-    renderView1 = GetActiveViewOrCreate('RenderView')
-
-    # show data in view
-    ParaviewDisplay = Show(Paraview, renderView1, 'GeometryRepresentation')
-
-    # get color transfer function/color map for 'scalars'
-    scalarsLUT = GetColorTransferFunction('scalars')
-
-    # trace defaults for the display properties.
-    ParaviewDisplay.Representation = 'Surface'
-    ParaviewDisplay.ColorArrayName = ['CELLS', 'scalars']
-    ParaviewDisplay.LookupTable = scalarsLUT
-    ParaviewDisplay.SelectTCoordArray = 'None'
-    ParaviewDisplay.SelectNormalArray = 'None'
-    ParaviewDisplay.SelectTangentArray = 'None'
-    ParaviewDisplay.OSPRayScaleFunction = 'PiecewiseFunction'
-    ParaviewDisplay.SelectOrientationVectors = 'None'
-    ParaviewDisplay.ScaleFactor = 42.19332799911499
-    ParaviewDisplay.SelectScaleArray = 'scalars'
-    ParaviewDisplay.GlyphType = 'Arrow'
-    ParaviewDisplay.GlyphTableIndexArray = 'scalars'
-    ParaviewDisplay.GaussianRadius = 2.10966639999557497
-    ParaviewDisplay.SetScaleArray = [None, '']
-    ParaviewDisplay.ScaleTransferFunction = 'PiecewiseFunction'
-    ParaviewDisplay.OpacityArray = [None, '']
-    ParaviewDisplay.OpacityTransferFunction = 'PiecewiseFunction'
-    ParaviewDisplay.DataAxesGrid = 'GridAxesRepresentation'
-    ParaviewDisplay.PolarAxes = 'PolarAxesRepresentation'
-
-    # hide color bar/color legend
-    ParaviewDisplay.SetScalarBarVisibility(renderView1, False)
-
-    # Hide orientation axes
-    renderView1.OrientationAxesVisibility = 0
-
-    # reset view to fit data
-    renderView1.ResetCamera()
-
-    # get layout
-    layout1 = GetLayout()
-
-    # layout/tab size in pixels
-    layout1.SetSize(590, 590)
-
-    # current camera placement for renderView1
-    renderView1.CameraPosition = [263.2996940612793, -945.4659242482333, 214.03336000442505]
-    renderView1.CameraFocalPoint = [263.2996940612793, 255.01700592041016, 214.03336000442505]
-    renderView1.CameraViewUp = [0.0, 0.0, 1.0]
-    renderView1.CameraParallelScale = 310.70784564812436
-
-    # save screenshot
-    SaveScreenshot(mesh.replace('.vtk','.png'), renderView1, ImageResolution=[590, 590],
-        OverrideColorPalette='WhiteBackground')
-    #Reset the session
-    Disconnect()
 
 def Creat_CT_crosssection(path_to_tif,path_to_dcm):
     #get tif with labels
@@ -102,7 +35,7 @@ def Creat_CT_crosssection(path_to_tif,path_to_dcm):
     plt.imsave(path_to_png,img,cmap='gray')
     return path_to_png
 
-def fill_height_dir(path_to_data,save_path):
+def fill_length_dir(path_to_data,save_path):
     #get the dcm files
     slices = glob.glob(path_to_data+'/**/*', recursive=True)
     #set start values
@@ -121,15 +54,77 @@ def fill_height_dir(path_to_data,save_path):
         data[ds.InstanceNumber-1] = img
     #convert to uint8
     data = np.uint8(data*255./np.amax(data))
-    #creat subfolder
-    if not os.path.exists(save_path+'\\Daten'):
-        os.mkdir(save_path+'\\Daten')
-    #save every layer
-    for z in range(data.shape[0]):
-        ## save data as tif
-        img = Image.fromarray(data[z,:,:], mode='L')
-        img.save(save_path +'\\Daten\\'+ str(z).zfill(6) +'.tif')
+    #creat subfolders
+    if not os.path.exists(save_path+'\\Höhe'):
+        os.mkdir(save_path+'\\Höhe')
+        os.mkdir(save_path+'\\Höhe\\Daten')
+    if not os.path.exists(save_path+'\\Breite'):
+        os.mkdir(save_path+'\\Breite')
+        os.mkdir(save_path+'\\Breite\\Daten')
+    #save every layer in z and x direction
+        for z in range(data.shape[0]):
+            ## save data as tif
+            img = Image.fromarray(data[z,:,:], mode='L')
+            img.resize((512,512))
+            img.save(save_path +'\\Höhe\\Daten\\'+ str(z).zfill(6) +'.tif')
 
+        for x in range(data.shape[2]):
+            ## save data as tif
+            img = Image.fromarray(data[:,:,x], mode='L')
+            img.resize((512,512))
+            img.save(save_path +'\\Breite\\Daten\\'+ str(x).zfill(6) +'.tif')
+
+def get_hernia_area(height,width):
+    #compute the area of an elipse with hernia height and width
+    area = pi*height*width
+    return area
+
+#get the dimensions of the nativ hernia
+def annotate_nativimage():
+    import Prediction
+    #fill the length directory with images
+    fill_length_dir(nativ_dir,nativ_length_dir)
+    #Create Paths to both subdirectories
+    nativ_height_dir = nativ_length_dir + '\\Höhe'
+    nativ_width_dir  = nativ_length_dir + '\\Breite'
+    #Get Height,width and area of the hernia
+    nativ_hernia_height = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernien_detector_z.h5",nativ_height_dir)
+    nativ_hernia_height *= slice_thickness*0.1 
+    nativ_hernia_width = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernien_detector_x.h5",nativ_width_dir)
+    nativ_hernia_width *= slice_width*0.1
+    nativ_hernia_area = get_hernia_area(nativ_hernia_height,nativ_hernia_width)
+    print('Height:' + str(nativ_hernia_height) + 'cm Width:'+ str(nativ_hernia_width) + 'cm Area:' + str(nativ_hernia_area) +'cm²')
+    #print hernia dimensions on the image
+    img = Image.open(nativ_png)
+    draw = ImageDraw.Draw(img)
+    draw.text((0,0),'Height:' + str(nativ_hernia_height) + 'cm Width:'+ str(nativ_hernia_width) + 'cm Area:' + str(nativ_hernia_area) + 'cm²',
+            (0,0,0),
+            align='center',
+            )
+    img.save(nativ_png,format='png')
+
+#get the dimensions of the valsalva hernia
+def annotate_valsalvaimage():
+    import Prediction
+    #fill the length directory with images
+    fill_length_dir(valsalva_dir,valsalva_length_dir)
+    #Create Paths to both subdirectories
+    valsalva_height_dir = valsalva_length_dir + '\\Höhe'
+    valsalva_width_dir  = valsalva_length_dir + '\\Breite'
+    #Get Hernia height,width and area
+    valsalva_hernia_height = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernien_detector_z.h5",valsalva_height_dir)
+    valsalva_hernia_height *= slice_thickness*0.1
+    valsalva_hernia_width = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernien_detector_x.h5",valsalva_width_dir)
+    valsalva_hernia_width *= slice_width*0.1
+    valsalva_hernia_area = get_hernia_area(valsalva_hernia_height,valsalva_hernia_width)
+    print('Height:' + str(valsalva_hernia_height) + 'cm Width:'+ str(valsalva_hernia_width) + 'cm Area:' + str(valsalva_hernia_area) +'cm²')
+    img = Image.open(valsalva_png)
+    draw = ImageDraw.Draw(img)
+    draw.text((0,0),'Height:' + str(valsalva_hernia_height) + 'cm Width:'+ str(valsalva_hernia_width) + 'cm Area:' + str(valsalva_hernia_area) +'cm²',
+            (0,0,0),
+            align='center',
+            )
+    img.save(valsalva_png,format='png')
 
 if __name__ == "__main__":
     #Get the Path to the Data
@@ -157,22 +152,23 @@ if __name__ == "__main__":
                 #name the directory containing all results after patient name + Birthdate     	      
                 first_level = main_path +'\\'+str(ds.PatientName)+'_'+str(ds.PatientBirthDate)
                 first_level = first_level.replace('^','_')  
+                first_level = first_level.replace(' ','_') 
                 #Set the subdirectories
                 nativ_dir = first_level+'\\nativ'
-                nativ_height_dir = first_level+'\\nativ_height'
+                nativ_length_dir = first_level+'\\nativ_length'
                 valsalva_dir = first_level+'\\valsalva'
-                valsalva_height_dir = first_level+'\\valsalva_height'
+                valsalva_length_dir = first_level+'\\valsalva_length'
                 #Create the directorys if not existing            
                 if not os.path.exists(first_level):
                     os.mkdir(first_level)
                 if not os.path.exists(nativ_dir):
                     os.mkdir(nativ_dir)
-                if not os.path.exists(nativ_height_dir):
-                    os.mkdir(nativ_height_dir)
+                if not os.path.exists(nativ_length_dir):
+                    os.mkdir(nativ_length_dir)
                 if not os.path.exists(valsalva_dir):					
                     os.mkdir(valsalva_dir)
-                if not os.path.exists(valsalva_height_dir):
-                    os.mkdir(valsalva_height_dir)             
+                if not os.path.exists(valsalva_length_dir):
+                    os.mkdir(valsalva_length_dir)             
                 #Store String of the Series Name 
                 series = str(ds.SeriesDescription)
                 #Check for the Bvalue
@@ -183,7 +179,7 @@ if __name__ == "__main__":
                     Bvalue = 'B31s'
     
     #fill the subdirectories         
-    for file in files:      
+    for file in files:
         if os.path.isfile(file):
             #read dicom properties  
             ds = pydicom.filereader.dcmread(file)
@@ -194,7 +190,8 @@ if __name__ == "__main__":
                 nat_exists = True
                 #Set slice thickness if given
                 try:
-                    slice_thickness = str(ds.SliceThickness)        
+                    slice_thickness = ds.SliceThickness
+                    _, slice_width = ds.PixelSpacing     
                 except:
                     slice_thickness = '1'
                 #Set the final path for the dcm files
@@ -215,10 +212,12 @@ if __name__ == "__main__":
                 continue
 
 
-    #Execute Neural Net for nativ
+    #Create results for nativ data
     if nat_exists:
-        #fill the height directory with 
-        fill_height_dir(nativ_dir,nativ_height_dir)
+        
+
+        
+        #Create the classification proposal in for of a tif
         net1 = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py", 
                     nativ_dir, r"C:\Users\Hernienforschung\Documents\Python_Scripts\img_hernie.h5", "-p","-bs","6"]
                     )
@@ -226,25 +225,29 @@ if __name__ == "__main__":
         nativ_tif = first_level+'\\final.nativ.tif'
         nativ_vtk = nativ_tif.replace('.tif','.vtk')
         nativ_png = nativ_tif.replace('.tif','.png')
-
-        #Create Nativ mesh in vtk format for Paraview
+        
+        #Create nativ mesh in vtk format for Paraview
         mesh1 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\create_mesh.py", 
-                    nativ_tif, slice_thickness]
+                    nativ_tif, str(slice_thickness)]
                     )
-
-        #Create Image using Paraview
-        paraview_screenshot(nativ_vtk)
-
+        
+        #Create image using Paraview
+        screen1 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\paraview_screenshot.py",nativ_vtk])
+        
         #Create CT crosssection
         nativ_cross_path = Creat_CT_crosssection(nativ_tif,nativ_dir)
 
 
-    #Execute Neural Net for valsalva
+    #Create results for valsalva data
     if val_exists:
-        fill_height_dir(valsalva_dir,valsalva_height_dir)
+        
+
+
+        #Create the classification proposal in for of a tif
         net2 = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py",
                     valsalva_dir, r"C:\Users\Hernienforschung\Documents\Python_Scripts\img_hernie.h5", "-p","-bs","6"]
                     )
+        
         #Create Paths to the mesh and the img                    
         valsalva_tif = first_level+'\\final.valsalva.tif'
         valsalva_vtk = valsalva_tif.replace('.tif','.vtk')
@@ -252,18 +255,23 @@ if __name__ == "__main__":
 
         #Create Valsalva mesh in vtk format for Paraview
         mesh2 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\create_mesh.py", 
-                    valsalva_tif, slice_thickness]
+                    valsalva_tif, str(slice_thickness)]
                     )
 
         #Create img using Paraview
-        paraview_screenshot(valsalva_vtk)
-
+        screen2 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\paraview_screenshot.py",valsalva_vtk])
+       
         #Create CT crosssection images
         valsalva_cross_path = Creat_CT_crosssection(valsalva_tif,valsalva_dir)
 
 
     #Execute Samuels script automaticaly and combine results
     if nat_exists and val_exists: #Check if Data is complete
+        
+        #annotate bothimages
+        annotate_nativimage()
+        annotate_valsalvaimage()
+        
         #get time and date
         day = datetime.now()
         #Set Time String for saving the data
@@ -302,7 +310,7 @@ if __name__ == "__main__":
         for file in (sam_path_two,nativ_png,valsalva_png,nativ_cross_path,valsalva_cross_path,nativ_tif,valsalva_tif,nativ_vtk,valsalva_vtk):
             shutil.move(file, archiv)
         #show final result
-        os.system('start ' + auswertung[:auswertung.find('^')]+'^'+ auswertung[auswertung.find('^'):]+ '\\Finale_Auswertung.png')
+        os.system('start ' + auswertung + '\\Finale_Auswertung.png')
 
     #if either scan is missing do nothing
     else:
