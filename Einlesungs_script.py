@@ -135,7 +135,6 @@ if __name__ == "__main__":
     main_path = "C:\\Users\\Hernienforschung\\Desktop\\Hernien_Analyse" 
     nat_exists = False   #Existence booleans
     val_exists = False
-    B20s = False
     
     #create main directory if not yet existing
     if not os.path.exists(main_path):
