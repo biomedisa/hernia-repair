@@ -96,7 +96,7 @@ def annotate_nativimage():
     #print hernia dimensions on the image
     img = Image.open(nativ_png)
     draw = ImageDraw.Draw(img)
-    draw.text((0,0),'Breite:' + str(nativ_hernia_width) + 'cm Länge:'+ str(nativ_hernia_height) + 'cm Fläche:' + str(nativ_hernia_area) + 'cm²',
+    draw.text((0,0),'Breite:' + str(round(nativ_hernia_width,1)) + 'cm Länge:'+ str(round(nativ_hernia_height,1)) + 'cm Fläche:' + str(round(nativ_hernia_area,1)) + 'cm²',
             (0,0,0),
             align='center',
             )
@@ -118,7 +118,7 @@ def annotate_valsalvaimage():
     valsalva_hernia_area = get_hernia_area(valsalva_hernia_height,valsalva_hernia_width)
     img = Image.open(valsalva_png)
     draw = ImageDraw.Draw(img)
-    draw.text((0,0),'Breite:'+ str(valsalva_hernia_width) + ' cm Länge:' + str(valsalva_hernia_height) + 'cm Fläche:' + str(valsalva_hernia_area) +'cm²',
+    draw.text((0,0),'Breite:'+ str(round(valsalva_hernia_width,1)) + 'cm Länge:' + str(round(valsalva_hernia_height,1)) + 'cm Fläche:' + str(round(valsalva_hernia_area,1)) +'cm²',
             (0,0,0),
             align='center',
             )
@@ -142,39 +142,38 @@ if __name__ == "__main__":
         os.mkdir(main_path)
 
     #Loop over all dcm files set directory names and search for Bvalue
-    while not B20s:
-        for file in files:      
-            if os.path.isfile(file):
-                #read dicom properties        
-                ds = pydicom.filereader.dcmread(file)
-                #name the directory containing all results after patient name + Birthdate     	      
-                first_level = main_path +'\\'+str(ds.PatientName)+'_'+str(ds.PatientBirthDate)
-                first_level = first_level.replace('^','_')  
-                first_level = first_level.replace(' ','_') 
-                #Set the subdirectories
-                nativ_dir = first_level+'\\nativ'
-                nativ_length_dir = first_level+'\\nativ_length'
-                valsalva_dir = first_level+'\\valsalva'
-                valsalva_length_dir = first_level+'\\valsalva_length'
-                #Create the directorys if not existing            
-                if not os.path.exists(first_level):
-                    os.mkdir(first_level)
-                if not os.path.exists(nativ_dir):
-                    os.mkdir(nativ_dir)
-                if not os.path.exists(nativ_length_dir):
-                    os.mkdir(nativ_length_dir)
-                if not os.path.exists(valsalva_dir):					
-                    os.mkdir(valsalva_dir)
-                if not os.path.exists(valsalva_length_dir):
-                    os.mkdir(valsalva_length_dir)             
-                #Store String of the Series Name 
-                series = str(ds.SeriesDescription)
-                #Check for the Bvalue
-                if 'B20s' in series:
-                    Bvalue = 'B20s'                    
-                    B20s = True
-                elif 'B31s' in series:
-                    Bvalue = 'B31s'
+    for file in files:      
+        if os.path.isfile(file):
+            #read dicom properties        
+            ds = pydicom.filereader.dcmread(file)
+            #name the directory containing all results after patient name + Birthdate     	      
+            first_level = main_path +'\\'+str(ds.PatientName)+'_'+str(ds.PatientBirthDate)
+            first_level = first_level.replace('^','_')  
+            first_level = first_level.replace(' ','_') 
+            #Set the subdirectories
+            nativ_dir = first_level+'\\nativ'
+            nativ_length_dir = first_level+'\\nativ_length'
+            valsalva_dir = first_level+'\\valsalva'
+            valsalva_length_dir = first_level+'\\valsalva_length'
+            #Create the directorys if not existing            
+            if not os.path.exists(first_level):
+                os.mkdir(first_level)
+            if not os.path.exists(nativ_dir):
+                os.mkdir(nativ_dir)
+            if not os.path.exists(nativ_length_dir):
+                os.mkdir(nativ_length_dir)
+            if not os.path.exists(valsalva_dir):					
+                os.mkdir(valsalva_dir)
+            if not os.path.exists(valsalva_length_dir):
+                os.mkdir(valsalva_length_dir)             
+            #Store String of the Series Name 
+            series = str(ds.SeriesDescription)
+            #Check for the Bvalue
+            if 'B20s' in series:
+                Bvalue = 'B20s'                    
+                break
+            elif 'B31s' in series:
+                Bvalue = 'B31s'
     
     #fill the subdirectories         
     for file in files:
@@ -212,8 +211,6 @@ if __name__ == "__main__":
 
     #Create results for nativ data
     if nat_exists:
-        
-
         
         #Create the classification proposal in for of a tif
         net1 = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py", 
