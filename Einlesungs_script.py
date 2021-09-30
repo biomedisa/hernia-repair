@@ -24,15 +24,24 @@ def Creat_CT_crosssection(path_to_tif,path_to_dcm):
     #sum the amount of pixels containing the hernia in each horizontal slice
     label_sum = np.sum(np.sum(label, axis=2),axis=1)
     #get the layer that contains the largest amount of hernia pixels
-    layer = np.argmax(label_sum)
+    layer = np.argmax(label_sum) + 1
     #get the dcm file containg that layer
     layer_path = path_to_dcm + '\\' + str(layer).zfill(6) + '.dcm'
-    #convert the dcm file into an image
+    #convert the dcm file into an PIL image
     ds = pydicom.filereader.dcmread(layer_path)
     img = ds.pixel_array
+    img = Image.fromarray(img, mode='L')
     #save the crosssection
     path_to_png = path_to_dcm + '_crosssection.png'
-    plt.imsave(path_to_png,img,cmap='gray')
+    draw = ImageDraw.Draw(img)
+    draw.text(text='Nativ \n Layer: ' + str(layer),
+            fill=(255,255,255),
+            align='center',
+            stroke_width=50
+            )
+    img.save(path_to_png,format='png')
+    
+    
     return path_to_png
 
 def fill_length_dir(path_to_data,save_path):
