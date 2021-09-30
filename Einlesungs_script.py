@@ -88,9 +88,9 @@ def annotate_nativimage():
     nativ_height_dir = nativ_length_dir + '\\Länge'
     nativ_width_dir  = nativ_length_dir + '\\Breite'
     #Get Height,width and area of the hernia
-    nativ_hernia_height = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernien_detector_z.h5",nativ_height_dir)
+    nativ_hernia_height = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\hernien_detector_z.h5",nativ_height_dir)
     nativ_hernia_height *= slice_thickness*0.1 
-    nativ_hernia_width = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernien_detector_x.h5",nativ_width_dir)
+    nativ_hernia_width = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\hernien_detector_x.h5",nativ_width_dir)
     nativ_hernia_width *= slice_width*0.1
     nativ_hernia_area = get_hernia_area(nativ_hernia_height,nativ_hernia_width)
     #print hernia dimensions on the image
@@ -112,9 +112,9 @@ def annotate_valsalvaimage():
     valsalva_height_dir = valsalva_length_dir + '\\Länge'
     valsalva_width_dir  = valsalva_length_dir + '\\Breite'
     #Get Hernia height,width and area
-    valsalva_hernia_height = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernien_detector_z.h5",valsalva_height_dir)
+    valsalva_hernia_height = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\hernien_detector_z.h5",valsalva_height_dir)
     valsalva_hernia_height *= slice_thickness*0.1
-    valsalva_hernia_width = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernien_detector_x.h5",valsalva_width_dir)
+    valsalva_hernia_width = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\hernien_detector_x.h5",valsalva_width_dir)
     valsalva_hernia_width *= slice_width*0.1
     valsalva_hernia_area = get_hernia_area(valsalva_hernia_height,valsalva_hernia_width)
     img = Image.open(valsalva_png)
@@ -218,7 +218,7 @@ if __name__ == "__main__":
         
         #Create the classification proposal in for of a tif
         net1 = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py", 
-                    nativ_dir, r"C:\Users\Hernienforschung\Documents\Python_Scripts\img_hernie.h5", "-p","-bs","6"]
+                    nativ_dir, r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\img_hernie.h5", "-p","-bs","6"]
                     )
         #Create Paths to the mesh and the img
         nativ_tif = first_level+'\\final.nativ.tif'
@@ -244,7 +244,7 @@ if __name__ == "__main__":
 
         #Create the classification proposal in for of a tif
         net2 = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py",
-                    valsalva_dir, r"C:\Users\Hernienforschung\Documents\Python_Scripts\img_hernie.h5", "-p","-bs","6"]
+                    valsalva_dir, r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\img_hernie.h5", "-p","-bs","6"]
                     )
         
         #Create Paths to the mesh and the img                    
@@ -276,7 +276,7 @@ if __name__ == "__main__":
         #Set Time String for saving the data
         day_string = day.strftime("%Y-%m-%d_%H-%M")
         #Execute Samuels Script
-        sam = call(["C:\\Users\\Hernienforschung\\Documents\\Auswertungen\\Hernienauswertung_v0_11.exe", nativ_dir, valsalva_dir])
+        sam = call([r"C:\Users\Hernienforschung\Documents\Auswertungen\Hernienauswertung_v0_11.exe", nativ_dir, valsalva_dir])
         #Set the saving paths for the optained data
         sam_path = 'Auswertung_' + day_string
         sam_path_two = 'Archiv_zur_Fehlerdiagnose_' + day_string
