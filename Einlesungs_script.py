@@ -88,9 +88,9 @@ def annotate_nativimage():
     nativ_height_dir = nativ_length_dir + '\\Höhe'
     nativ_width_dir  = nativ_length_dir + '\\Breite'
     #Get Height,width and area of the hernia
-    nativ_hernia_height = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernien_detector_z.h5",nativ_height_dir)
+    nativ_hernia_height = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\hernien_detector_z.h5",nativ_height_dir)
     nativ_hernia_height *= slice_thickness*0.1 
-    nativ_hernia_width = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernien_detector_x.h5",nativ_width_dir)
+    nativ_hernia_width = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\hernien_detector_x.h5",nativ_width_dir)
     nativ_hernia_width *= slice_width*0.1
     nativ_hernia_area = get_hernia_area(nativ_hernia_height,nativ_hernia_width)
     #print hernia dimensions on the image
@@ -111,9 +111,9 @@ def annotate_valsalvaimage():
     valsalva_height_dir = valsalva_length_dir + '\\Höhe'
     valsalva_width_dir  = valsalva_length_dir + '\\Breite'
     #Get Hernia height,width and area
-    valsalva_hernia_height = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernien_detector_z.h5",valsalva_height_dir)
+    valsalva_hernia_height = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\hernien_detector_z.h5",valsalva_height_dir)
     valsalva_hernia_height *= slice_thickness*0.1
-    valsalva_hernia_width = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernien_detector_x.h5",valsalva_width_dir)
+    valsalva_hernia_width = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\hernien_detector_x.h5",valsalva_width_dir)
     valsalva_hernia_width *= slice_width*0.1
     valsalva_hernia_area = get_hernia_area(valsalva_hernia_height,valsalva_hernia_width)
     img = Image.open(valsalva_png)
@@ -213,7 +213,7 @@ if __name__ == "__main__":
         
         #Create the classification proposal in for of a tif
         net1 = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py", 
-                    nativ_dir, r"C:\Users\Hernienforschung\Documents\Python_Scripts\img_hernie.h5", "-p","-bs","6"]
+                    nativ_dir, r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\img_hernie.h5", "-p","-bs","6"]
                     )
         #Create Paths to the mesh and the img
         nativ_tif = first_level+'\\final.nativ.tif'
@@ -221,12 +221,12 @@ if __name__ == "__main__":
         nativ_png = nativ_tif.replace('.tif','.png')
         
         #Create nativ mesh in vtk format for Paraview
-        mesh1 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\create_mesh.py", 
+        mesh1 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\create_mesh.py", 
                     nativ_tif, str(slice_thickness)]
                     )
         
         #Create image using Paraview
-        screen1 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\paraview_screenshot.py",nativ_vtk])
+        screen1 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\paraview_screenshot.py",nativ_vtk])
         
         #Create CT crosssection
         nativ_cross_path = Creat_CT_crosssection(nativ_tif,nativ_dir)
@@ -239,7 +239,7 @@ if __name__ == "__main__":
 
         #Create the classification proposal in for of a tif
         net2 = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py",
-                    valsalva_dir, r"C:\Users\Hernienforschung\Documents\Python_Scripts\img_hernie.h5", "-p","-bs","6"]
+                    valsalva_dir, r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\img_hernie.h5", "-p","-bs","6"]
                     )
         
         #Create Paths to the mesh and the img                    
@@ -248,12 +248,12 @@ if __name__ == "__main__":
         valsalva_png = valsalva_tif.replace('.tif','.png')   
 
         #Create Valsalva mesh in vtk format for Paraview
-        mesh2 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\create_mesh.py", 
+        mesh2 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\create_mesh.py", 
                     valsalva_tif, str(slice_thickness)]
                     )
 
         #Create img using Paraview
-        screen2 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\paraview_screenshot.py",valsalva_vtk])
+        screen2 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\paraview_screenshot.py",valsalva_vtk])
        
         #Create CT crosssection images
         valsalva_cross_path = Creat_CT_crosssection(valsalva_tif,valsalva_dir)
@@ -271,7 +271,7 @@ if __name__ == "__main__":
         #Set Time String for saving the data
         day_string = day.strftime("%Y-%m-%d_%H-%M")
         #Execute Samuels Script
-        sam = call(["C:\\Users\\Hernienforschung\\Documents\\Auswertungen\\Hernienauswertung_v0_11.exe", nativ_dir, valsalva_dir])
+        sam = call([r"C:\Users\Hernienforschung\Documents\Auswertungen\Hernienauswertung_v0_11.exe", nativ_dir, valsalva_dir])
         #Set the saving paths for the optained data
         sam_path = 'Auswertung_' + day_string
         sam_path_two = 'Archiv_zur_Fehlerdiagnose_' + day_string
