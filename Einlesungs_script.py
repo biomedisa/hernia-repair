@@ -55,9 +55,9 @@ def fill_length_dir(path_to_data,save_path):
     #convert to uint8
     data = np.uint8(data*255./np.amax(data))
     #creat subfolders
-    if not os.path.exists(save_path+'\\Höhe'):
-        os.mkdir(save_path+'\\Höhe')
-        os.mkdir(save_path+'\\Höhe\\Daten')
+    if not os.path.exists(save_path+'\\Länge'):
+        os.mkdir(save_path+'\\länge')
+        os.mkdir(save_path+'\\Länge\\Daten')
     if not os.path.exists(save_path+'\\Breite'):
         os.mkdir(save_path+'\\Breite')
         os.mkdir(save_path+'\\Breite\\Daten')
@@ -66,7 +66,7 @@ def fill_length_dir(path_to_data,save_path):
             ## save data as tif
             img = Image.fromarray(data[z,:,:], mode='L')
             img.resize((512,512))
-            img.save(save_path +'\\Höhe\\Daten\\'+ str(z).zfill(6) +'.tif')
+            img.save(save_path +'\\Länge\\Daten\\'+ str(z).zfill(6) +'.tif')
 
         for x in range(data.shape[2]):
             ## save data as tif
@@ -85,7 +85,7 @@ def annotate_nativimage():
     #fill the length directory with images
     fill_length_dir(nativ_dir,nativ_length_dir)
     #Create Paths to both subdirectories
-    nativ_height_dir = nativ_length_dir + '\\Höhe'
+    nativ_height_dir = nativ_length_dir + '\\Länge'
     nativ_width_dir  = nativ_length_dir + '\\Breite'
     #Get Height,width and area of the hernia
     nativ_hernia_height = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernien_detector_z.h5",nativ_height_dir)
@@ -99,6 +99,7 @@ def annotate_nativimage():
     draw.text((0,0),'Breite:' + str(round(nativ_hernia_width,1)) + 'cm Länge:'+ str(round(nativ_hernia_height,1)) + 'cm Fläche:' + str(round(nativ_hernia_area,1)) + 'cm²',
             (0,0,0),
             align='center',
+            stroke_width=30
             )
     img.save(nativ_png,format='png')
 
@@ -108,7 +109,7 @@ def annotate_valsalvaimage():
     #fill the length directory with images
     fill_length_dir(valsalva_dir,valsalva_length_dir)
     #Create Paths to both subdirectories
-    valsalva_height_dir = valsalva_length_dir + '\\Höhe'
+    valsalva_height_dir = valsalva_length_dir + '\\Länge'
     valsalva_width_dir  = valsalva_length_dir + '\\Breite'
     #Get Hernia height,width and area
     valsalva_hernia_height = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernien_detector_z.h5",valsalva_height_dir)
@@ -121,6 +122,7 @@ def annotate_valsalvaimage():
     draw.text((0,0),'Breite:'+ str(round(valsalva_hernia_width,1)) + 'cm Länge:' + str(round(valsalva_hernia_height,1)) + 'cm Fläche:' + str(round(valsalva_hernia_area,1)) +'cm²',
             (0,0,0),
             align='center',
+            stroke_width=30
             )
     img.save(valsalva_png,format='png')
 
@@ -149,6 +151,9 @@ if __name__ == "__main__":
             first_level = main_path +'\\'+str(ds.PatientName)+'_'+str(ds.PatientBirthDate)
             first_level = first_level.replace('^','_')  
             first_level = first_level.replace(' ','_') 
+            first_level = first_level.replace('ü','ue')
+            first_level = first_level.replace('ä','ae')
+            first_level = first_level.replace('ö','oe')                        
             #Set the subdirectories
             nativ_dir = first_level+'\\nativ'
             nativ_length_dir = first_level+'\\nativ_length'
@@ -221,12 +226,12 @@ if __name__ == "__main__":
         nativ_png = nativ_tif.replace('.tif','.png')
         
         #Create nativ mesh in vtk format for Paraview
-        mesh1 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\create_mesh.py", 
+        mesh1 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\create_mesh.py", 
                     nativ_tif, str(slice_thickness)]
                     )
         
         #Create image using Paraview
-        screen1 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\paraview_screenshot.py",nativ_vtk])
+        screen1 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\paraview_screenshot.py",nativ_vtk])
         
         #Create CT crosssection
         nativ_cross_path = Creat_CT_crosssection(nativ_tif,nativ_dir)
@@ -248,12 +253,12 @@ if __name__ == "__main__":
         valsalva_png = valsalva_tif.replace('.tif','.png')   
 
         #Create Valsalva mesh in vtk format for Paraview
-        mesh2 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\create_mesh.py", 
+        mesh2 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\create_mesh.py", 
                     valsalva_tif, str(slice_thickness)]
                     )
 
         #Create img using Paraview
-        screen2 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\paraview_screenshot.py",valsalva_vtk])
+        screen2 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\paraview_screenshot.py",valsalva_vtk])
        
         #Create CT crosssection images
         valsalva_cross_path = Creat_CT_crosssection(valsalva_tif,valsalva_dir)

@@ -21,11 +21,11 @@ def get_hernia_length(path_to_model,path_to_data):
     prediction = model.predict(hernia_data, verbose=0)
     smooth_prediction = np.empty_like(prediction)
     for slice in range(prediction.size):
-        smooth_prediction[slice] = sum(prediction[(i+slice)%prediction.size] for i in range(-10,11)) * 1./21
+        smooth_prediction[slice] = sum(prediction[(i+slice)%prediction.size] for i in range(-5,6)) * 1./11
 
     hernia_interval = np.argwhere(smooth_prediction>=0.5)
     try:
-        hernia_length = hernia_interval[-1][0]-hernia_interval[0][1]
+        hernia_length = hernia_interval[-1][0]-hernia_interval[0][0]
     except:
         hernia_length = 0
 
