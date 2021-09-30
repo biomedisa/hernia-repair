@@ -28,17 +28,20 @@ def Creat_CT_crosssection(path_to_tif,path_to_dcm):
     #get the dcm file containg that layer
     layer_path = path_to_dcm + '\\' + str(layer).zfill(6) + '.dcm'
     #convert the dcm file into an PIL image
+    path_to_png = path_to_dcm + '_crosssection.png'    
     ds = pydicom.filereader.dcmread(layer_path)
     img = ds.pixel_array
-    img = Image.fromarray(img, mode='L')
-    #save the crosssection
-    path_to_png = path_to_dcm + '_crosssection.png'
+    plt.imsave(path_to_png,img,cmap='gray')
+    img = Image.open(path_to_png)
+    #annotate the image
     draw = ImageDraw.Draw(img)
-    draw.text(text='Nativ \n Layer: ' + str(layer),
+    draw.text(xy=(256,0),
+            text='Nativ \n Layer: ' + str(layer),
             fill=(255,255,255),
             align='center',
-            stroke_width=50
             )
+    #save the crosssection        
+
     img.save(path_to_png,format='png')
     
     
@@ -104,11 +107,10 @@ def annotate_nativimage():
     #write hernia dimensions on the image
     img = Image.open(nativ_png)
     draw = ImageDraw.Draw(img)
-    draw.text((0,0), 'Nativ \n' +
-            'Breite:' + str(round(nativ_hernia_width,1)) + 'cm Länge:'+ str(round(nativ_hernia_height,1)) + 'cm Fläche:' + str(round(nativ_hernia_area,1)) + 'cm²',
-            (0,0,0),
+    draw.text(xy=(295,0),
+            text= 'Nativ \n' + 'Breite:' + str(round(nativ_hernia_width,1)) + 'cm Länge:'+ str(round(nativ_hernia_height,1)) + 'cm Fläche:' + str(round(nativ_hernia_area,1)) + 'cm²',
+            fill=(0,0,0),
             align='center',
-            stroke_width=30
             )
     img.save(nativ_png,format='png')
 
@@ -128,11 +130,10 @@ def annotate_valsalvaimage():
     #write dimensions on the image
     img = Image.open(valsalva_png)
     draw = ImageDraw.Draw(img)
-    draw.text((0,0), 'Valsalva \n' +
-            'Breite:'+ str(round(valsalva_hernia_width,1)) + 'cm Länge:' + str(round(valsalva_hernia_height,1)) + 'cm Fläche:' + str(round(valsalva_hernia_area,1)) +'cm²',
-            (0,0,0),
+    draw.text(xy=(295,0), 
+            text= 'Valsalva \n' + 'Breite:'+ str(round(valsalva_hernia_width,1)) + 'cm Länge:' + str(round(valsalva_hernia_height,1)) + 'cm Fläche:' + str(round(valsalva_hernia_area,1)) +'cm²',
+            fill= (0,0,0),
             align='center',
-            stroke_width=30
             )
     img.save(valsalva_png,format='png')
 
