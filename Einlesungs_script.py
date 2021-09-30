@@ -56,7 +56,7 @@ def fill_length_dir(path_to_data,save_path):
     data = np.uint8(data*255./np.amax(data))
     #creat subfolders
     if not os.path.exists(save_path+'\\Länge'):
-        os.mkdir(save_path+'\\länge')
+        os.mkdir(save_path+'\\Länge')
         os.mkdir(save_path+'\\Länge\\Daten')
     if not os.path.exists(save_path+'\\Breite'):
         os.mkdir(save_path+'\\Breite')
@@ -79,7 +79,6 @@ def get_hernia_area(height,width):
     area = pi*height*width
     return area
 
-#get the dimensions of the nativ hernia
 def annotate_nativimage():
     import Prediction
     #fill the length directory with images
@@ -88,22 +87,22 @@ def annotate_nativimage():
     nativ_height_dir = nativ_length_dir + '\\Länge'
     nativ_width_dir  = nativ_length_dir + '\\Breite'
     #Get Height,width and area of the hernia
-    nativ_hernia_height = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\hernien_detector_z.h5",nativ_height_dir)
+    nativ_hernia_height = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\Hernien_detector_z.h5",nativ_height_dir)
     nativ_hernia_height *= slice_thickness*0.1 
-    nativ_hernia_width = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\hernien_detector_x.h5",nativ_width_dir)
+    nativ_hernia_width = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\Hernien_detector_x.h5",nativ_width_dir)
     nativ_hernia_width *= slice_width*0.1
     nativ_hernia_area = get_hernia_area(nativ_hernia_height,nativ_hernia_width)
-    #print hernia dimensions on the image
+    #write hernia dimensions on the image
     img = Image.open(nativ_png)
     draw = ImageDraw.Draw(img)
-    draw.text((0,0),'Breite:' + str(round(nativ_hernia_width,1)) + 'cm Länge:'+ str(round(nativ_hernia_height,1)) + 'cm Fläche:' + str(round(nativ_hernia_area,1)) + 'cm²',
+    draw.text((0,0), 'Nativ \n' +
+            'Breite:' + str(round(nativ_hernia_width,1)) + 'cm Länge:'+ str(round(nativ_hernia_height,1)) + 'cm Fläche:' + str(round(nativ_hernia_area,1)) + 'cm²',
             (0,0,0),
             align='center',
             stroke_width=30
             )
     img.save(nativ_png,format='png')
 
-#get the dimensions of the valsalva hernia
 def annotate_valsalvaimage():
     import Prediction
     #fill the length directory with images
@@ -112,14 +111,16 @@ def annotate_valsalvaimage():
     valsalva_height_dir = valsalva_length_dir + '\\Länge'
     valsalva_width_dir  = valsalva_length_dir + '\\Breite'
     #Get Hernia height,width and area
-    valsalva_hernia_height = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\hernien_detector_z.h5",valsalva_height_dir)
+    valsalva_hernia_height = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\Hernien_detector_z.h5",valsalva_height_dir)
     valsalva_hernia_height *= slice_thickness*0.1
-    valsalva_hernia_width = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\hernien_detector_x.h5",valsalva_width_dir)
+    valsalva_hernia_width = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\Hernien_detector_x.h5",valsalva_width_dir)
     valsalva_hernia_width *= slice_width*0.1
     valsalva_hernia_area = get_hernia_area(valsalva_hernia_height,valsalva_hernia_width)
+    #write dimensions on the image
     img = Image.open(valsalva_png)
     draw = ImageDraw.Draw(img)
-    draw.text((0,0),'Breite:'+ str(round(valsalva_hernia_width,1)) + 'cm Länge:' + str(round(valsalva_hernia_height,1)) + 'cm Fläche:' + str(round(valsalva_hernia_area,1)) +'cm²',
+    draw.text((0,0), 'Valsalva \n' +
+            'Breite:'+ str(round(valsalva_hernia_width,1)) + 'cm Länge:' + str(round(valsalva_hernia_height,1)) + 'cm Fläche:' + str(round(valsalva_hernia_area,1)) +'cm²',
             (0,0,0),
             align='center',
             stroke_width=30

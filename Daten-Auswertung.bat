@@ -6,7 +6,6 @@ call activate biomedisa
 cd hernia-repair
 
 git checkout main
-
 git pull git@github.com:biomedisa/hernia-repair.git
 
 call python Einlesungs_script.py
