@@ -136,8 +136,6 @@ def annotate_by_label(path_to_tif,path_to_dcm):
 
     # load tomographic data & get pixel spacing
     file = path_to_dcm + '\\' + str(1).zfill(6) + '.dcm'
-    image_data, image_header = load(file)
-    y_res, x_res, z_res = image_header.get_voxel_spacing()
 
     # get slice thickness
     ds = pydicom.filereader.dcmread(file)
