@@ -143,11 +143,11 @@ def annotate_nativimage():
     img = Image.open(nativ_png)
     draw = ImageDraw.Draw(img)
     font = ImageFont.truetype("arial.ttf",size=30)
-    draw.text(xy=(img.shape[0]/2,img.shape[1]/2),
+    draw.text(xy=(img.width/2,img.height/2),
             text= 'Nativ \n' + 'Breite:' + str(round(nativ_hernia_width,1)) + 'cm Länge:'+ str(round(nativ_hernia_height,1)) + 'cm Fläche:' + str(round(nativ_hernia_area,1)) + 'cm²',
             fill=(0,0,0),
             anchor="center",
-            font=font
+            font=font,
             )
     img.save(nativ_png,format='png')
 
@@ -167,9 +167,12 @@ def annotate_valsalvaimage():
     #write dimensions on the image
     img = Image.open(valsalva_png)
     draw = ImageDraw.Draw(img)
-    draw.text(xy=(200,0), 
+    font=ImageFont.truetype("arial.ttf",size=30)
+    draw.text(xy=(img.width/2,img.height/2), 
             text= 'Valsalva \n' + 'Breite:'+ str(round(valsalva_hernia_width,1)) + 'cm Länge:' + str(round(valsalva_hernia_height,1)) + 'cm Fläche:' + str(round(valsalva_hernia_area,1)) +'cm²',
             fill= (0,0,0),
+            anchor="center",
+            font=font,
             )
     img.save(valsalva_png,format='png')
 
