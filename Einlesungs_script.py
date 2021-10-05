@@ -73,7 +73,7 @@ def Creat_CT_crosssection(path_to_tif,path_to_dcm):
     draw = ImageDraw.Draw(img)
     font = ImageFont.truetype("arial.ttf",size=20)
     draw.text(xy=(img.width/2,0),
-            text='Nativ \n Layer: ' + str(layer),
+            text='Nativ \n' + 'Layer: ' + str(layer),
             fill=(255,255,255),
             anchor='ma',
             font=font,
@@ -129,55 +129,76 @@ def get_hernia_area(height,width):
     area = pi*height*width
     return area
 
-def annotate_nativimage():
+def annotate_by_label(path_to_tif,path_to_dcm):
+    # load segmentation
+    a = imread(path_to_tif)
+    zsh, ysh, xsh = a.shape
+
+    # load tomographic data & get pixel spacing
+    file = path_to_dcm + '\\' + str(1).zfill(6) + '.dcm'
+    image_data, image_header = load(file)
+    y_res, x_res, z_res = image_header.get_voxel_spacing()
+
+    # get slice thickness
+    ds = pydicom.filereader.dcmread(file)
+    z_res = float(ds.slicethickness)
+    y_res, x_res = float(ds.pixelspacing)
+
+    # compute size of area between rectus left and right
+    area = 0
+    for k in range(zsh):
+        y0,x0 = np.where(a[k]==1)
+        y1,x1 = np.where(a[k]==2)
+        if np.any(x0) and np.any(x1):
+            argmax = np.argmax(x0)
+            argmin = np.argmin(x1)
+            x_max,y_max = x0[argmax],y0[argmax]
+            x_min,y_min = x1[argmin],y1[argmin]
+            area += np.sqrt((x_res*(x_max-x_min))**2 + (y_res*(y_max-y_min))**2) * z_res
+
+    # compute size of hernia area
+    hernia_area = 0
+    for k in range(zsh):
+        y,x = np.where(a[k]==7)
+        if np.any(x):
+            argmax = np.argmax(x)
+            argmin = np.argmin(x)
+            x_max,x_min = x[argmax],x[argmin]
+            hernia_area += np.sqrt((x_res*(x_max-x_min))**2) * z_res
+    return area, hernia_area
+
+def annotate_by_neural_net(path_to_dcm,path_to_length_dir):
     import Prediction
     #fill the length directory with images
-    fill_length_dir(nativ_dir,nativ_length_dir)
+    fill_length_dir(path_to_dcm,path_to_length_dir)
     #Create Paths to both subdirectories
-    nativ_height_dir = nativ_length_dir + '\\Länge'
-    nativ_width_dir  = nativ_length_dir + '\\Breite'
+    height_dir = path_to_length_dir + '\\Länge'
+    width_dir  = path_to_length_dir + '\\Breite'
     #Get Height,width and area of the hernia
-    nativ_hernia_height = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\Hernien_detector_z.h5",nativ_height_dir)
-    nativ_hernia_height *= slice_thickness*0.1 
-    nativ_hernia_width = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\Hernien_detector_x.h5",nativ_width_dir)
-    nativ_hernia_width *= slice_width*0.1
-    nativ_hernia_area = get_hernia_area(nativ_hernia_height,nativ_hernia_width)
+    hernia_width = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\Hernien_detector_x.h5",width_dir)
+    hernia_width *= slice_width*0.1
+    hernia_height = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\Hernien_detector_z.h5",height_dir)
+    hernia_height *= slice_thickness*0.1 
+    hernia_area = get_hernia_area(hernia_height,hernia_width)
+    return hernia_width, hernia_height ,hernia_area
+
+def annotate_image(observation,path_to_dcm,path_to_length_dir,path_to_tif,path_to_png):
+    hernia_width_by_nn, hernia_height_by_nn,hernia_area_by_nn = annotate_by_neural_net(path_to_dcm,path_to_length_dir)
+    instabel_area_by_label, hernia_area_by_label = annotate_by_label(path_to_tif,path_to_dcm)
+    
     #write hernia dimensions on the image
-    img = Image.open(nativ_png)
-    draw = ImageDraw.Draw(img)
+    to_annotate = Image.open(path_to_png)
+    draw = ImageDraw.Draw(to_annotate)
     font = ImageFont.truetype("arial.ttf",size=20)
-    draw.text(xy=(img.width/2,0),
-            text= 'Nativ \n' + 'Breite:' + str(round(nativ_hernia_width,1)) + 'cm Länge:'+ str(round(nativ_hernia_height,1)) + 'cm Fläche:' + str(round(nativ_hernia_area,1)) + 'cm²',
+    draw.text(xy=(to_annotate.width/2,0),
+            text= observation + 
+            '\nBerechnete Größen:\n' + 'Breite:' + str(round(hernia_width_by_nn,1)) + 'cm Länge:'+ str(round(hernia_height_by_nn,1)) + 'cm Fläche:' + str(round(hernia_area_by_nn,1)) + 'cm²' +
+            '\nGrößen im Bild:\n' + 'Instabile_Fläche:'+ str(round(instabel_area_by_label,1)) + 'cm² Fläche:' + str(round(hernia_area_by_label,1)) + 'cm²',     
             fill=(0,0,0),
             anchor="ma",
             font=font,
             )
-    img.save(nativ_png,format='png')
-
-def annotate_valsalvaimage():
-    import Prediction
-    #fill the length directory with images
-    fill_length_dir(valsalva_dir,valsalva_length_dir)
-    #Create Paths to both subdirectories
-    valsalva_height_dir = valsalva_length_dir + '\\Länge'
-    valsalva_width_dir  = valsalva_length_dir + '\\Breite'
-    #Get Hernia height,width and area
-    valsalva_hernia_height = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\Hernien_detector_z.h5",valsalva_height_dir)
-    valsalva_hernia_height *= slice_thickness*0.1
-    valsalva_hernia_width = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\Hernien_detector_x.h5",valsalva_width_dir)
-    valsalva_hernia_width *= slice_width*0.1
-    valsalva_hernia_area = get_hernia_area(valsalva_hernia_height,valsalva_hernia_width)
-    #write dimensions on the image
-    img = Image.open(valsalva_png)
-    draw = ImageDraw.Draw(img)
-    font=ImageFont.truetype("arial.ttf",size=20)
-    draw.text(xy=(img.width/2,0), 
-            text= 'Valsalva \n' + 'Breite:'+ str(round(valsalva_hernia_width,1)) + 'cm Länge:' + str(round(valsalva_hernia_height,1)) + 'cm Fläche:' + str(round(valsalva_hernia_area,1)) +'cm²',
-            fill= (0,0,0),
-            anchor="ma",
-            font=font,
-            )
-    img.save(valsalva_png,format='png')
+    to_annotate.save(path_to_png,format='png')
 
 if __name__ == "__main__":
     #Check for and update the neural nets
@@ -344,8 +365,8 @@ if __name__ == "__main__":
 
 
         #annotate bothimages
-        annotate_nativimage()
-        annotate_valsalvaimage()
+        annotate_image('Nativ',nativ_dir,nativ_length_dir,nativ_tif,nativ_png)
+        annotate_image('Valsalva',valsalva_dir,valsalva_length_dir,valsalva_tif,valsalva_png)
         
         #get time and date
         day = datetime.now()
@@ -364,8 +385,9 @@ if __name__ == "__main__":
         try:
             sam_img = plt.imread(sam_path + '\\Verschiebung und Verzerrung.png')
         except:
-            sam_path.replace(day.strftime('-%M'),day.strftime('-%M')+1)
-    
+            sam_path = sam_path.replace(day.strftime('-%M'),str(int(day.strftime('-%M'))+1))
+            sam_img = plt.imread(sam_path + '\\Verschiebung und Verzerrung.png')
+
         nativ_crosssection = plt.imread(nativ_cross_path)[:,:,:3]
         valsalva_crosssection = plt.imread(valsalva_cross_path)[:,:,:3]
         #Resize images to same width for stacking 
