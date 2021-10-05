@@ -15,7 +15,7 @@ from tkinter.filedialog import askdirectory
 from tifffile import imread
 from subprocess import call
 from datetime import datetime
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 from dateutil import tz
 
 def update_neural_nets():
@@ -142,9 +142,12 @@ def annotate_nativimage():
     #write hernia dimensions on the image
     img = Image.open(nativ_png)
     draw = ImageDraw.Draw(img)
-    draw.text(xy=(200,0),
+    font = ImageFont.truetype(size=30)
+    draw.text(xy=(img.shape[0]/2,img.shape[1]/2),
             text= 'Nativ \n' + 'Breite:' + str(round(nativ_hernia_width,1)) + 'cm Länge:'+ str(round(nativ_hernia_height,1)) + 'cm Fläche:' + str(round(nativ_hernia_area,1)) + 'cm²',
             fill=(0,0,0),
+            anchor="center",
+            font=font
             )
     img.save(nativ_png,format='png')
 
