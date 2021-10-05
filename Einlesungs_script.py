@@ -71,8 +71,8 @@ def Creat_CT_crosssection(path_to_tif,path_to_dcm):
     img = Image.open(path_to_png)
     #annotate the image
     draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype("arial.ttf",size=30)
-    draw.text(xy=(img.width/2,img.height/2),
+    font = ImageFont.truetype("arial.ttf",size=20)
+    draw.text(xy=(img.width/2,0),
             text='Nativ \n Layer: ' + str(layer),
             fill=(255,255,255),
             anchor='ma',
@@ -145,8 +145,8 @@ def annotate_nativimage():
     #write hernia dimensions on the image
     img = Image.open(nativ_png)
     draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype("arial.ttf",size=30)
-    draw.text(xy=(img.width/2,img.height/2),
+    font = ImageFont.truetype("arial.ttf",size=20)
+    draw.text(xy=(img.width/2,0),
             text= 'Nativ \n' + 'Breite:' + str(round(nativ_hernia_width,1)) + 'cm Länge:'+ str(round(nativ_hernia_height,1)) + 'cm Fläche:' + str(round(nativ_hernia_area,1)) + 'cm²',
             fill=(0,0,0),
             anchor="ma",
@@ -170,8 +170,8 @@ def annotate_valsalvaimage():
     #write dimensions on the image
     img = Image.open(valsalva_png)
     draw = ImageDraw.Draw(img)
-    font=ImageFont.truetype("arial.ttf",size=30)
-    draw.text(xy=(img.width/2,img.height/2), 
+    font=ImageFont.truetype("arial.ttf",size=20)
+    draw.text(xy=(img.width/2,0), 
             text= 'Valsalva \n' + 'Breite:'+ str(round(valsalva_hernia_width,1)) + 'cm Länge:' + str(round(valsalva_hernia_height,1)) + 'cm Fläche:' + str(round(valsalva_hernia_area,1)) +'cm²',
             fill= (0,0,0),
             anchor="ma",
@@ -185,6 +185,10 @@ if __name__ == "__main__":
     #Ask the user for the Path to the Data via Tkinterface
     tk.Tk().withdraw()
     path_to_dir = askdirectory()
+
+    #Console output
+    print('Loading Data...')
+
 
     #Get the raw dcm files
     files = glob.glob(path_to_dir+'/**/*', recursive=True)
@@ -270,21 +274,30 @@ if __name__ == "__main__":
 
     #Create results for nativ data
     if nat_exists:
-        
+        #console output
+        os.system('cls')
+        print('Processing Nativ:\n Computing Labels...')
+
+
         #Create the classification proposal in for of a tif
         net1 = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py", 
                     nativ_dir, r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\img_hernie.h5", "-p","-bs","6"]
                     )
+
         #Create Paths to the mesh and the img
         nativ_tif = first_level+'\\final.nativ.tif'
         nativ_vtk = nativ_tif.replace('.tif','.vtk')
         nativ_png = nativ_tif.replace('.tif','.png')
-        
+
         #Create nativ mesh in vtk format for Paraview
         mesh1 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\create_mesh.py", 
                     nativ_tif, str(slice_thickness)]
                     )
-        
+                
+        #console Output
+        print('Done\n Creating Images')
+
+
         #Create image using Paraview
         screen1 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\paraview_screenshot.py",nativ_vtk])
         
@@ -294,7 +307,9 @@ if __name__ == "__main__":
 
     #Create results for valsalva data
     if val_exists:
-        
+        #console output
+        os.system('cls')
+        print('Processing Valsalva:\n Computing Labels...')
 
 
         #Create the classification proposal in for of a tif
@@ -312,6 +327,9 @@ if __name__ == "__main__":
                     valsalva_tif, str(slice_thickness)]
                     )
 
+        #console Output
+        print('Done\n Creating Images')
+
         #Create img using Paraview
         screen2 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\paraview_screenshot.py",valsalva_vtk])
        
@@ -321,7 +339,10 @@ if __name__ == "__main__":
 
     #Execute Samuels script automaticaly and combine results
     if nat_exists and val_exists: #Check if Data is complete
-        
+        #console Output
+        print('Annotate images')
+
+
         #annotate bothimages
         annotate_nativimage()
         annotate_valsalvaimage()
@@ -340,7 +361,11 @@ if __name__ == "__main__":
         #Read all images
         nat_img = plt.imread(nativ_png)
         val_img = plt.imread(valsalva_png)
-        sam_img = plt.imread(sam_path + '\\Verschiebung und Verzerrung.png')
+        try:
+            sam_img = plt.imread(sam_path + '\\Verschiebung und Verzerrung.png')
+        except:
+            sam_path.replace(day.strftime('-%M'),day.strftime('-%M')+1)
+    
         nativ_crosssection = plt.imread(nativ_cross_path)[:,:,:3]
         valsalva_crosssection = plt.imread(valsalva_cross_path)[:,:,:3]
         #Resize images to same width for stacking 
