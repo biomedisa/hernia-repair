@@ -4,9 +4,11 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 import pydicom
 import glob
+import time,shutil,ssl
+import requests
+import urllib.request
 import numpy as np
 import matplotlib.pyplot as plt
-import shutil
 import tkinter as tk
 from math import pi
 from tkinter.filedialog import askdirectory
@@ -14,7 +16,41 @@ from tifffile import imread
 from subprocess import call
 from datetime import datetime
 from PIL import Image, ImageDraw
+from dateutil import tz
 
+def update_neural_nets():
+    sources = ['https://biomedisa.org/media/img_hernie.h5','https://biomedisa.org/media/Hernien_detector_x.h5','https://biomedisa.org/media/Hernien_detector_z.h5']
+    destinations = [r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\img_hernie.h5",r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\hernien_detector_x.h5",r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\hernien_detector_z.h5"]
+    for src, dst in zip(sources,destinations):
+        update = False
+        if os.path.exists(dst):
+            # source
+            response = requests.head(src)
+            timestamp1 = response.headers.get('Last-Modified')
+            timestamp1 = timestamp1.split(' ')
+            del timestamp1[0]
+            timestamp1 = ' '.join(timestamp1)
+            for i, month in enumerate(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov']):
+                if month in timestamp1:
+                    timestamp1 = timestamp1.replace(month, '0%s'%(i+1))
+            t1 = datetime.strptime(timestamp1, "%d %m %Y %H:%M:%S %Z")
+            t1 = t1.replace(tzinfo=tz.tzutc())  # tell datetime it's in UTC time zone
+            t1 = t1.astimezone(tz.tzlocal())    # convert to local time
+            print("Web:", t1)
+
+            # destination
+            timestamp2 = os.path.getmtime(dst)
+            timestamp2 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(timestamp2))
+            t2 = datetime.strptime(timestamp2, '%Y-%m-%d %H:%M:%S')
+            t2 = t2.astimezone(tz.tzlocal())
+            print("Local:", timestamp2)
+            update = (t1>t2) 
+        #difference = t1 - t2
+        #print(t1>t2, difference, difference.days)
+
+        if update or not os.path.exists(dst):
+            with urllib.request.urlopen(src,context=ssl._create_unverified_context()) as response,open(dst,'wb') as out_file: 
+                shutil.copyfileobj(response,out_file)
 
 def Creat_CT_crosssection(path_to_tif,path_to_dcm):
     #get tif with labels
@@ -35,10 +71,9 @@ def Creat_CT_crosssection(path_to_tif,path_to_dcm):
     img = Image.open(path_to_png)
     #annotate the image
     draw = ImageDraw.Draw(img)
-    draw.text(xy=(256,0),
+    draw.text(xy=(200,0),
             text='Nativ \n Layer: ' + str(layer),
             fill=(255,255,255),
-            align='center',
             )
     #save the crosssection        
 
@@ -107,10 +142,9 @@ def annotate_nativimage():
     #write hernia dimensions on the image
     img = Image.open(nativ_png)
     draw = ImageDraw.Draw(img)
-    draw.text(xy=(295,0),
+    draw.text(xy=(200,0),
             text= 'Nativ \n' + 'Breite:' + str(round(nativ_hernia_width,1)) + 'cm Länge:'+ str(round(nativ_hernia_height,1)) + 'cm Fläche:' + str(round(nativ_hernia_area,1)) + 'cm²',
             fill=(0,0,0),
-            align='center',
             )
     img.save(nativ_png,format='png')
 
@@ -130,14 +164,15 @@ def annotate_valsalvaimage():
     #write dimensions on the image
     img = Image.open(valsalva_png)
     draw = ImageDraw.Draw(img)
-    draw.text(xy=(295,0), 
+    draw.text(xy=(200,0), 
             text= 'Valsalva \n' + 'Breite:'+ str(round(valsalva_hernia_width,1)) + 'cm Länge:' + str(round(valsalva_hernia_height,1)) + 'cm Fläche:' + str(round(valsalva_hernia_area,1)) +'cm²',
             fill= (0,0,0),
-            align='center',
             )
     img.save(valsalva_png,format='png')
 
 if __name__ == "__main__":
+    #Check for and update the neural nets
+    update_neural_nets()
     #Get the Path to the Data
     tk.Tk().withdraw()
     path_to_dir = askdirectory()
