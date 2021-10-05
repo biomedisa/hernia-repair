@@ -173,7 +173,7 @@ def annotate_valsalvaimage():
 if __name__ == "__main__":
     #Check for and update the neural nets
     update_neural_nets()
-    #Get the Path to the Data
+    #Ask the user for the Path to the Data via Tkinterface
     tk.Tk().withdraw()
     path_to_dir = askdirectory()
 
