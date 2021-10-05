@@ -71,9 +71,12 @@ def Creat_CT_crosssection(path_to_tif,path_to_dcm):
     img = Image.open(path_to_png)
     #annotate the image
     draw = ImageDraw.Draw(img)
-    draw.text(xy=(200,0),
+    font = ImageFont.truetype("arial.ttf",size=30)
+    draw.text(xy=(img.width/2,img.height/2),
             text='Nativ \n Layer: ' + str(layer),
             fill=(255,255,255),
+            anchor='ma',
+            font=font,
             )
     #save the crosssection        
 
@@ -146,7 +149,7 @@ def annotate_nativimage():
     draw.text(xy=(img.width/2,img.height/2),
             text= 'Nativ \n' + 'Breite:' + str(round(nativ_hernia_width,1)) + 'cm Länge:'+ str(round(nativ_hernia_height,1)) + 'cm Fläche:' + str(round(nativ_hernia_area,1)) + 'cm²',
             fill=(0,0,0),
-            anchor="center",
+            anchor="ma",
             font=font,
             )
     img.save(nativ_png,format='png')
@@ -171,7 +174,7 @@ def annotate_valsalvaimage():
     draw.text(xy=(img.width/2,img.height/2), 
             text= 'Valsalva \n' + 'Breite:'+ str(round(valsalva_hernia_width,1)) + 'cm Länge:' + str(round(valsalva_hernia_height,1)) + 'cm Fläche:' + str(round(valsalva_hernia_area,1)) +'cm²',
             fill= (0,0,0),
-            anchor="center",
+            anchor="ma",
             font=font,
             )
     img.save(valsalva_png,format='png')
