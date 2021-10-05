@@ -139,8 +139,8 @@ def annotate_by_label(path_to_tif,path_to_dcm):
 
     # get slice thickness
     ds = pydicom.filereader.dcmread(file)
-    z_res = float(ds.slicethickness)
-    y_res, x_res = float(ds.pixelspacing)
+    z_res = float(ds.SliceThickness)
+    y_res, x_res = float(ds.PixelSpacing)
 
     # compute size of area between rectus left and right
     area = 0
