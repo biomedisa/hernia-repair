@@ -142,7 +142,7 @@ def annotate_nativimage():
     #write hernia dimensions on the image
     img = Image.open(nativ_png)
     draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype(size=30)
+    font = ImageFont.truetype("arial.ttf",size=30)
     draw.text(xy=(img.shape[0]/2,img.shape[1]/2),
             text= 'Nativ \n' + 'Breite:' + str(round(nativ_hernia_width,1)) + 'cm Länge:'+ str(round(nativ_hernia_height,1)) + 'cm Fläche:' + str(round(nativ_hernia_area,1)) + 'cm²',
             fill=(0,0,0),
