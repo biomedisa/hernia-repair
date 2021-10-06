@@ -222,7 +222,7 @@ if __name__ == "__main__":
         os.mkdir(main_path)
 
     #Loop over all dcm files set directory names and search for Bvalue
-    for file in files:      
+    for file in files:
         if os.path.isfile(file):
             #read dicom properties        
             ds = pydicom.filereader.dcmread(file)
