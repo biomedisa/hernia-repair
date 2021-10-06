@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-import os
+import os,sys
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 import pydicom
 import glob
@@ -52,7 +52,7 @@ def update_neural_nets():
             with urllib.request.urlopen(src,context=ssl._create_unverified_context()) as response,open(dst,'wb') as out_file: 
                 shutil.copyfileobj(response,out_file)
 
-def Creat_CT_crosssection(path_to_tif,path_to_dcm):
+def Creat_CT_crosssection(observation,path_to_tif,path_to_dcm):
     #get tif with labels
     label = imread(path_to_tif)
     #set all labels that aren´t a hernia to 0
@@ -73,7 +73,7 @@ def Creat_CT_crosssection(path_to_tif,path_to_dcm):
     draw = ImageDraw.Draw(img)
     font = ImageFont.truetype("arial.ttf",size=20)
     draw.text(xy=(img.width/2,0),
-            text='Nativ \n' + 'Layer: ' + str(layer),
+            text= observation +' \n' + 'Layer: ' + str(layer),
             fill=(255,255,255),
             anchor='ma',
             font=font,
@@ -140,7 +140,7 @@ def annotate_by_label(path_to_tif,path_to_dcm):
     # get slice thickness
     ds = pydicom.filereader.dcmread(file)
     z_res = float(ds.SliceThickness)
-    y_res, x_res = float(ds.PixelSpacing)
+    y_res, x_res = ds.PixelSpacing
 
     # compute size of area between rectus left and right
     area = 0
@@ -166,6 +166,7 @@ def annotate_by_label(path_to_tif,path_to_dcm):
     return area, hernia_area
 
 def annotate_by_neural_net(path_to_dcm,path_to_length_dir):
+    sys.path.insert(1,r'C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair')
     import Prediction
     #fill the length directory with images
     fill_length_dir(path_to_dcm,path_to_length_dir)
@@ -191,7 +192,7 @@ def annotate_image(observation,path_to_dcm,path_to_length_dir,path_to_tif,path_t
     draw.text(xy=(to_annotate.width/2,0),
             text= observation + 
             '\nBerechnete Größen:\n' + 'Breite:' + str(round(hernia_width_by_nn,1)) + 'cm Länge:'+ str(round(hernia_height_by_nn,1)) + 'cm Fläche:' + str(round(hernia_area_by_nn,1)) + 'cm²' +
-            '\nGrößen im Bild:\n' + 'Instabile_Fläche:'+ str(round(instabel_area_by_label,1)) + 'cm² Fläche:' + str(round(hernia_area_by_label,1)) + 'cm²',     
+            '\nGrößen im Bild:\n' + 'Instabile_Fläche:'+ str(round(instabel_area_by_label*0.01,1)) + 'cm² Fläche:' + str(round(hernia_area_by_label*0.01,1)) + 'cm²',     
             fill=(0,0,0),
             anchor="ma",
             font=font,
@@ -314,14 +315,14 @@ if __name__ == "__main__":
                     )
                 
         #console Output
-        print('Done\n Creating Images')
+        print('Done\n Creating Images...')
 
 
         #Create image using Paraview
         screen1 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\paraview_screenshot.py",nativ_vtk])
         
         #Create CT crosssection
-        nativ_cross_path = Creat_CT_crosssection(nativ_tif,nativ_dir)
+        nativ_cross_path = Creat_CT_crosssection('Nativ',nativ_tif,nativ_dir)
 
 
     #Create results for valsalva data
@@ -347,25 +348,18 @@ if __name__ == "__main__":
                     )
 
         #console Output
-        print('Done\n Creating Images')
+        print('Done\n Creating Images...')
 
         #Create img using Paraview
         screen2 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\paraview_screenshot.py",valsalva_vtk])
        
         #Create CT crosssection images
-        valsalva_cross_path = Creat_CT_crosssection(valsalva_tif,valsalva_dir)
+        valsalva_cross_path = Creat_CT_crosssection('valsalva',valsalva_tif,valsalva_dir)
 
 
-    #Execute Samuels script automaticaly and combine results
+#Execute Samuels script automaticaly and combine results
     if nat_exists and val_exists: #Check if Data is complete
-        #console Output
-        print('Annotate images')
 
-
-        #annotate bothimages
-        annotate_image('Nativ',nativ_dir,nativ_length_dir,nativ_tif,nativ_png)
-        annotate_image('Valsalva',valsalva_dir,valsalva_length_dir,valsalva_tif,valsalva_png)
-        
         #get time and date
         day = datetime.now()
         #Set Time String for saving the data
@@ -376,10 +370,33 @@ if __name__ == "__main__":
         sam_path = 'Auswertung_' + day_string
         sam_path_two = 'Archiv_zur_Fehlerdiagnose_' + day_string
 
-        #Combine all images
-        #Read all images
+    #Combine all images
+        
+    
+        #console Output
+        print(' Annotate images...')
+        
+    #Preprocess and Annotate the Paraview labeled images
+        #Read both images
         nat_img = plt.imread(nativ_png)
-        val_img = plt.imread(valsalva_png)
+        val_img = plt.imread(valsalva_png)  
+        
+        #Reshape to fit text above
+        nat_img = np.pad(nat_img, ((0,50),(0,1),(0,0)), mode='edge')
+        val_img = np.pad(val_img, ((0,50),(0,0),(0,0)), mode='edge')
+        plt.imsave(nativ_png,nat_img)
+        plt.imsave(valsalva_png,val_img)        
+
+        #Annotate the images
+        annotate_image('Nativ',nativ_dir,nativ_length_dir,nativ_tif,nativ_png)
+        annotate_image('Valsalva',valsalva_dir,valsalva_length_dir,valsalva_tif,valsalva_png)    
+        
+
+        
+        #Load all images
+        nat_img = plt.imread(nativ_png)[:,:,:3]
+        val_img = plt.imread(valsalva_png)[:,:,:3]
+
         try:
             sam_img = plt.imread(sam_path + '\\Verschiebung und Verzerrung.png')
         except:
@@ -388,17 +405,22 @@ if __name__ == "__main__":
 
         nativ_crosssection = plt.imread(nativ_cross_path)[:,:,:3]
         valsalva_crosssection = plt.imread(valsalva_cross_path)[:,:,:3]
+        
         #Resize images to same width for stacking 
-        nat_img = np.pad(nat_img, ((0,0),(0,1),(0,0)), mode='edge')
         nativ_crosssection = np.pad(nativ_crosssection,((0,0),(39,40),(0,0)), mode='edge')
         valsalva_crosssection = np.pad(valsalva_crosssection,((0,0),(39,39),(0,0)), mode='edge')
+        
         #Stack the image pairs
         nat_and_val = np.hstack((nat_img,val_img))
         double_cross = np.hstack((nativ_crosssection,valsalva_crosssection))
         #Stack result, paraview images and crosssections
-        sam_and_para = np.vstack((sam_img,nat_and_val))
-        combined_img = np.vstack((sam_and_para,double_cross))
+        sam_and_labels = np.vstack((sam_img,nat_and_val))
+        combined_img = np.vstack((sam_and_labels,double_cross))
         
+
+        #console Output
+        print('\nDone')
+
 
         #Move everything into one directory
         auswertung = first_level + '\\Auswertung_' + day_string

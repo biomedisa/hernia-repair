@@ -8,5 +8,7 @@ cd hernia-repair
 git checkout main
 git pull git@github.com:biomedisa/hernia-repair.git
 
-call python Einlesungs_script.py
+call python C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\Einlesungs_script.py
+
+
 pause
