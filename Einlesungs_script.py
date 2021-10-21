@@ -279,6 +279,7 @@ if __name__ == "__main__":
                     _, slice_width = ds.PixelSpacing     
                 except:
                     slice_thickness = '1'
+                    slice_width = '1'
                 #Set the final path for the dcm files
                 path_to_dest = observation_path['Nativ']['dcm_dir'] + '\\' + str(ds.InstanceNumber).zfill(6) + '.dcm' 
                 #Link the file if not yet linked
@@ -288,6 +289,13 @@ if __name__ == "__main__":
             #Extracte the horizontal valsalva series
             elif ('m' in series or 'pressen' in series) and (Bvalue in series) and not ('SPO' in series):  
                 observation_exists['Valsalva'] = True
+                #Set slice thickness if given
+                try:
+                    slice_thickness = ds.SliceThickness
+                    _, slice_width = ds.PixelSpacing     
+                except:
+                    slice_thickness = '1'
+                    slice_width = '1' 
                 #Set the final path for the dcm files
                 path_to_dest = observation_path['Valsalva']['dcm_dir'] + '\\' + str(ds.InstanceNumber).zfill(6) + '.dcm'
                 #Link the file if not yet linked
@@ -347,7 +355,7 @@ if __name__ == "__main__":
         #Preprocess and Annotate the Paraview labeled images
         #Read both images
         nat_img = plt.imread(observation_path['Nativ']['png'])
-        val_img = plt.imread(observation_path['Nativ']['png'])  
+        val_img = plt.imread(observation_path['Valsalva']['png'])  
         
         #Reshape to match size of sam_img and to fit annotation
         nat_img = np.pad(nat_img, ((50,0),(0,1),(0,0)), mode='edge')
