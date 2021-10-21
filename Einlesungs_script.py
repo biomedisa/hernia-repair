@@ -201,7 +201,11 @@ def annotate_image(observation,path_to_dcm,path_to_length_dir,path_to_tif,path_t
 
 if __name__ == "__main__":
     #Check for and update the neural nets
-    update_neural_nets()
+    try:
+        update_neural_nets()
+    except:
+        print('Couldn´t update neuralnets start with old ones.')
+    
     #Ask the user for the Path to the Data via Tkinterface
     tk.Tk().withdraw()
     path_to_dir = askdirectory()
@@ -213,15 +217,11 @@ if __name__ == "__main__":
     #Get the raw dcm files
     files = glob.glob(path_to_dir+'/**/*', recursive=True)
     #Set the main save directory
-    main_path = "C:\\Users\\Hernienforschung\\Desktop\\Hernien_Analyse" 
-    nat_exists = False   #Existence booleans
-    val_exists = False
-    
-    #create main directory if not yet existing
+    main_path = "C:\\Users\\Hernienforschung\\Desktop\\Hernien_Analyse"
     if not os.path.exists(main_path):
         os.mkdir(main_path)
 
-    #Loop over all dcm files set directory names and search for Bvalue
+    #Loop over all dcm files set patients directory and search for Bvalue
     for file in files:
         if os.path.isfile(file):
             #read dicom properties        
@@ -233,22 +233,9 @@ if __name__ == "__main__":
             first_level = first_level.replace('ü','ue')
             first_level = first_level.replace('ä','ae')
             first_level = first_level.replace('ö','oe')                        
-            #Set the subdirectories
-            nativ_dir = first_level+'\\nativ'
-            nativ_length_dir = first_level+'\\nativ_length'
-            valsalva_dir = first_level+'\\valsalva'
-            valsalva_length_dir = first_level+'\\valsalva_length'
-            #Create the directorys if not existing            
             if not os.path.exists(first_level):
                 os.mkdir(first_level)
-            if not os.path.exists(nativ_dir):
-                os.mkdir(nativ_dir)
-            if not os.path.exists(nativ_length_dir):
-                os.mkdir(nativ_length_dir)
-            if not os.path.exists(valsalva_dir):					
-                os.mkdir(valsalva_dir)
-            if not os.path.exists(valsalva_length_dir):
-                os.mkdir(valsalva_length_dir)             
+            
             #Store String of the Series Name 
             series = str(ds.SeriesDescription)
             #Check for the Bvalue
@@ -257,8 +244,26 @@ if __name__ == "__main__":
                 break
             elif 'B31s' in series:
                 Bvalue = 'B31s'
+
+    #Set the paths for both observations
+    Observations = ["Nativ","Valsalva"] 
+    observation_exists = {observation:False for observation in Observations}
+    observation_path ={observation:{"tif":"","vtk":"","png":"","crosssection":"","dcm_dir":"","length_dir":""}for observation in Observations}
     
-    #fill the subdirectories         
+    for observation in Observations:            
+        #Create Paths to the mesh and the img
+        observation_path[observation]['tif'] = first_level + '\\final.' + observation + '.tif'
+        observation_path[observation]['vtk'] = first_level + '\\' + observation + '_for_paraview.vtk'
+        observation_path[observation]['png'] = first_level + '\\' + observation + '_front_view.png'
+        observation_path[observation]['dcm_dir'] =  first_level+'\\' + observation
+        observation_path[observation]['length_dir'] =  first_level+'\\' + observation + '_length'
+        
+        for data in ['dcm_dir','length_dir']:
+            #Create the directorys if not existing            
+            if not os.path.exists(observation_path[observation][data]):
+                os.mkdir(observation_path[observation][data])         
+
+    #Fill the subdirectories         
     for file in files:
         if os.path.isfile(file):
             #read dicom properties  
@@ -267,7 +272,7 @@ if __name__ == "__main__":
             series = str(ds.SeriesDescription)
             #Extracte the horizontal nativ series coresponting to detectet Bvalue
             if ('o' in series or 'nativ' in series) and (Bvalue in series) and not ('SPO' in series or 'pressen' in series or 'm' in series):
-                nat_exists = True
+                observation_exists['Nativ'] = True
                 #Set slice thickness if given
                 try:
                     slice_thickness = ds.SliceThickness
@@ -275,136 +280,101 @@ if __name__ == "__main__":
                 except:
                     slice_thickness = '1'
                 #Set the final path for the dcm files
-                path_to_dest = nativ_dir + '\\' + str(ds.InstanceNumber).zfill(6) + '.dcm' 
+                path_to_dest = observation_path['Nativ']['dcm_dir'] + '\\' + str(ds.InstanceNumber).zfill(6) + '.dcm' 
                 #Link the file if not yet linked
                 if not os.path.exists(path_to_dest):			
                     shutil.copy(file, path_to_dest)
             
             #Extracte the horizontal valsalva series
             elif ('m' in series or 'pressen' in series) and (Bvalue in series) and not ('SPO' in series):  
-                val_exists = True
+                observation_exists['Valsalva'] = True
                 #Set the final path for the dcm files
-                path_to_dest = valsalva_dir + '\\' + str(ds.InstanceNumber).zfill(6) + '.dcm'
+                path_to_dest = observation_path['Valsalva']['dcm_dir'] + '\\' + str(ds.InstanceNumber).zfill(6) + '.dcm'
                 #Link the file if not yet linked
                 if not os.path.exists(path_to_dest):
                     shutil.copy(file, path_to_dest)
             else:   
                 continue
+    
+    #Run all subprocesses for both observations
+    for observation in Observations:
+        if observation_exists[observation]:
+            
+            #console output
+            os.system('cls')
+            print('Processing ' + observation + ':\n Computing Labels...')
 
 
-    #Create results for nativ data
-    if nat_exists:
-        #console output
-        os.system('cls')
-        print('Processing Nativ:\n Computing Labels...')
+            #Create the classification proposal in form of a tif
+            net = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py", 
+                        observation_path[observation]['dcm_dir'], r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\img_hernie.h5", "-p","-bs","6"]
+                        )
+
+            #Create nativ mesh in vtk format for Paraview
+            mesh = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\create_mesh.py", 
+                        observation_path[observation]['tif'], observation_path[observation]['vtk'], str(slice_thickness)]
+                        )
 
 
-        #Create the classification proposal in for of a tif
-        net1 = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py", 
-                    nativ_dir, r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\img_hernie.h5", "-p","-bs","6"]
-                    )
-
-        #Create Paths to the mesh and the img
-        nativ_tif = first_level+'\\final.nativ.tif'
-        nativ_vtk = nativ_tif.replace('.tif','.vtk')
-        nativ_png = nativ_tif.replace('.tif','.png')
-
-        #Create nativ mesh in vtk format for Paraview
-        mesh1 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\create_mesh.py", 
-                    nativ_tif, str(slice_thickness)]
-                    )
-                
-        #console Output
-        print('Done\n Creating Images...')
+            #console Output
+            print('Done\n Creating Images...')
 
 
-        #Create image using Paraview
-        screen1 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\paraview_screenshot.py",nativ_vtk])
-        
-        #Create CT crosssection
-        nativ_cross_path = Creat_CT_crosssection('Nativ',nativ_tif,nativ_dir)
+            #Create image using Paraview
+            screenshot = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\paraview_screenshot.py",observation_path[observation]['vtk'],observation_path[observation]['png']])
+            
+            #Create CT crosssection
+            observation_path[observation]['crosssection'] = Creat_CT_crosssection(observation,observation_path[observation]['tif'],observation_path[observation]['dcm_dir'])
 
-
-    #Create results for valsalva data
-    if val_exists:
-        #console output
-        os.system('cls')
-        print('Processing Valsalva:\n Computing Labels...')
-
-
-        #Create the classification proposal in for of a tif
-        net2 = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py",
-                    valsalva_dir, r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\img_hernie.h5", "-p","-bs","6"]
-                    )
-        
-        #Create Paths to the mesh and the img                    
-        valsalva_tif = first_level+'\\final.valsalva.tif'
-        valsalva_vtk = valsalva_tif.replace('.tif','.vtk')
-        valsalva_png = valsalva_tif.replace('.tif','.png')   
-
-        #Create Valsalva mesh in vtk format for Paraview
-        mesh2 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\create_mesh.py", 
-                    valsalva_tif, str(slice_thickness)]
-                    )
-
-        #console Output
-        print('Done\n Creating Images...')
-
-        #Create img using Paraview
-        screen2 = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\paraview_screenshot.py",valsalva_vtk])
-       
-        #Create CT crosssection images
-        valsalva_cross_path = Creat_CT_crosssection('valsalva',valsalva_tif,valsalva_dir)
-
-
-#Execute Samuels script automaticaly and combine results
-    if nat_exists and val_exists: #Check if Data is complete
+    #Execute Samuels script automaticaly and combine results
+    if  all(observation_exists.values()): #Check if Data is complete
 
         #get time and date
         day = datetime.now()
         #Set Time String for saving the data
         day_string = day.strftime("%Y-%m-%d_%H-%M")
         #Execute Samuels Script
-        sam = call([r"C:\Users\Hernienforschung\Documents\Auswertungen\Hernienauswertung_v0_11.exe", nativ_dir, valsalva_dir])
+        sam = call([r"C:\Users\Hernienforschung\Documents\Auswertungen\Hernienauswertung_v0_11.exe", observation_path['Nativ']['dcm_dir'], observation_path['Valsalva']['dcm_dir']])
         #Set the saving paths for the optained data
-        sam_path = 'Auswertung_' + day_string
-        sam_path_two = 'Archiv_zur_Fehlerdiagnose_' + day_string
-
-    #Combine all images
+        temp_path_to_evaluation = 'Auswertung_' + day_string
+        temp_path_to_archiv = 'Archiv_zur_Fehlerdiagnose_' + day_string
         
     
         #console Output
         print(' Annotate images...')
         
-    #Preprocess and Annotate the Paraview labeled images
+
+        #Preprocess and Annotate the Paraview labeled images
         #Read both images
-        nat_img = plt.imread(nativ_png)
-        val_img = plt.imread(valsalva_png)  
+        nat_img = plt.imread(observation_path['Nativ']['png'])
+        val_img = plt.imread(observation_path['Nativ']['png'])  
         
-        #Reshape to fit text above
-        nat_img = np.pad(nat_img, ((0,50),(0,1),(0,0)), mode='edge')
-        val_img = np.pad(val_img, ((0,50),(0,0),(0,0)), mode='edge')
-        plt.imsave(nativ_png,nat_img)
-        plt.imsave(valsalva_png,val_img)        
-
-        #Annotate the images
-        annotate_image('Nativ',nativ_dir,nativ_length_dir,nativ_tif,nativ_png)
-        annotate_image('Valsalva',valsalva_dir,valsalva_length_dir,valsalva_tif,valsalva_png)    
-        
-
+        #Reshape to match size of sam_img and to fit annotation
+        nat_img = np.pad(nat_img, ((50,0),(0,1),(0,0)), mode='edge')
+        val_img = np.pad(val_img, ((50,0),(0,0),(0,0)), mode='edge')
+        plt.imsave(observation_path['Nativ']['png'],nat_img)
+        plt.imsave(observation_path['Valsalva']['png'],val_img)        
+    
+        for observation in Observations:
+            #Annotate the images
+            annotate_image(observation,observation_path[observation]['dcm_dir'],
+                            observation_path[observation]['length_dir'],
+                            observation_path[observation]['tif'],
+                            observation_path[observation]['png'])
         
         #Load all images
-        nat_img = plt.imread(nativ_png)[:,:,:3]
-        val_img = plt.imread(valsalva_png)[:,:,:3]
-
+        nat_img = plt.imread(observation_path['Nativ']['png'])[:,:,:3]
+        val_img = plt.imread(observation_path['Valsalva']['png'])[:,:,:3]
+        
+        #Check if directory was created a minute later and rename if neccesary
         try:
-            sam_img = plt.imread(sam_path + '\\Verschiebung und Verzerrung.png')
+            sam_img = plt.imread(temp_path_to_evaluation + '\\Verschiebung und Verzerrung.png')
         except:
-            sam_path = sam_path.replace(day.strftime('-%M'),str(int(day.strftime('-%M'))+1))
-            sam_img = plt.imread(sam_path + '\\Verschiebung und Verzerrung.png')
+            temp_path_to_evaluation = temp_path_to_evaluation.replace(day.strftime('-%M'),str(int(day.strftime('-%M'))+1))
+            sam_img = plt.imread(temp_path_to_evaluation + '\\Verschiebung und Verzerrung.png')
 
-        nativ_crosssection = plt.imread(nativ_cross_path)[:,:,:3]
-        valsalva_crosssection = plt.imread(valsalva_cross_path)[:,:,:3]
+        nativ_crosssection = plt.imread(observation_path['Nativ']['crosssection'])[:,:,:3]
+        valsalva_crosssection = plt.imread(observation_path['Valsalva']['crosssection'])[:,:,:3]
         
         #Resize images to same width for stacking 
         nativ_crosssection = np.pad(nativ_crosssection,((0,0),(39,40),(0,0)), mode='edge')
@@ -423,15 +393,18 @@ if __name__ == "__main__":
 
 
         #Move everything into one directory
-        auswertung = first_level + '\\Auswertung_' + day_string
-        shutil.move(sam_path, auswertung)
-        plt.imsave(auswertung + '\\Finale_Auswertung.png',combined_img)
+        path_to_evaluation = first_level + '\\Auswertung_' + day_string
+        shutil.move(temp_path_to_evaluation, path_to_evaluation)
+        plt.imsave(path_to_evaluation + '\\Finale_Auswertung.png',combined_img)
         #Move used Data into the archiv folder
         archiv = first_level + '\\Archiv_zur_Fehlerdiagnose_' + day_string
-        for file in (sam_path_two,nativ_png,valsalva_png,nativ_cross_path,valsalva_cross_path,nativ_tif,valsalva_tif,nativ_vtk,valsalva_vtk):
+        for file in (temp_path_to_archiv,observation_path['Nativ']['png'],observation_path['Valsalva']['png'],
+                    observation_path['Nativ']['crosssection'],observation_path['Valsalva']['crosssection'],
+                    observation_path['Nativ']['tif'],observation_path['Valsalva']['tif'],
+                    observation_path['Nativ']['vtk'],observation_path['Valsalva']['vtk']):
             shutil.move(file, archiv)
         #show final result
-        os.system('start ' + auswertung + '\\Finale_Auswertung.png')
+        os.system('start ' + path_to_evaluation + '\\Finale_Auswertung.png')
 
     #if either scan is missing do nothing
     else:

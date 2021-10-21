@@ -2,6 +2,7 @@ import sys
 from paraview.simple import *
 
 mesh = sys.argv[1]
+path_to_save = sys.argv[2]
 
 Connect()
 #### disable automatic camera reset on 'Show'
@@ -65,7 +66,7 @@ renderView1.CameraViewUp = [0.0, 0.0, 1.0]
 renderView1.CameraParallelScale = 310.70784564812436
 
 # save screenshot
-SaveScreenshot(mesh.replace('.vtk','.png'), renderView1, ImageResolution=[590, 590],
+SaveScreenshot(path_to_save, renderView1, ImageResolution=[590, 590],
     OverrideColorPalette='WhiteBackground')
 #Reset the session
 Disconnect()

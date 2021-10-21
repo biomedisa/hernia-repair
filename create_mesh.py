@@ -70,12 +70,12 @@ if __name__ == "__main__":
 
     # path to data
     path_to_data = sys.argv[1]
-    slice_thickness = int(sys.argv[2])
+    path_to_save = sys.argv[2]
+    slice_thickness = int(sys.argv[3])
 
     # load data
     data = imread(path_to_data)
-    path_to_save = path_to_data.replace('.tif','.vtk')
 
     # create vtk file
-    CreateVTK(data, path_to_save,slice_thickness)
+    CreateVTK(data, path_to_save, slice_thickness)
 
