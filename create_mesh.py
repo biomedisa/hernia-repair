@@ -44,7 +44,7 @@ def MarchingCubes(image,labels):
 def CreateVTK(image,path_to_save,slice_thickness):
     
     #flip image
-    image = np.flip(image, axis=(0,2))
+    image = np.flip(image, axis=(0))
 
     # get labels
     zsh,ysh,xsh=image.shape

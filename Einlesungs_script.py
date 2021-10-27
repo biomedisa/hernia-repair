@@ -191,8 +191,8 @@ def annotate_image(observation,path_to_dcm,path_to_length_dir,path_to_tif,path_t
     font = ImageFont.truetype("arial.ttf",size=20)
     draw.text(xy=(to_annotate.width/2,0),
             text= observation + 
-            '\nBerechnete Größen:\n' + 'Breite:' + str(round(hernia_width_by_nn,1)) + 'cm Länge:'+ str(round(hernia_height_by_nn,1)) + 'cm Fläche:' + str(round(hernia_area_by_nn,1)) + 'cm²' +
-            '\nGrößen im Bild:\n' + 'Instabile_Fläche:'+ str(round(instabel_area_by_label*0.01,1)) + 'cm² Fläche:' + str(round(hernia_area_by_label*0.01,1)) + 'cm²',     
+            '\nBerechnete Größen:\n' + 'Breite:' + str(round(hernia_width_by_nn,1)) + 'cm     Länge:'+ str(round(hernia_height_by_nn,1)) + 'cm     Fläche:' + str(round(hernia_area_by_nn,1)) + 'cm²' +
+            '\nGrößen im Bild:\n' + 'Instabile_Fläche:'+ str(round(instabel_area_by_label*0.01,1)) + 'cm²     Fläche:' + str(round(hernia_area_by_label*0.01,1)) + 'cm²',     
             fill=(0,0,0),
             anchor="ma",
             font=font,
@@ -409,7 +409,8 @@ if __name__ == "__main__":
         for file in (temp_path_to_archiv,observation_path['Nativ']['png'],observation_path['Valsalva']['png'],
                     observation_path['Nativ']['crosssection'],observation_path['Valsalva']['crosssection'],
                     observation_path['Nativ']['tif'],observation_path['Valsalva']['tif'],
-                    observation_path['Nativ']['vtk'],observation_path['Valsalva']['vtk']):
+                    observation_path['Nativ']['vtk'],observation_path['Valsalva']['vtk'],
+                    ):
             shutil.move(file, archiv)
         #show final result
         os.system('start ' + path_to_evaluation + '\\Finale_Auswertung.png')
