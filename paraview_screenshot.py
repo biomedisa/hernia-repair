@@ -22,6 +22,7 @@ ParaviewDisplay = Show(Paraview, renderView1, 'GeometryRepresentation')
 
 # get color transfer function/color map for 'scalars'
 scalarsLUT = GetColorTransferFunction('scalars')
+scalarsLUT.RescaleTransferFunction(1.0, 7.0)
 
 # trace defaults for the display properties.
 ParaviewDisplay.Representation = 'Surface'

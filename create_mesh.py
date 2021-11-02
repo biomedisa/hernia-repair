@@ -12,7 +12,7 @@ def MarchingCubes(image,labels):
     mc.SetInputData(image)
     mc.ComputeNormalsOn()
     mc.ComputeGradientsOn()
-    mc.GenerateValues(labels.size,labels[1],labels[-1])
+    mc.GenerateValues(7,1,7)
     mc.Update()
 
     # To remain largest region
