@@ -255,7 +255,6 @@ if __name__ == "__main__":
     main_path = "C:\\Users\\Hernienforschung\\Desktop\\Hernien_Analyse"
     if not os.path.exists(main_path):
         os.mkdir(main_path)
-    first_level = ""
     series_descriptions = {}
     #initalize slice thickness and width
     slice_thickness = '1'
@@ -266,16 +265,18 @@ if __name__ == "__main__":
         if os.path.isfile(file):
             #read dicom properties        
             ds = pydicom.filereader.dcmread(file)
-            if not os.path.exists(first_level):
+            if not 'first_level' in globals():
                 #name the directory containing all results after patient name + Birthdate     	      
                 first_level = main_path +'\\'+str(ds.PatientName)+'_'+str(ds.PatientBirthDate)
                 first_level = first_level.replace('^','_')  
                 first_level = first_level.replace(' ','_') 
                 first_level = first_level.replace('ü','ue')
                 first_level = first_level.replace('ä','ae')
-                first_level = first_level.replace('ö','oe')                        
-                os.mkdir(first_level)
+                first_level = first_level.replace('ö','oe') 
+                if not os.path.exists(first_level):                       
+                    os.mkdir(first_level)
             series_descriptions[str(ds.SeriesNumber)] = str(ds.SeriesDescription)
+    
     #Choose series to use 
     for key in series_descriptions.keys():
         series = series_descriptions[key]
@@ -283,7 +284,7 @@ if __name__ == "__main__":
             nativ_seriesnumber = key
         elif ('m' in series or 'pressen' in series) and ('B20s' in series) and not ('SPO' in series):
             valsalva_seriesnumber = key
-    if not ('nativ_seriesnumber' and 'valsalva_seriesnumber' in globals()):
+    if not ('nativ_seriesnumber' in globals() and 'valsalva_seriesnumber' in globals()):
         for key in series_descriptions.keys():
             series = series_descriptions[key]
             if ('o' in series or 'nativ' in series) and ('B31s' in series) and not ('SPO' in series or 'pressen' in series or 'm' in series):
