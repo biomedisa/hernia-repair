@@ -52,6 +52,38 @@ def update_neural_nets():
             with urllib.request.urlopen(src,context=ssl._create_unverified_context()) as response,open(dst,'wb') as out_file: 
                 shutil.copyfileobj(response,out_file)
 
+def fill_nativ_dir():
+    observation_exists['Nativ'] = True
+    #Set slice thickness if given
+    try:
+        global slice_thickness, slice_width
+        slice_thickness = ds.SliceThickness
+        _, slice_width = ds.PixelSpacing     
+    except:
+        slice_thickness = '1'
+        slice_width = '1'
+    #Set the final path for the dcm files
+    path_to_dest = observation_path['Nativ']['dcm_dir'] + '\\' + str(ds.InstanceNumber).zfill(6) + '.dcm' 
+    #Link the file if not yet linked
+    if not os.path.exists(path_to_dest):			
+        shutil.copy(file, path_to_dest)
+
+def fill_valsalva_dir():
+    observation_exists['Valsalva'] = True
+    #Set slice thickness if given
+    try:
+        global slice_thickness, slice_width
+        slice_thickness = ds.SliceThickness
+        _, slice_width = ds.PixelSpacing     
+    except:
+        slice_thickness = '1'
+        slice_width = '1'
+    #Set the final path for the dcm files
+    path_to_dest = observation_path['Valsalva']['dcm_dir'] + '\\' + str(ds.InstanceNumber).zfill(6) + '.dcm'
+    #Link the file if not yet linked
+    if not os.path.exists(path_to_dest):
+        shutil.copy(file, path_to_dest)
+
 def Creat_CT_crosssection(observation,path_to_tif,path_to_dcm):
     #get tif with labels
     label = imread(path_to_tif)
@@ -223,22 +255,42 @@ if __name__ == "__main__":
     main_path = "C:\\Users\\Hernienforschung\\Desktop\\Hernien_Analyse"
     if not os.path.exists(main_path):
         os.mkdir(main_path)
+    first_level = ""
+    series_descriptions = {}
+    #initalize slice thickness and width
+    slice_thickness = '1'
+    slice_width = '1' 
 
     #Loop over all dcm files set patients directory and search for Bvalue
     for file in files:
         if os.path.isfile(file):
             #read dicom properties        
             ds = pydicom.filereader.dcmread(file)
-            #name the directory containing all results after patient name + Birthdate     	      
-            first_level = main_path +'\\'+str(ds.PatientName)+'_'+str(ds.PatientBirthDate)
-            first_level = first_level.replace('^','_')  
-            first_level = first_level.replace(' ','_') 
-            first_level = first_level.replace('ü','ue')
-            first_level = first_level.replace('ä','ae')
-            first_level = first_level.replace('ö','oe')                        
             if not os.path.exists(first_level):
+                #name the directory containing all results after patient name + Birthdate     	      
+                first_level = main_path +'\\'+str(ds.PatientName)+'_'+str(ds.PatientBirthDate)
+                first_level = first_level.replace('^','_')  
+                first_level = first_level.replace(' ','_') 
+                first_level = first_level.replace('ü','ue')
+                first_level = first_level.replace('ä','ae')
+                first_level = first_level.replace('ö','oe')                        
                 os.mkdir(first_level)
-            break
+            series_descriptions[str(ds.SeriesNumber)] = str(ds.SeriesDescription)
+    #Choose series to use 
+    for key in series_descriptions.keys():
+        series = series_descriptions[key]
+        if ('o' in series or 'nativ' in series) and ('B20s' in series) and not ('SPO' in series or 'pressen' in series or 'm' in series):
+            nativ_seriesnumber = key
+        elif ('m' in series or 'pressen' in series) and ('B20s' in series) and not ('SPO' in series):
+            valsalva_seriesnumber = key
+    if not ('nativ_seriesnumber' and 'valsalva_seriesnumber' in globals()):
+        for key in series_descriptions.keys():
+            series = series_descriptions[key]
+            if ('o' in series or 'nativ' in series) and ('B31s' in series) and not ('SPO' in series or 'pressen' in series or 'm' in series):
+                nativ_seriesnumber = key
+            elif ('m' in series or 'pressen' in series) and ('B31s' in series) and not ('SPO' in series):
+                valsalva_seriesnumber = key
+
 
     #Set the paths for both observations
     Observations = ["Nativ","Valsalva"] 
@@ -256,49 +308,23 @@ if __name__ == "__main__":
         for data in ['dcm_dir','length_dir']:
             #Create the directorys if not existing            
             if not os.path.exists(observation_path[observation][data]):
-                os.mkdir(observation_path[observation][data])         
-    for Bvalue in ['B20s','B31s']:
-        #Fill the subdirectories         
-        for file in files:
-            if os.path.isfile(file):
-                #read dicom properties  
-                ds = pydicom.filereader.dcmread(file)
-                #Store String of the Series Name 
-                series = str(ds.SeriesDescription)
-                #Extracte the horizontal nativ series coresponting to detectet Bvalue
-                if ('o' in series or 'nativ' in series) and (Bvalue in series) and not ('SPO' in series or 'pressen' in series or 'm' in series):
-                    observation_exists['Nativ'] = True
-                    #Set slice thickness if given
-                    try:
-                        slice_thickness = ds.SliceThickness
-                        _, slice_width = ds.PixelSpacing     
-                    except:
-                        slice_thickness = '1'
-                        slice_width = '1'
-                    #Set the final path for the dcm files
-                    path_to_dest = observation_path['Nativ']['dcm_dir'] + '\\' + str(ds.InstanceNumber).zfill(6) + '.dcm' 
-                    #Link the file if not yet linked
-                    if not os.path.exists(path_to_dest):			
-                        shutil.copy(file, path_to_dest)
-                
-                #Extracte the horizontal valsalva series
-                elif ('m' in series or 'pressen' in series) and (Bvalue in series) and not ('SPO' in series):  
-                    observation_exists['Valsalva'] = True
-                    #Set slice thickness if given
-                    try:
-                        slice_thickness = ds.SliceThickness
-                        _, slice_width = ds.PixelSpacing     
-                    except:
-                        slice_thickness = '1'
-                        slice_width = '1' 
-                    #Set the final path for the dcm files
-                    path_to_dest = observation_path['Valsalva']['dcm_dir'] + '\\' + str(ds.InstanceNumber).zfill(6) + '.dcm'
-                    #Link the file if not yet linked
-                    if not os.path.exists(path_to_dest):
-                        shutil.copy(file, path_to_dest)
-                else:   
-                    continue
-        if all(observation_exists.values()): break
+                os.mkdir(observation_path[observation][data])   
+          
+    #Fill the subdirectories         
+    for file in files:
+        if os.path.isfile(file):
+            #read dicom properties  
+            ds = pydicom.filereader.dcmread(file)
+            #Store String of the Series Name 
+            series_number = str(ds.SeriesNumber)
+            #Extracte the horizontal nativ series 
+            if series_number == nativ_seriesnumber:
+                fill_nativ_dir()
+            #Extracte the horizontal valsalva series
+            elif series_number == valsalva_seriesnumber:
+                fill_valsalva_dir()
+            else:   
+                continue
 
     #Run all subprocesses for both observations
     for observation in Observations:
