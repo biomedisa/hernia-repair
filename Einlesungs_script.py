@@ -205,7 +205,10 @@ if __name__ == "__main__":
         update_neural_nets()
     except:
         print('Couldn´t update neuralnets start with old ones.')
-    
+    #Get time to measure execution time
+    start_time = datetime.now()
+
+
     #Ask the user for the Path to the Data via Tkinterface
     tk.Tk().withdraw()
     path_to_dir = askdirectory()
@@ -419,3 +422,6 @@ if __name__ == "__main__":
     #if either scan is missing do nothing
     else:
         print('Error: Nativ or Valsalva Data missing')
+
+    end_time = datetime.now()
+    print('Execution time: {}'.format(end_time - start_time))
