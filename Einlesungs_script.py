@@ -367,8 +367,10 @@ if __name__ == "__main__":
         #Execute Samuels Script
         sam = call([r"C:\Users\Hernienforschung\Documents\Auswertungen\Hernienauswertung_v0_11.exe", observation_path['Nativ']['dcm_dir'], observation_path['Valsalva']['dcm_dir']])
         #Set the saving paths for the optained data
-        temp_path_to_evaluation = 'Auswertung_' + day_string
-        temp_path_to_archiv = 'Archiv_zur_Fehlerdiagnose_' + day_string
+        temp_paths = sorted(os.listdir('C:\\Users\\Hernienforschung\\Documents\\Python_Scripts\\Temp')) 
+        temp_path_to_archiv = temp_paths[0]
+        temp_path_to_evaluation = temp_paths[1]
+
         
     
         #console Output
@@ -399,11 +401,7 @@ if __name__ == "__main__":
         val_img = plt.imread(observation_path['Valsalva']['png'])[:,:,:3]
         
         #Check if directory was created a minute later and rename if neccesary
-        try:
-            sam_img = plt.imread(temp_path_to_evaluation + '\\Verschiebung und Verzerrung.png')
-        except:
-            temp_path_to_evaluation = temp_path_to_evaluation.replace(day.strftime('-%M'),str(int(day.strftime('-%M'))+1))
-            sam_img = plt.imread(temp_path_to_evaluation + '\\Verschiebung und Verzerrung.png')
+        sam_img = plt.imread(temp_path_to_evaluation + '\\Verschiebung und Verzerrung.png')
 
         nativ_crosssection = plt.imread(observation_path['Nativ']['crosssection'])[:,:,:3]
         valsalva_crosssection = plt.imread(observation_path['Valsalva']['crosssection'])[:,:,:3]

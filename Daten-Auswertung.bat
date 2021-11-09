@@ -9,10 +9,10 @@ git checkout main
 git pull git@github.com:biomedisa/hernia-repair.git
 
 cd..
+rm -r Temp 
+mkdir Temp
 cd Temp
 
 call python C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\Einlesungs_script.py
-
-Del "A*"
 
 pause
