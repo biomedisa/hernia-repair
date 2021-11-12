@@ -52,37 +52,56 @@ def update_neural_nets():
             with urllib.request.urlopen(src,context=ssl._create_unverified_context()) as response,open(dst,'wb') as out_file: 
                 shutil.copyfileobj(response,out_file)
 
-def fill_nativ_dir():
-    observation_exists['Nativ'] = True
-    #Set slice thickness if given
-    try:
-        global slice_thickness, slice_width
-        slice_thickness = ds.SliceThickness
-        _, slice_width = ds.PixelSpacing     
-    except:
-        slice_thickness = '1'
-        slice_width = '1'
-    #Set the final path for the dcm files
-    path_to_dest = observation_path['Nativ']['dcm_dir'] + '\\' + str(ds.InstanceNumber).zfill(6) + '.dcm' 
-    #Link the file if not yet linked
-    if not os.path.exists(path_to_dest):			
-        shutil.copy(file, path_to_dest)
+def load_directorys():
+    #Ask the user for the Path to the Data via Tkinterface
+    tk.Tk().withdraw()
+    path_to_dir = askdirectory()
 
-def fill_valsalva_dir():
-    observation_exists['Valsalva'] = True
-    #Set slice thickness if given
-    try:
-        global slice_thickness, slice_width
-        slice_thickness = ds.SliceThickness
-        _, slice_width = ds.PixelSpacing     
-    except:
-        slice_thickness = '1'
-        slice_width = '1'
-    #Set the final path for the dcm files
-    path_to_dest = observation_path['Valsalva']['dcm_dir'] + '\\' + str(ds.InstanceNumber).zfill(6) + '.dcm'
-    #Link the file if not yet linked
-    if not os.path.exists(path_to_dest):
-        shutil.copy(file, path_to_dest)
+    #Console output
+    print('Loading Data...')
+
+     #Get the raw dcm files
+    files = glob.glob(path_to_dir+'/**/*', recursive=True)
+    
+    #Set patients directory 
+    for file in files:
+        if os.path.isfile(file):
+            ds = pydicom.filereader.dcmread(file)
+            if not 'first_level' in locals():
+                #name the directory containing all results after patient name + Birthdate     	      
+                first_level = main_path +'\\'+str(ds.PatientName)+'_'+str(ds.PatientBirthDate)
+                first_level = first_level.replace('^','_')  
+                first_level = first_level.replace(' ','_') 
+                first_level = first_level.replace('ü','ue')
+                first_level = first_level.replace('ä','ae')
+                first_level = first_level.replace('ö','oe') 
+            second_level = first_level +'\\' +str(ds.StudyDate)+'_'+str(ds.StudyDescription)
+            third_level = second_level + '\\' + str(ds.SeriesNumber) + '_' + str(ds.SeriesDescription)
+
+            if not os.path.exists(first_level):                       
+                os.mkdir(first_level)
+            if not os.path.exists(second_level):                       
+                os.mkdir(second_level)
+            if not os.path.exists(third_level):
+                os.mkdir(third_level)
+            
+            path_to_dest = third_level + '\\' + str(ds.InstanceNumber).zfill(6) + '.dcm'
+            if not os.path.exists(path_to_dest):			
+                shutil.copy(file, path_to_dest)
+    return first_level
+
+def get_slice_thickness():
+    nativ_slice_thickness = pydicom.filereader.dcmread(
+                                    observation_path['Nativ']['dcm_dir'] + '\\000001.dcm'
+                                    ).SliceThickness
+    valsalva_slice_thickness = pydicom.filereader.dcmread(
+                                    observation_path['Valsalva']['dcm_dir'] + '\\000001.dcm'
+                                    ).SliceThickness
+    if nativ_slice_thickness == valsalva_slice_thickness: 
+        return nativ_slice_thickness
+
+    else: print('Nativ and Valsalva slice thickness do not match! \n',
+                'Please load Data with matching thickness.')
 
 def Creat_CT_crosssection(observation,path_to_tif,path_to_dcm):
     #get tif with labels
@@ -96,7 +115,7 @@ def Creat_CT_crosssection(observation,path_to_tif,path_to_dcm):
     #get the dcm file containg that layer
     layer_path = path_to_dcm + '\\' + str(layer).zfill(6) + '.dcm'
     #convert the dcm file into an PIL image
-    path_to_png = path_to_dcm + '_crosssection.png'
+    path_to_png = path_to_tif.replace(os.path.basename(path_to_tif), observation + '_crosssection.png')
     ds = pydicom.filereader.dcmread(layer_path)
     img = ds.pixel_array
     plt.imsave(path_to_png,img,cmap='gray')
@@ -164,7 +183,7 @@ def get_hernia_area(height,width):
 def annotate_by_label(path_to_tif,path_to_dcm):
     # load segmentation
     a = imread(path_to_tif)
-    zsh, ysh, xsh = a.shape
+    zsh, _, _ = a.shape
 
     # load tomographic data & get pixel spacing
     file = path_to_dcm + '\\' + str(1).zfill(6) + '.dcm'
@@ -205,6 +224,10 @@ def annotate_by_neural_net(path_to_dcm,path_to_length_dir):
     #Create Paths to both subdirectories
     height_dir = path_to_length_dir + '\\Länge'
     width_dir  = path_to_length_dir + '\\Breite'
+    #Get slice width 
+    file = path_to_dcm + '\\' + str(1).zfill(6) + '.dcm'
+    ds = pydicom.filereader.dcmread(file)
+    _ , slice_width = ds.PixelSpacing
     #Get Height,width and area of the hernia
     hernia_width = Prediction.get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\Hernien_detector_x.h5",width_dir)
     hernia_width *= slice_width*0.1
@@ -223,8 +246,8 @@ def annotate_image(observation,path_to_dcm,path_to_length_dir,path_to_tif,path_t
     font = ImageFont.truetype("arial.ttf",size=20)
     draw.text(xy=(to_annotate.width/2,0),
             text= observation + 
-            '\nBerechnete Größen:\n' + 'Breite:' + str(round(hernia_width_by_nn,1)) + 'cm     Länge:'+ str(round(hernia_height_by_nn,1)) + 'cm     Fläche:' + str(round(hernia_area_by_nn,1)) + 'cm²' +
-            '\nGrößen im Bild:\n' + 'Instabile_Fläche:'+ str(round(instabel_area_by_label*0.01,1)) + 'cm²     Fläche:' + str(round(hernia_area_by_label*0.01,1)) + 'cm²',     
+            '\nBerechnete Größen:\n' + 'Breite:' + str(round(hernia_width_by_nn,1)) + 'cm     Länge:'+ str(round(hernia_height_by_nn,1)) + 'cm    Bruchpforten Fläche:' + str(round(hernia_area_by_nn,1)) + 'cm²' +
+            '\nGrößen im Bild:\n' + 'Instabile_Fläche:'+ str(round(instabel_area_by_label*0.01,1)) + 'cm²    Projezierte Fläche:' + str(round(hernia_area_by_label*0.01,1)) + 'cm²',     
             fill=(0,0,0),
             anchor="ma",
             font=font,
@@ -232,101 +255,38 @@ def annotate_image(observation,path_to_dcm,path_to_length_dir,path_to_tif,path_t
     to_annotate.save(path_to_png,format='png')
 
 if __name__ == "__main__":
-    #Check for and update the neural nets
+    #Check for updates and update the neural nets
     try:
         update_neural_nets()
     except:
         print('Couldn´t update neuralnets! Check your internet connection.\n','Start with old ones.')
     #Get time to measure execution time
     start_time = datetime.now()
-
-
-    #Ask the user for the Path to the Data via Tkinterface
-    tk.Tk().withdraw()
-    path_to_dir = askdirectory()
-
-    #Console output
-    print('Loading Data...')
-
-
-    #Get the raw dcm files
-    files = glob.glob(path_to_dir+'/**/*', recursive=True)
-    #Set the main save directory
-    main_path = "C:\\Users\\Hernienforschung\\Desktop\\Hernien_Analyse"
+    #Set the main save directory    
+    main_path = "D:\\Hernien_Analyse"
     if not os.path.exists(main_path):
         os.mkdir(main_path)
-    series_descriptions = {}
-    #initalize slice thickness and width
-    slice_thickness = '1'
-    slice_width = '1' 
-
-    #Loop over all dcm files set patients directory and search for Bvalue
-    for file in files:
-        if os.path.isfile(file):
-            #read dicom properties        
-            ds = pydicom.filereader.dcmread(file)
-            if not 'first_level' in globals():
-                #name the directory containing all results after patient name + Birthdate     	      
-                first_level = main_path +'\\'+str(ds.PatientName)+'_'+str(ds.PatientBirthDate)
-                first_level = first_level.replace('^','_')  
-                first_level = first_level.replace(' ','_') 
-                first_level = first_level.replace('ü','ue')
-                first_level = first_level.replace('ä','ae')
-                first_level = first_level.replace('ö','oe') 
-                if not os.path.exists(first_level):                       
-                    os.mkdir(first_level)
-            series_descriptions[str(ds.SeriesNumber)] = str(ds.SeriesDescription)
-    
-    #Choose series to use 
-    for key in series_descriptions.keys():
-        series = series_descriptions[key]
-        if ('o' in series or 'nativ' in series) and ('B20s' in series) and not ('SPO' in series or 'pressen' in series or 'm' in series):
-            nativ_seriesnumber = key
-        elif ('m' in series or 'pressen' in series) and ('B20s' in series) and not ('SPO' in series):
-            valsalva_seriesnumber = key
-    if not ('nativ_seriesnumber' in globals() and 'valsalva_seriesnumber' in globals()):
-        for key in series_descriptions.keys():
-            series = series_descriptions[key]
-            if ('o' in series or 'nativ' in series) and ('B31s' in series) and not ('SPO' in series or 'pressen' in series or 'm' in series):
-                nativ_seriesnumber = key
-            elif ('m' in series or 'pressen' in series) and ('B31s' in series) and not ('SPO' in series):
-                valsalva_seriesnumber = key
-
+    #Set the patients directorys and fill with data
+    first_level = load_directorys()
 
     #Set the paths for both observations
     Observations = ["Nativ","Valsalva"] 
     observation_exists = {observation:False for observation in Observations}
-    observation_path ={observation:{"tif":"","vtk":"","png":"","crosssection":"","dcm_dir":"","length_dir":""}for observation in Observations}
+    observation_path = {observation:{"tif":"","vtk":"","png":"","crosssection":"","dcm_dir":"","length_dir":""}for observation in Observations}
     
-    for observation in Observations:            
+    for observation in sorted(Observations):            
         #Create Paths to the mesh and the img
         observation_path[observation]['tif'] = first_level + '\\final.' + observation + '.tif'
         observation_path[observation]['vtk'] = first_level + '\\' + observation + '_for_paraview.vtk'
         observation_path[observation]['png'] = first_level + '\\' + observation + '_front_view.png'
-        observation_path[observation]['dcm_dir'] =  first_level+'\\' + observation
-        observation_path[observation]['length_dir'] =  first_level+'\\' + observation + '_length'
-        
-        for data in ['dcm_dir','length_dir']:
-            #Create the directorys if not existing            
-            if not os.path.exists(observation_path[observation][data]):
-                os.mkdir(observation_path[observation][data])   
-          
-    #Fill the subdirectories         
-    for file in files:
-        if os.path.isfile(file):
-            #read dicom properties  
-            ds = pydicom.filereader.dcmread(file)
-            #Store String of the Series Name 
-            series_number = str(ds.SeriesNumber)
-            #Extracte the horizontal nativ series 
-            if series_number == nativ_seriesnumber:
-                fill_nativ_dir()
-            #Extracte the horizontal valsalva series
-            elif series_number == valsalva_seriesnumber:
-                fill_valsalva_dir()
-            else:   
-                continue
+        observation_path[observation]['dcm_dir'] = askdirectory(initialdir = first_level)
+        observation_exists[observation] = True
+        observation_path[observation]['length_dir'] = first_level+'\\' + observation + '_length'          
+        if not os.path.exists(observation_path[observation]['length_dir']):
+            os.mkdir(observation_path[observation]['length_dir']) 
 
+    slice_thickness = get_slice_thickness()
+    
     #Run all subprocesses for both observations
     for observation in Observations:
         if observation_exists[observation]:
@@ -340,7 +300,11 @@ if __name__ == "__main__":
             net = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py", 
                         observation_path[observation]['dcm_dir'], r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\img_hernie.h5", "-p","-bs","6"]
                         )
-
+            shutil.move(observation_path[observation]['dcm_dir'].replace(
+                            os.path.basename(observation_path[observation]['dcm_dir']),
+                            'final.' + '.tif'),
+                            observation_path[observation]['tif'])
+ 
             #Create nativ mesh in vtk format for Paraview
             mesh = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\create_mesh.py", 
                         observation_path[observation]['tif'], observation_path[observation]['vtk'], str(slice_thickness)]
@@ -372,7 +336,6 @@ if __name__ == "__main__":
         temp_path_to_evaluation = temp_paths[1]
 
         
-    
         #console Output
         os.system('cls')
         print(' Annotate images...')

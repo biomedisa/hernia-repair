@@ -9,7 +9,7 @@ git checkout main
 git pull git@github.com:biomedisa/hernia-repair.git
 
 cd..
-rm -r Temp 
+rmdir /s /Q Temp
 mkdir Temp
 cd Temp
 
