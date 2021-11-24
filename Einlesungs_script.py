@@ -270,8 +270,7 @@ if __name__ == "__main__":
     first_level = load_directorys()
 
     #Set the paths for both observations
-    Observations = ["Nativ","Valsalva"] 
-    observation_exists = {observation:False for observation in Observations}
+    Observations = ["Nativ","Valsalva"]
     observation_path = {observation:{"tif":"","vtk":"","png":"","crosssection":"","dcm_dir":"","length_dir":""}for observation in Observations}
     
     for observation in sorted(Observations):            
@@ -280,7 +279,6 @@ if __name__ == "__main__":
         observation_path[observation]['vtk'] = first_level + '\\' + observation + '_for_paraview.vtk'
         observation_path[observation]['png'] = first_level + '\\' + observation + '_front_view.png'
         observation_path[observation]['dcm_dir'] = askdirectory(initialdir = first_level)
-        observation_exists[observation] = True
         observation_path[observation]['length_dir'] = first_level+'\\' + observation + '_length'          
         if not os.path.exists(observation_path[observation]['length_dir']):
             os.mkdir(observation_path[observation]['length_dir']) 
@@ -289,47 +287,46 @@ if __name__ == "__main__":
     
     #Run all subprocesses for both observations
     for observation in Observations:
-        if observation_exists[observation]:
-            
-            #console output
-            os.system('cls')
-            print('Processing ' + observation + ':\n Computing Labels...')
+
+        #console output
+        os.system('cls')
+        print('Processing ' + observation + ':\n Computing Labels...')
 
 
-            #Create the classification proposal in form of a tif
-            net = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py", 
-                        observation_path[observation]['dcm_dir'], r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\img_hernie.h5", "-p","-bs","6"]
-                        )
-            shutil.move(observation_path[observation]['dcm_dir'].replace(
-                            os.path.basename(observation_path[observation]['dcm_dir']),
-                            'final.' + '.tif'),
-                            observation_path[observation]['tif'])
- 
-            #Create nativ mesh in vtk format for Paraview
-            mesh = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\create_mesh.py", 
-                        observation_path[observation]['tif'], observation_path[observation]['vtk'], str(slice_thickness)]
-                        )
+        #Create the classification proposal in form of a tif
+        net = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py", 
+                    observation_path[observation]['dcm_dir'], r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\img_hernie.h5", "-p","-bs","6"]
+                    )
+        shutil.move(observation_path[observation]['dcm_dir'].replace(
+                        os.path.basename(observation_path[observation]['dcm_dir']),
+                        'final.' + '.tif'),
+                        observation_path[observation]['tif'])
+
+        #Create nativ mesh in vtk format for Paraview
+        mesh = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\create_mesh.py", 
+                    observation_path[observation]['tif'], observation_path[observation]['vtk'], str(slice_thickness)]
+                    )
 
 
-            #console Output
-            print('Done\n Creating Images...')
+        #console Output
+        print('Done\n Creating Images...')
 
 
-            #Create image using Paraview
-            screenshot = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\paraview_screenshot.py",observation_path[observation]['vtk'],observation_path[observation]['png']])
-            
-            #Create CT crosssection
-            observation_path[observation]['crosssection'] = Creat_CT_crosssection(observation,observation_path[observation]['tif'],observation_path[observation]['dcm_dir'])
+        #Create image using Paraview
+        screenshot = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\paraview_screenshot.py",observation_path[observation]['vtk'],observation_path[observation]['png']])
+        
+        #Create CT crosssection
+        observation_path[observation]['crosssection'] = Creat_CT_crosssection(observation,observation_path[observation]['tif'],observation_path[observation]['dcm_dir'])
 
     #Execute Samuels script automaticaly and combine results
-    if  all(observation_exists.values()): #Check if Data is complete
+    if  True:
 
         #get time and date
         day = datetime.now()
         #Set Time String for saving the data
         day_string = day.strftime("%Y-%m-%d_%H-%M")
         #Execute Samuels Script
-        sam = call([r"C:\Users\Hernienforschung\Documents\Auswertungen\Hernienauswertung_v0_11.exe", observation_path['Nativ']['dcm_dir'], observation_path['Valsalva']['dcm_dir']])
+        sam = call([r"C:\Users\Hernienforschung\Documents\Auswertungen\Hernienauswertung_v0_12.exe", observation_path['Nativ']['dcm_dir'], observation_path['Valsalva']['dcm_dir']])
         #Set the saving paths for the optained data
         temp_paths = sorted(os.listdir('C:\\Users\\Hernienforschung\\Documents\\Python_Scripts\\Temp')) 
         temp_path_to_archiv = temp_paths[0]
