@@ -8,9 +8,7 @@ import requests
 import urllib.request
 import numpy as np
 import matplotlib.pyplot as plt
-import glob
-import tkinter as tk
-from tkinter.filedialog import askdirectory
+import logging
 from subprocess import call
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
@@ -50,53 +48,32 @@ def update_neural_nets():
             with urllib.request.urlopen(src,context=ssl._create_unverified_context()) as response,open(dst,'wb') as out_file: 
                 shutil.copyfileobj(response,out_file)
 
-def load_directorys():
-    #Ask the user for the Path to the Data via Tkinterface
-    tk.Tk().withdraw()
-    path_to_dir = askdirectory()
+def create_patient_directory(path_to_dir):
 
 
     #Console output
+    os.system('cls')
     print('Loading Data...')
 
 
     #Get the raw dcm files
-    files = glob.glob(path_to_dir + '/**/*', recursive=True)
-
+    files = os.listdir(path_to_dir)
     #Set patients directory 
-    for file in files:
-        if os.path.isfile(file):
-            ds = pydicom.filereader.dcmread(file)
-            if not 'first_level' in locals():
-                #name the directory containing all results after patient name + Birthdate     	      
-                first_level = f'{main_path}\\{ds.PatientName}-{ds.PatientBirthDate}'
-                first_level = first_level.replace('^','_')  
-                first_level = first_level.replace(' ','_') 
-                first_level = first_level.replace('ü','ue')
-                first_level = first_level.replace('ä','ae')
-                first_level = first_level.replace('ö','oe') 
-            second_level = f'{first_level}\\{ds.StudyDate}-{ds.StudyDescription}'
-            third_level = f'{second_level}\\{ds.SeriesNumber}-{ds.SeriesDescription}'
+    ds = pydicom.filereader.dcmread(f'{path_to_dir}\\{files[1]}')
+    #Get patients slice thickness
+    slice_thickness = ds.SliceThickness
+    #name the directory containing all results after patient name + Birthdate     	      
+    first_level = f'{main_path}\\{ds.PatientName}_{ds.PatientBirthDate}'
+    first_level = first_level.replace('^','_')  
+    first_level = first_level.replace(' ','_') 
+    first_level = first_level.replace('ü','ue')
+    first_level = first_level.replace('ä','ae')
+    first_level = first_level.replace('ö','oe') 
 
-            if not os.path.exists(first_level):                       
-                os.mkdir(first_level)
-            if not os.path.exists(second_level):                       
-                os.mkdir(second_level)
-            if not os.path.exists(third_level):
-                os.mkdir(third_level)
+    if not os.path.exists(first_level):                       
+        os.mkdir(first_level)
 
-            path_to_dest = f'{third_level}\\{str(ds.InstanceNumber).zfill(6)}.dcm'
-            if not os.path.exists(path_to_dest):			
-                shutil.copy(file, path_to_dest)
-
-    return first_level
-
-def get_slice_thickness(observation_path):
-    files = os.listdir(observation_path['Nativ']['dcm_dir'])
-    #Set patients directory 
-    ds = pydicom.filereader.dcmread(f'{observation_path["Nativ"]["dcm_dir"]}\\{files[1]}')
-    nativ_slice_thickness = ds.SliceThickness
-    return nativ_slice_thickness
+    return first_level, slice_thickness
 
 def creat_ct_crosssection(path_to_layer_txt,observation_path):
     layer_file = open(path_to_layer_txt,'r',encoding='utf8')
@@ -122,28 +99,28 @@ def creat_ct_crosssection(path_to_layer_txt,observation_path):
         #save the crosssection
         img.save(observation_path[observation]['crosssection'],format='png')
 
-def hernia_analysis():
-    #Set the paths for both observations
-    Observations = ["Nativ","Valsalva"]
+def hernia_analysis(path_to_nativ,path_to_valsalva):
+
+    #Set the paths for both observations as a dictonary of a dictonary
+    Observations = ["Nativ","Valsalva"] 
     observation_path = {observation:{"tif":"","vtk":"","png":"","crosssection":"","dcm_dir":"","length_dir":""}for observation in Observations}
     
+    observation_path['Nativ']['dcm_dir'] = path_to_nativ 
+    observation_path['Valsalva']['dcm_dir'] = path_to_valsalva
     #Create and get the patients working directory
-    first_level = load_directorys()
-    for observation in sorted(Observations):            
-        #Create Paths to the mesh and the img
+    first_level, slice_thickness = create_patient_directory(observation_path['Nativ']['dcm_dir'])
+    for observation in Observations:
+        #Set the paths to all used datas
         observation_path[observation]['tif'] = f'{first_level}\\final.{observation}.tif'
         observation_path[observation]['vtk'] = f'{first_level}\\{observation}_for_paraview.vtk'
         observation_path[observation]['png'] = f'{first_level}\\{observation}_front_view.png'
         observation_path[observation]['length_dir'] = f'{first_level}\\{observation}_length'  
         observation_path[observation]['crosssection'] = f'{first_level}\\{observation}_crosssection.png'        
-        observation_path[observation]['dcm_dir'] = askdirectory(initialdir = first_level)
         if not os.path.exists(observation_path[observation]['length_dir']):
-            os.mkdir(observation_path[observation]['length_dir']) 
+            os.mkdir(observation_path[observation]['length_dir'])
 
-    slice_thickness = get_slice_thickness(observation_path)
-    
     #Execute Samuels script automaticaly and combine results
-    sam = call([r"C:\Users\Hernienforschung\Documents\Auswertungen\Hernienauswertung_v0_12.exe",
+    sam = call([r"C:\Users\Hernienforschung\Documents\Auswertungen\Hernienauswertung_v0_12batch.exe",
                     observation_path['Nativ']['dcm_dir'], 
                     observation_path['Valsalva']['dcm_dir']
                 ])
@@ -160,8 +137,7 @@ def hernia_analysis():
 
     #Move the created directorys into the main directory
     shutil.move(temp_path_to_evaluation, path_to_evaluation)
-    shutil.move(temp_path_to_archiv, path_to_archiv)    
-    
+    shutil.move(temp_path_to_archiv, path_to_archiv)
     
     #Run all subprocesses for both observations
     for observation in Observations:
@@ -223,7 +199,7 @@ def hernia_analysis():
                         observation_path[observation]['tif'],
                         observation_path[observation]['png']
                         ])
-    
+
     #Get the crossection image as the layer with the biggest of set between observations
     creat_ct_crosssection(f'{path_to_archiv}\\sliceID and sliceName maxDisplacement.txt',observation_path)
 
@@ -256,23 +232,44 @@ def hernia_analysis():
                 observation_path['Nativ']['crosssection'],observation_path['Valsalva']['crosssection'],
                 ):
         shutil.move(file, path_to_archiv)
-    #show final result
-    os.system(f'start {path_to_evaluation}\\Finale_Auswertung.png')
 
 if __name__ == "__main__":
+
     #Check for updates and update the neural nets
     try:
         update_neural_nets()
     except:
         print('Couldn´t update neuralnets! Check your internet connection.\n','Start with old ones.')
     #Get time to measure execution time
-    start_time = datetime.now()
+    total_start_time = datetime.now()
     #Set the main save directory    
-    main_path = "D:\\Hernien_Analyse_Single"
+    main_path = f'D:\\Hernien_Analyse_{datetime.now().strftime("%Y-%m-%d")}' 
     if not os.path.exists(main_path):
         os.mkdir(main_path)
 
-    hernia_analysis()
+    #Create the logging file
+    logging.basicConfig(filename=f'{main_path}\\time_per_patient.log', level=logging.INFO)
 
-    end_time = datetime.now()
-    print(f'Execution time: {end_time - start_time}')
+    #open txt file with paths to the data
+    txt_file = open("C:\\Users\\Hernienforschung\\Desktop\\Pfade 2.txt",'r',encoding='utf8')
+    #read the first emptyline
+    line = txt_file.readline()
+    #loop over the file till EOF is reached
+    while line:
+        #get the starting time of the current iteration
+        single_case_start_time = datetime.now()
+        hernia_analysis(txt_file.readline()[1:-2],txt_file.readline()[1:-2])
+        #get the end time of the current itteration
+        single_case_end_time = datetime.now()
+        #log the used time for the current itteration
+        logging.INFO(f'Execution time: {single_case_end_time - single_case_start_time}')
+        #skip the next empty line in the txt file
+        line = txt_file.readline()
+
+    #close the file
+    txt_file.close()
+    #Get the time after the proggram is finished
+    total_end_time = datetime.now()
+    #log the total time used by the programm
+    logging.INFO(f'Execution time: {total_end_time - total_start_time}')
+    print(f'Execution time: {total_end_time - total_start_time}')
