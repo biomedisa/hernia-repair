@@ -271,5 +271,5 @@ if __name__ == "__main__":
     #Get the time after the proggram is finished
     total_end_time = datetime.now()
     #log the total time used by the programm
-    logging.INFO(f'Execution time: {total_end_time - total_start_time}')
+    logging.INFO(f'Total execution time: {total_end_time - total_start_time}')
     print(f'Execution time: {total_end_time - total_start_time}')

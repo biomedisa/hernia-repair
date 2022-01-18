@@ -148,6 +148,7 @@ def annotate_image(observation,path_to_dcm,path_to_length_dir,path_to_tif,path_t
             )
     to_annotate.save(path_to_png,format='png')
 
+
 observation = sys.argv[1]
 path_to_dcm = sys.argv[2]
 path_to_length_dir = sys.argv[3]
