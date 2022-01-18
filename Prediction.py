@@ -61,13 +61,10 @@ def get_hernia_length(path_to_model,path_to_data):
     )
 
     prediction = model.predict(hernia_data, verbose=0)
-    smooth_prediction = np.empty_like(prediction)
-    for slice in range(prediction.size):
-        smooth_prediction[slice] = sum(prediction[(i+slice)%prediction.size] for i in range(-5,6)) * 1./11
 
-    hernia_interval = np.argwhere(smooth_prediction>=0.5)
+    hernia_interval = np.argwhere(prediction>=0.5)
     try:
-        hernia_length = hernia_interval[-1][0]-hernia_interval[0][0]
+        hernia_length = hernia_interval[-1][0] - hernia_interval[0][0]
     except:
         hernia_length = 0
 
@@ -129,7 +126,7 @@ def annotate_by_neural_net(path_to_dcm,path_to_length_dir):
     hernia_width = get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\Hernien_detector_x.h5",width_dir)
     hernia_width *= slice_width*0.1
     hernia_height = get_hernia_length(r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\Hernien_detector_z.h5",height_dir)
-    hernia_height *= slice_thickness*0.1 
+    hernia_height *= slice_thickness*0.1
     hernia_area = get_hernia_area(hernia_height,hernia_width)
     return hernia_width, hernia_height ,hernia_area
 
