@@ -251,7 +251,7 @@ if __name__ == "__main__":
     logging.basicConfig(filename=f'{main_path}\\time_per_patient.log', level=logging.INFO)
 
     #open txt file with paths to the data
-    txt_file = open("C:\\Users\\Hernienforschung\\Desktop\\Pfade 2.txt",'r',encoding='utf8')
+    txt_file = open("C:\\Users\\Hernienforschung\\Desktop\\Pfade.txt",'r',encoding='utf8')
     #read the first emptyline
     line = txt_file.readline()
     #loop over the file till EOF is reached
