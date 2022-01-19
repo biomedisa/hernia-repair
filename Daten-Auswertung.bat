@@ -6,7 +6,7 @@ call activate biomedisa
 cd hernia-repair
 
 git checkout main
-git pull git@github.com:biomedisa/hernia-repair.git
+git pull
 
 cd..
 rmdir /s /Q Temp
