@@ -147,7 +147,8 @@ def hernia_analysis():
                     observation_path['Nativ']['dcm_dir'], 
                     observation_path['Valsalva']['dcm_dir']
                 ])
-
+    input()
+    
     #Set the saving paths for the optained data
     temp_paths = sorted(os.listdir('C:\\Users\\Hernienforschung\\Documents\\Python_Scripts\\Temp')) 
     temp_path_to_archiv = temp_paths[0]
