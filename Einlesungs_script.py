@@ -123,6 +123,21 @@ def creat_ct_crosssection(path_to_layer_txt,observation_path):
         #save the crosssection
         img.save(observation_path[observation]['crosssection'],format='png')
 
+def annotate_info(path_to_img,used_dmc_path_1,used_dmc_path_2):
+        img = Image.open(path_to_img)
+        #annotate the image
+        draw = ImageDraw.Draw(img)
+        font = ImageFont.truetype("arial.ttf",size=20)
+        draw.text(xy=(img.width/2,0),
+                text= f'Benutzter Datensatz: {used_dmc_path_1} und {used_dmc_path_2}',
+                fill=(255,255,255),
+                anchor='ma',
+                font=font,
+                )
+        #save the crosssection
+        img.save(path_to_img,format='png')
+
+
 def hernia_analysis():
     #Set the paths for both observations
     Observations = ["Nativ","Valsalva"]
@@ -227,6 +242,8 @@ def hernia_analysis():
     
     #Get the crossection image as the layer with the biggest of set between observations
     creat_ct_crosssection(f'{path_to_archiv}\\sliceID and sliceName maxDisplacement.txt',observation_path)
+    #Add used dcm paths to top of the upper image
+    annotate_info(f'{path_to_evaluation}\\Verschiebung und Verzerrung.png',observation_path['Nativ']['dcm_dir'],observation_path['Valsalva']['dcm_dir'])
 
     #Load all images
     sam_img = plt.imread(f'{path_to_evaluation}\\Verschiebung und Verzerrung.png')
@@ -234,7 +251,7 @@ def hernia_analysis():
     val_img = plt.imread(observation_path['Valsalva']['png'])[:,:,:3]
     nativ_crosssection = plt.imread(observation_path['Nativ']['crosssection'])[:,:,:3]
     valsalva_crosssection = plt.imread(observation_path['Valsalva']['crosssection'])[:,:,:3]
-    
+
     #Resize images to same width for stacking 
     nativ_crosssection = np.pad(nativ_crosssection,((0,0),(39,40),(0,0)), mode='edge')
     valsalva_crosssection = np.pad(valsalva_crosssection,((0,0),(39,39),(0,0)), mode='edge')
@@ -266,7 +283,7 @@ try:#Try loop in case of error
         try:
             update_neural_nets()
         except:
-            print('Couldn´t update neuralnets! Check your internet connection.\n','Start with old ones.')
+            print('Could not update neuralnets! Check your internet connection.\n','Start with old ones.')
         #Get time to measure execution time
         start_time = datetime.now()
         #Set the main save directory    
