@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 import tkinter as tk
+import logging
 from tkinter.filedialog import askdirectory
 from subprocess import call
 from datetime import datetime
@@ -259,20 +260,33 @@ def hernia_analysis():
     #show final result
     os.system(f'start {path_to_evaluation}\\Finale_Auswertung.png')
 
-if __name__ == "__main__":
-    #Check for updates and update the neural nets
-    try:
-        update_neural_nets()
-    except:
-        print('Couldn´t update neuralnets! Check your internet connection.\n','Start with old ones.')
-    #Get time to measure execution time
-    start_time = datetime.now()
-    #Set the main save directory    
-    main_path = "D:\\Hernien_Analyse_Single"
-    if not os.path.exists(main_path):
-        os.mkdir(main_path)
+try:#Try loop in case of error
+    if __name__ == "__main__":
+        #Check for updates and update the neural nets
+        try:
+            update_neural_nets()
+        except:
+            print('Couldn´t update neuralnets! Check your internet connection.\n','Start with old ones.')
+        #Get time to measure execution time
+        start_time = datetime.now()
+        #Set the main save directory    
+        main_path = "D:\\Hernien_Analyse_Single"
+        if not os.path.exists(main_path):
+            os.mkdir(main_path)
 
-    hernia_analysis()
+        hernia_analysis()
 
-    end_time = datetime.now()
-    print(f'Execution time: {end_time - start_time}')
+        end_time = datetime.now()
+        print(f'Execution time: {end_time - start_time}')
+# Catch the error and log it to a file in the main Directory
+except Exception as Argument: 
+    #open the error txt file to write to
+    f = open("D:\\Hernien_Analyse_Single\Error_file.txt", "a")
+    #Write into the error file
+    f.write(str(Argument))
+    #close the error file
+    f.close()
+    
+    
+    
+    
