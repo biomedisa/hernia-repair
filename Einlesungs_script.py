@@ -289,11 +289,8 @@ try:#Try loop in case of error
         #Set the main save directory    
         main_path = "D:\\Hernien_Analyse_Single"
         if not os.path.exists(main_path):
-            os.mkdir(main_path)
-            
-        print(alpha)    
-            
-            
+            os.mkdir(main_path)   
+                     
         hernia_analysis()
 
         end_time = datetime.now()
