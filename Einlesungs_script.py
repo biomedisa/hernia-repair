@@ -225,9 +225,9 @@ def hernia_analysis():
 
         #Reshape to match size of sam_img and to fit annotation
         if observation == 'Nativ':
-            observation_img = np.pad(observation_img, ((50,0),(0,1),(0,0)), mode='edge')
+            observation_img = np.pad(observation_img, ((50,0),(0,1),(0,0)), mode='constant',constant_values=1)
         elif observation == 'Valsalva':
-            observation_img = np.pad(observation_img, ((50,0),(0,0),(0,0)), mode='edge')
+            observation_img = np.pad(observation_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1)
         plt.imsave(observation_path[observation]['png'],observation_img)       
     
         #Annotate the images
@@ -253,8 +253,8 @@ def hernia_analysis():
     valsalva_crosssection = plt.imread(observation_path['Valsalva']['crosssection'])[:,:,:3]
 
     #Resize images to same width for stacking 
-    nativ_crosssection = np.pad(nativ_crosssection,((0,0),(39,40),(0,0)), mode='edge')
-    valsalva_crosssection = np.pad(valsalva_crosssection,((0,0),(39,39),(0,0)), mode='edge')
+    nativ_crosssection = np.pad(nativ_crosssection,((0,0),(39,40),(0,0)), mode='constant')
+    valsalva_crosssection = np.pad(valsalva_crosssection,((0,0),(39,39),(0,0)), mode='constant')
     
     #Stack the image pairs
     nat_and_val = np.hstack((nat_img,val_img))
