@@ -78,6 +78,8 @@ def load_directorys():
                 first_level = first_level.replace('ö','oe') 
             second_level = f'{first_level}\\{ds.StudyDate}_{ds.StudyDescription}'
             third_level = f'{second_level}\\{ds.SeriesNumber}_{ds.SeriesDescription}'
+            third_level = third_level.replace('/',' ') 
+            
 
             if not os.path.exists(first_level):                       
                 os.mkdir(first_level)
