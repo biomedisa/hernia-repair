@@ -75,7 +75,8 @@ def load_directorys():
                 first_level = first_level.replace(' ','_') 
                 first_level = first_level.replace('ü','ue')
                 first_level = first_level.replace('ä','ae')
-                first_level = first_level.replace('ö','oe') 
+                first_level = first_level.replace('ö','oe')
+                first_level = first_level.replace('ß','ss')
             second_level = f'{first_level}\\{ds.StudyDate}_{ds.StudyDescription}'
             third_level = f'{second_level}\\{ds.SeriesNumber}_{ds.SeriesDescription}'
             third_level = third_level.replace('/',' ') 
@@ -187,17 +188,19 @@ def hernia_analysis():
         #console output
         os.system('cls')
         print(f'Processing {observation}:\n Computing Labels...')
-
-
+        
         #Create the classification proposal, in form of a tif
         net = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py", 
                     observation_path[observation]['dcm_dir'], r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\img_hernie.h5", "-p","-bs","6"]
                     )
+        
+        print(f'Moveing temporary files...')
         shutil.move(observation_path[observation]['dcm_dir'].replace(
                         os.path.basename(observation_path[observation]['dcm_dir']),
                         'final..tif'),
                         observation_path[observation]['tif'])
-
+        
+        print(f'Creating Mesh...')
         #Create nativ mesh, in vtk format for Paraview
         mesh = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\create_mesh.py", 
                     observation_path[observation]['tif'], observation_path[observation]['vtk'], str(slice_thickness)]
@@ -205,9 +208,8 @@ def hernia_analysis():
 
 
         #console Output
-        print('Done\n Creating Images...')
-
-
+        print(f'Creating Image...')
+        
         #Create image using Paraview
         screenshot = call(["python",
                         r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\paraview_screenshot.py",
@@ -216,10 +218,9 @@ def hernia_analysis():
                         ])
 
 
-        #console Output
-        os.system('cls')
-        print(' Annotate images...')
 
+        
+        print(f'Scaleing image...')
 
         #Preprocess and Annotate the Paraview labeled images
         #Read both images
@@ -231,7 +232,9 @@ def hernia_analysis():
         elif observation == 'Valsalva':
             observation_img = np.pad(observation_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1)
         plt.imsave(observation_path[observation]['png'],observation_img)       
-    
+        
+        #console Output
+        print('Annotating image...')
         #Annotate the images
         annotate = call(["python",
                         r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\Prediction.py",
