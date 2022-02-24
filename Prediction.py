@@ -62,11 +62,11 @@ def get_hernia_length(path_to_model,path_to_data):
 
     prediction = model.predict(hernia_data, verbose=0)
 
-    hernia_interval = np.argwhere(prediction>=0.5)
+    hernia_interval = (prediction > 0.5).flatnonzero()
     try:
-        hernia_length = hernia_interval[-1][0] - hernia_interval[0][0]
+        hernia_length = hernia_interval[-1] - hernia_interval[0]
     except:
-        hernia_length = 0
+        hernia_length = -1
 
     return hernia_length
 
@@ -132,7 +132,7 @@ def annotate_by_neural_net(path_to_dcm,path_to_length_dir):
 
 def annotate_image(observation,path_to_dcm,path_to_length_dir,path_to_tif,path_to_png):
     hernia_width_by_nn, hernia_height_by_nn,hernia_area_by_nn = annotate_by_neural_net(path_to_dcm,path_to_length_dir)
-    instabel_area_by_label, hernia_area_by_label = annotate_by_label(path_to_tif,path_to_dcm)
+    instable_area_by_label, hernia_area_by_label = annotate_by_label(path_to_tif,path_to_dcm)
     
     #write hernia dimensions on the image
     to_annotate = Image.open(path_to_png)
@@ -141,7 +141,7 @@ def annotate_image(observation,path_to_dcm,path_to_length_dir,path_to_tif,path_t
     draw.text(xy=(to_annotate.width/2,0),
             text= observation + 
             '\nBerechnete Größen:\n' + 'Breite:' + str(round(hernia_width_by_nn,1)) + 'cm     Länge:'+ str(round(hernia_height_by_nn,1)) + 'cm    Bruchpforten Fläche:' + str(round(hernia_area_by_nn,1)) + 'cm²' +
-            '\nGrößen im Bild:\n' + 'Instabile_Fläche:'+ str(round(instabel_area_by_label*0.01,1)) + 'cm²    Projezierte Fläche:' + str(round(hernia_area_by_label*0.01,1)) + 'cm²',     
+            '\nGrößen im Bild:\n' + 'Instabile_Fläche:'+ str(round(instable_area_by_label*0.01,1)) + 'cm²    Projezierte Fläche:' + str(round(hernia_area_by_label*0.01,1)) + 'cm²',     
             fill=(0,0,0),
             anchor="ma",
             font=font,
