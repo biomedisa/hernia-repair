@@ -135,7 +135,7 @@ def annotate_info(path_to_img,used_dmc_path_1,used_dmc_path_2):
                 text= f'Benutzter Datensatz: {used_dmc_path_1} und {used_dmc_path_2}',
                 fill=(255,255,255),
                 anchor='rt',
-                direction='ttb'
+                direction='ttb',
                 font=font,
                 )
         #save the crosssection
