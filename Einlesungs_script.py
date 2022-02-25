@@ -131,10 +131,11 @@ def annotate_info(path_to_img,used_dmc_path_1,used_dmc_path_2):
         #annotate the image
         draw = ImageDraw.Draw(img)
         font = ImageFont.truetype("arial.ttf",size=20)
-        draw.text(xy=(img.width/2,0),
+        draw.text(xy=(img.width,0),
                 text= f'Benutzter Datensatz: {used_dmc_path_1} und {used_dmc_path_2}',
                 fill=(255,255,255),
-                anchor='ma',
+                anchor='rt',
+                direction='ttb'
                 font=font,
                 )
         #save the crosssection
