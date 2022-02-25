@@ -249,7 +249,8 @@ def hernia_analysis():
     #Get the crossection image as the layer with the biggest of set between observations
     creat_ct_crosssection(f'{path_to_archiv}\\sliceID and sliceName maxDisplacement.txt',observation_path)
     #Add used dcm paths to top of the upper image
-    annotate_info(f'{path_to_evaluation}\\Verschiebung und Verzerrung.png',observation_path['Nativ']['dcm_dir'],observation_path['Valsalva']['dcm_dir'])
+    #Removed for now
+    #annotate_info(f'{path_to_evaluation}\\Verschiebung und Verzerrung.png',observation_path['Nativ']['dcm_dir'],observation_path['Valsalva']['dcm_dir'])
 
     #Load all images
     sam_img = plt.imread(f'{path_to_evaluation}\\Verschiebung und Verzerrung.png')
