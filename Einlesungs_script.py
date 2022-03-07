@@ -77,7 +77,9 @@ def load_directorys():
                 first_level = first_level.replace('ä','ae')
                 first_level = first_level.replace('ö','oe')
                 first_level = first_level.replace('ß','ss')
+                first_level = first_level.replace('/',' ') 
             second_level = f'{first_level}\\{ds.StudyDate}_{ds.StudyDescription}'
+            second_level = second_level.replace('/',' ') 
             third_level = f'{second_level}\\{ds.SeriesNumber}_{ds.SeriesDescription}'
             third_level = third_level.replace('/',' ') 
             
