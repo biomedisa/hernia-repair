@@ -73,6 +73,7 @@ def load_directorys():
 
     #Console output
     print('Loading Data...')
+    logging.debug('Loading Data...')
 
 
     #Get the raw dcm files
@@ -111,6 +112,8 @@ def load_directorys():
             path_to_dest = f'{third_level}\\{str(ds.InstanceNumber).zfill(6)}.dcm'
             if not os.path.exists(path_to_dest):			
                 shutil.copy(file, path_to_dest)
+
+    logging.debug('Data Loaded successfuly.')
 
     return first_level
 
@@ -199,25 +202,29 @@ def hernia_analysis():
     #selection Checks (Are the Dimensions of Nativ and Valsalva the same)
     if observation_path['Nativ']['slice_thickness'] != observation_path['Valsalva']['slice_thickness']:
         print(f'Nativ and Valsalva slice thickness missmatch! \n This will impact the result. \n\n')
+        logging.warning(f'Nativ and Valsalva slice thickness (z-dim) missmatch! \n This will impact the result. \n\n')
         ask_continue()
 
     elif observation_path['Nativ']['y_dim'] != observation_path['Valsalva']['y_dim']:
         print(f'Nativ and Valsalva depth missmatch! \n This will impact the result. \n\n')
+        logging.warning(f'Nativ and Valsalva depth (y-dim) missmatch! \n This will impact the result. \n\n')
         ask_continue()
 
     elif observation_path['Nativ']['x_dim'] != observation_path['Valsalva']['x_dim']:
         print(f'Nativ and Valsalva width missmatch! \n This will impact the result. \n\n')
+        logging.warning(f'Nativ and Valsalva width (x-dim) missmatch! \n This will impact the result. \n\n')
         ask_continue()
     
     compare_slice_amount(observation_path['Nativ']['dcm_dir'],observation_path['Valsalva']['dcm_dir'])
 
 
-
+    logging.debug('Starting Samuels script.')
     #Execute Samuels script automaticaly and combine results
     sam = call([r"C:\Users\Hernienforschung\Documents\Auswertungen\Hernienauswertung_v0_12.exe",
                     observation_path['Nativ']['dcm_dir'], 
                     observation_path['Valsalva']['dcm_dir']
                 ])
+    logging.debug('Finished Samuels Script.')
   
     #Set the saving paths for the optained data
     temp_paths = sorted(os.listdir('C:\\Users\\Hernienforschung\\Documents\\Python_Scripts\\Temp')) 
@@ -240,6 +247,7 @@ def hernia_analysis():
         #console output
         os.system('cls')
         print(f'Processing {observation}:\n Computing Labels...')
+        logging.debug(f'Processing {observation}:\n Computing Labels...')
         
         
         #Create the classification proposal, in form of a tif
@@ -340,25 +348,35 @@ def hernia_analysis():
     #show final result
     os.system(f'start {path_to_evaluation}\\Finale_Auswertung.png')
 
-
-try:#Try loop in case of error
+#Try loop in case of error
+try:
     if __name__ == "__main__":
+
+        #Get time to measure execution time
+        start_time = datetime.now()
+
+        #Set the main save directory    
+        main_path = "D:\\Hernien_Analyse_Single"
+        if not os.path.exists(main_path):
+            os.mkdir(main_path) 
+
+        #Set the logging Config            
+        logging.basicConfig(filename= f'{main_path}_{start_time}.log', encoding='utf-8', level=logging.DEBUG)
+
         #Check for updates and update the neural nets
         try:
             update_neural_nets()
         except:
-            print('Could not update neuralnets! Check your internet connection.\n','Start with old ones.')
-        #Get time to measure execution time
-        start_time = datetime.now()
-        #Set the main save directory    
-        main_path = "D:\\Hernien_Analyse_Single"
-        if not os.path.exists(main_path):
-            os.mkdir(main_path)   
+            print('Could not update neuralnets! Check your internet connection.\n', 'Start with old ones.')
+            logging.warning('Could not update neuralnets! Check your internet connection.\n Start with old ones.')
+
                      
         hernia_analysis()
 
+
         end_time = datetime.now()
         print(f'Execution time: {end_time - start_time}')
+        logging.info(f'Execution time: {end_time - start_time}')
 # Catch the error and log it to a file in the main Directory
 except Exception as Argument: 
     #open the error txt file to write to
