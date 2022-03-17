@@ -266,7 +266,7 @@ def hernia_analysis():
         #Create nativ mesh, in vtk format for Paraview
         print(f'Creating Mesh...')
         mesh = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\create_mesh.py", 
-                    observation_path[observation]['tif'], observation_path[observation]['vtk'], observation[observation]['slice_thickness'] ]
+                    observation_path[observation]['tif'], observation_path[observation]['vtk'], observation_path[observation]['slice_thickness'] ]
                     )
 
         #Create image using Paraview
