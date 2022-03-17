@@ -67,7 +67,7 @@ def update_neural_nets():
 def load_directorys():
     #Ask the user for the Path to the Data via Tkinterface
     tk.Tk().withdraw()
-    path_to_dir = askdirectory()
+    path_to_dir = askdirectory(title='Select Dataset')
 
 
     #Console output
@@ -190,7 +190,7 @@ def hernia_analysis():
         observation_path[observation]['png'] = f'{first_level}\\{observation}_front_view.png'
         observation_path[observation]['length_dir'] = f'{first_level}\\{observation}_length'  
         observation_path[observation]['crosssection'] = f'{first_level}\\{observation}_crosssection.png'        
-        observation_path[observation]['dcm_dir'] = askdirectory(initialdir = first_level)
+        observation_path[observation]['dcm_dir'] = askdirectory(initialdir = first_level, title=f'Select {observation} Directory')
         observation_path[observation]['slice_thickness'],\
         observation_path[observation]['y_dim'],\
         observation_path[observation]['x_dim'] = get_slice_dims(observation_path[observation]['dcm_dir'])
