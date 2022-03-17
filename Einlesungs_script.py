@@ -360,7 +360,7 @@ try:
             os.mkdir(main_path) 
 
         #Set the logging Config            
-        logging.basicConfig(filename= f'{main_path}.log', encoding='utf-8', level=logging.DEBUG)
+        logging.basicConfig(filename= f'{main_path}.log', level=logging.DEBUG)
 
         #Check for updates and update the neural nets
         try:
