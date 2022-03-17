@@ -128,14 +128,12 @@ def get_slice_dims(dcm_dir):
 def compare_slice_amount(nativ_dcm_dir, valsalva_dcm_dir):
     nativ_slice_amount = len(os.listdir(nativ_dcm_dir))
     valsalva_slice_amount = len(os.listdir(valsalva_dcm_dir))
-    if nativ_slice_amount != valsalva_slice_amount:
-        slice_amount = min(nativ_slice_amount,valsalva_slice_amount)
-        if nativ_slice_amount > valsalva_slice_amount:
-            for file in sorted(os.listdir(nativ_dcm_dir))[slice_amount:]:
-                os.remove(file)
-        else:
-            for file in sorted(os.listdir(valsalva_dcm_dir))[slice_amount:]:
-                os.remove(file)
+    if nativ_slice_amount > valsalva_slice_amount:
+        print(f'There are {nativ_slice_amount - valsalva_slice_amount} more nativ than valsalva scans! \n This will impact the result. \n\n')
+        ask_continue()
+    elif nativ_slice_amount < valsalva_slice_amount:
+        print(f'There are {valsalva_slice_amount - nativ_slice_amount} more nativ than valsalva scans! \n This will impact the result. \n\n')
+        ask_continue()
 
 def creat_ct_crosssection(path_to_layer_txt,observation_path):
     layer_file = open(path_to_layer_txt,'r',encoding='utf8')
