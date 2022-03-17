@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 import os
+
+from sqlalchemy import case
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 import pydicom
 import time,shutil,ssl
@@ -16,6 +18,18 @@ from subprocess import call
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
 from dateutil import tz
+
+def ask_continue():
+    print(f'Do You want to continue (y) or close the Application (n)?\n')
+    user_input = input()
+    if user_input in ['y','yes', 'ja' ]:
+        print('Continuing.')
+    elif user_input in ['n', 'no', 'nein']:
+        print('Shuting Down.')
+        exit()
+    else: 
+        print('Please enter only "y" or "n"!')
+        ask_continue()
 
 def update_neural_nets():
     sources = ['https://biomedisa.org/media/img_hernie.h5','https://biomedisa.org/media/Hernien_detector_x.h5','https://biomedisa.org/media/Hernien_detector_z.h5']
@@ -59,6 +73,7 @@ def load_directorys():
 
     #Console output
     print('Loading Data...')
+    logging.debug('Loading Data...')
 
 
     #Get the raw dcm files
@@ -98,14 +113,30 @@ def load_directorys():
             if not os.path.exists(path_to_dest):			
                 shutil.copy(file, path_to_dest)
 
+    logging.debug('Data Loaded successfuly.')
+
     return first_level
 
-def get_slice_thickness(observation_path):
-    files = os.listdir(observation_path['Nativ']['dcm_dir'])
+def get_slice_dims(dcm_dir):
+    files = os.listdir(dcm_dir)
     #Set patients directory 
-    ds = pydicom.filereader.dcmread(f'{observation_path["Nativ"]["dcm_dir"]}\\{files[1]}')
-    nativ_slice_thickness = ds.SliceThickness
-    return nativ_slice_thickness
+    ds = pydicom.filereader.dcmread(f'{dcm_dir}\\{files[1]}')
+    z_res = ds.SliceThickness
+    y_res, x_res = ds.PixelSpacing
+
+    return str(z_res), str(y_res), str(x_res)
+
+def compare_slice_amount(nativ_dcm_dir, valsalva_dcm_dir):
+    nativ_slice_amount = len(os.listdir(nativ_dcm_dir))
+    valsalva_slice_amount = len(os.listdir(valsalva_dcm_dir))
+    if nativ_slice_amount != valsalva_slice_amount:
+        slice_amount = min(nativ_slice_amount,valsalva_slice_amount)
+        if nativ_slice_amount > valsalva_slice_amount:
+            for file in sorted(os.listdir(nativ_dcm_dir))[slice_amount:]:
+                os.remove(file)
+        else:
+            for file in sorted(os.listdir(valsalva_dcm_dir))[slice_amount:]:
+                os.remove(file)
 
 def creat_ct_crosssection(path_to_layer_txt,observation_path):
     layer_file = open(path_to_layer_txt,'r',encoding='utf8')
@@ -146,11 +177,10 @@ def annotate_info(path_to_img,used_dmc_path_1,used_dmc_path_2):
         #save the crosssection
         img.save(path_to_img,format='png')
 
-
 def hernia_analysis():
     #Set the paths for both observations
     Observations = ["Nativ","Valsalva"]
-    observation_path = {observation:{"tif":"","vtk":"","png":"","crosssection":"","dcm_dir":"","length_dir":""}for observation in Observations}
+    observation_path = {observation:{"tif":"","vtk":"","png":"","crosssection":"","dcm_dir":"","length_dir":"","slice_thickness":""}for observation in Observations}
     
     #Create and get the patients working directory
     first_level = load_directorys()
@@ -162,16 +192,39 @@ def hernia_analysis():
         observation_path[observation]['length_dir'] = f'{first_level}\\{observation}_length'  
         observation_path[observation]['crosssection'] = f'{first_level}\\{observation}_crosssection.png'        
         observation_path[observation]['dcm_dir'] = askdirectory(initialdir = first_level)
+        observation_path[observation]['slice_thickness'],\
+        observation_path[observation]['y_dim'],\
+        observation_path[observation]['x_dim'] = get_slice_dims(observation_path[observation]['dcm_dir'])
+
         if not os.path.exists(observation_path[observation]['length_dir']):
             os.mkdir(observation_path[observation]['length_dir']) 
 
-    slice_thickness = get_slice_thickness(observation_path)
+    #selection Checks (Are the Dimensions of Nativ and Valsalva the same)
+    if observation_path['Nativ']['slice_thickness'] != observation_path['Valsalva']['slice_thickness']:
+        print(f'Nativ and Valsalva slice thickness missmatch! \n This will impact the result. \n\n')
+        logging.warning(f'Nativ and Valsalva slice thickness (z-dim) missmatch! \n This will impact the result. \n\n')
+        ask_continue()
+
+    elif observation_path['Nativ']['y_dim'] != observation_path['Valsalva']['y_dim']:
+        print(f'Nativ and Valsalva depth missmatch! \n This will impact the result. \n\n')
+        logging.warning(f'Nativ and Valsalva depth (y-dim) missmatch! \n This will impact the result. \n\n')
+        ask_continue()
+
+    elif observation_path['Nativ']['x_dim'] != observation_path['Valsalva']['x_dim']:
+        print(f'Nativ and Valsalva width missmatch! \n This will impact the result. \n\n')
+        logging.warning(f'Nativ and Valsalva width (x-dim) missmatch! \n This will impact the result. \n\n')
+        ask_continue()
     
+    compare_slice_amount(observation_path['Nativ']['dcm_dir'],observation_path['Valsalva']['dcm_dir'])
+
+
+    logging.debug('Starting Samuels script.')
     #Execute Samuels script automaticaly and combine results
     sam = call([r"C:\Users\Hernienforschung\Documents\Auswertungen\Hernienauswertung_v0_12.exe",
                     observation_path['Nativ']['dcm_dir'], 
                     observation_path['Valsalva']['dcm_dir']
                 ])
+    logging.debug('Finished Samuels Script.')
   
     #Set the saving paths for the optained data
     temp_paths = sorted(os.listdir('C:\\Users\\Hernienforschung\\Documents\\Python_Scripts\\Temp')) 
@@ -194,44 +247,41 @@ def hernia_analysis():
         #console output
         os.system('cls')
         print(f'Processing {observation}:\n Computing Labels...')
+        logging.debug(f'Processing {observation}:\n Computing Labels...')
+        
         
         #Create the classification proposal, in form of a tif
         net = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py", 
                     observation_path[observation]['dcm_dir'], r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\img_hernie.h5", "-p","-bs","6"]
                     )
         
+        
+        #Move the segmentiation propasal into the correct folder
         print(f'Moveing temporary files...')
         shutil.move(observation_path[observation]['dcm_dir'].replace(
                         os.path.basename(observation_path[observation]['dcm_dir']),
                         'final..tif'),
                         observation_path[observation]['tif'])
         
-        print(f'Creating Mesh...')
+        
         #Create nativ mesh, in vtk format for Paraview
+        print(f'Creating Mesh...')
         mesh = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\create_mesh.py", 
-                    observation_path[observation]['tif'], observation_path[observation]['vtk'], str(slice_thickness)]
+                    observation_path[observation]['tif'], observation_path[observation]['vtk'], observation[observation]['slice_thickness'] ]
                     )
 
-
-        #console Output
-        print(f'Creating Image...')
-        
         #Create image using Paraview
+        print(f'Creating Image...')
         screenshot = call(["python",
                         r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\paraview_screenshot.py",
                         observation_path[observation]['vtk'],
                         observation_path[observation]['png']
                         ])
 
-
-
-        
-        print(f'Scaleing image...')
-
         #Preprocess and Annotate the Paraview labeled images
-        #Read both images
+        print(f'Scaling image...')
+        #Read the image
         observation_img = plt.imread(observation_path[observation]['png'])
-
         #Reshape to match size of sam_img and to fit annotation
         if observation == 'Nativ':
             observation_img = np.pad(observation_img, ((50,0),(0,1),(0,0)), mode='constant',constant_values=1)
@@ -239,9 +289,9 @@ def hernia_analysis():
             observation_img = np.pad(observation_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1)
         plt.imsave(observation_path[observation]['png'],observation_img)       
         
-        #console Output
-        print('Annotating image...')
+
         #Annotate the images
+        print('Annotating image...')
         annotate = call(["python",
                         r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\Prediction.py",
                         observation,
@@ -251,11 +301,18 @@ def hernia_analysis():
                         observation_path[observation]['png']
                         ])
     
-    #Get the crossection image as the layer with the biggest of set between observations
+    #Patching Images togther for presentation
+    os.system('cls')
+    print('Arranging Results...')
+
+    #Get the crossection image as the layer with the biggest offset between nativ and valsalva
     creat_ct_crosssection(f'{path_to_archiv}\\sliceID and sliceName maxDisplacement.txt',observation_path)
+    
+    '''
     #Add used dcm paths to top of the upper image
     #Removed for now
     #annotate_info(f'{path_to_evaluation}\\Verschiebung und Verzerrung.png',observation_path['Nativ']['dcm_dir'],observation_path['Valsalva']['dcm_dir'])
+    '''
 
     #Load all images
     sam_img = plt.imread(f'{path_to_evaluation}\\Verschiebung und Verzerrung.png')
@@ -277,7 +334,8 @@ def hernia_analysis():
     plt.imsave(f'{path_to_evaluation}\\Finale_Auswertung.png',combined_img)
 
     #console Output
-    print('\nDone')
+    print('')
+
 
     #Move used Data into the archiv folder
     for file in (observation_path['Nativ']['png'],observation_path['Valsalva']['png'],
@@ -286,27 +344,39 @@ def hernia_analysis():
                 observation_path['Nativ']['crosssection'],observation_path['Valsalva']['crosssection'],
                 ):
         shutil.move(file, path_to_archiv)
+    
     #show final result
     os.system(f'start {path_to_evaluation}\\Finale_Auswertung.png')
 
-try:#Try loop in case of error
+#Try loop in case of error
+try:
     if __name__ == "__main__":
+
+        #Get time to measure execution time
+        start_time = datetime.now()
+
+        #Set the main save directory    
+        main_path = "D:\\Hernien_Analyse_Single"
+        if not os.path.exists(main_path):
+            os.mkdir(main_path) 
+
+        #Set the logging Config            
+        logging.basicConfig(filename= f'{main_path}_{start_time}.log', encoding='utf-8', level=logging.DEBUG)
+
         #Check for updates and update the neural nets
         try:
             update_neural_nets()
         except:
-            print('Could not update neuralnets! Check your internet connection.\n','Start with old ones.')
-        #Get time to measure execution time
-        start_time = datetime.now()
-        #Set the main save directory    
-        main_path = "D:\\Hernien_Analyse_Single"
-        if not os.path.exists(main_path):
-            os.mkdir(main_path)   
+            print('Could not update neuralnets! Check your internet connection.\n', 'Start with old ones.')
+            logging.warning('Could not update neuralnets! Check your internet connection.\n Start with old ones.')
+
                      
         hernia_analysis()
 
+
         end_time = datetime.now()
         print(f'Execution time: {end_time - start_time}')
+        logging.info(f'Execution time: {end_time - start_time}')
 # Catch the error and log it to a file in the main Directory
 except Exception as Argument: 
     #open the error txt file to write to
