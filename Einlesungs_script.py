@@ -22,7 +22,7 @@ def ask_continue():
     print(f'Do You want to continue (y) or close the Application (n)?\n')
     user_input = input()
     if user_input in ['y','yes', 'ja' ]:
-        print('Continuing.')
+        print('Continuing...')
     elif user_input in ['n', 'no', 'nein']:
         print('Shuting Down.')
         exit()
@@ -32,7 +32,7 @@ def ask_continue():
 
 def update_neural_nets():
     sources = ['https://biomedisa.org/media/img_hernie.h5','https://biomedisa.org/media/Hernien_detector_x.h5','https://biomedisa.org/media/Hernien_detector_z.h5']
-    destinations = [r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\img_hernie.h5",r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\hernien_detector_x.h5",r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\hernien_detector_z.h5"]
+    destinations = [r"\Netzwerke\img_hernie.h5",r"\Netzwerke\hernien_detector_x.h5",r"\Netzwerke\hernien_detector_z.h5"]
     for src, dst in zip(sources,destinations):
         update = False
         if os.path.exists(dst):
@@ -84,7 +84,7 @@ def load_directorys():
             ds = pydicom.filereader.dcmread(file)
             if not 'first_level' in locals():
                 #name the directory containing all results after patient name + Birthdate     	      
-                first_level = f'{main_path}\\{ds.PatientName}_{ds.PatientBirthDate}'
+                first_level = f'{main_folder}\\{ds.PatientName}_{ds.PatientBirthDate}'
                 first_level = first_level.replace('^','_')
                 first_level = first_level.replace('/',' ')
                 first_level = first_level.replace(' ','_') 
@@ -217,14 +217,14 @@ def hernia_analysis():
 
     logging.debug('Starting Samuels script.')
     #Execute Samuels script automaticaly and combine results
-    sam = call([r"C:\Users\Hernienforschung\Documents\Auswertungen\Hernienauswertung_v0_12.exe",
+    sam = call([r"\hernia-repair\Hernienauswertung_v0_12.exe",
                     observation_path['Nativ']['dcm_dir'], 
                     observation_path['Valsalva']['dcm_dir']
                 ])
     logging.debug('Finished Samuels Script.')
   
     #Set the saving paths for the optained data
-    temp_paths = sorted(os.listdir('C:\\Users\\Hernienforschung\\Documents\\Python_Scripts\\Temp')) 
+    temp_paths = sorted(os.listdir('\\Temp')) 
     temp_path_to_archiv = temp_paths[0]
     temp_path_to_evaluation = temp_paths[1]
 
@@ -248,8 +248,8 @@ def hernia_analysis():
         
         
         #Create the classification proposal, in form of a tif
-        net = call(["python",r"C:\Users\Hernienforschung\git\biomedisa\demo\biomedisa_deeplearning.py", 
-                    observation_path[observation]['dcm_dir'], r"C:\Users\Hernienforschung\Documents\Python_Scripts\Netzwerke\img_hernie.h5", "-p","-bs","6"]
+        net = call(["python",r"\biomedisa\demo\biomedisa_deeplearning.py", 
+                    observation_path[observation]['dcm_dir'], r"\Netzwerke\img_hernie.h5", "-p","-bs","6"]
                     )
         
         
@@ -263,14 +263,14 @@ def hernia_analysis():
         
         #Create nativ mesh, in vtk format for Paraview
         print(f'Creating Mesh...')
-        mesh = call(["python",r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\create_mesh.py", 
+        mesh = call(["python",r"\hernia-repair\create_mesh.py", 
                     observation_path[observation]['tif'], observation_path[observation]['vtk'], observation_path[observation]['slice_thickness'] ]
                     )
 
         #Create image using Paraview
         print(f'Creating Image...')
         screenshot = call(["python",
-                        r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\paraview_screenshot.py",
+                        r"\hernia-repair\paraview_screenshot.py",
                         observation_path[observation]['vtk'],
                         observation_path[observation]['png']
                         ])
@@ -290,7 +290,7 @@ def hernia_analysis():
         #Annotate the images
         print('Annotating image...')
         annotate = call(["python",
-                        r"C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\Prediction.py",
+                        r"\hernia-repair\Prediction.py",
                         observation,
                         observation_path[observation]['dcm_dir'],
                         observation_path[observation]['length_dir'],
@@ -353,19 +353,21 @@ try:
         start_time = datetime.now()
 
         #Set the main save directory    
-        main_path = "D:\\Hernien_Analyse_Single"
-        if not os.path.exists(main_path):
-            os.mkdir(main_path) 
+        main_folder = "Hernien_Analyse_Single"
+        if not os.path.exists(main_folder):
+            os.mkdir(main_folder) 
 
-        #Set the logging Config            
-        logging.basicConfig(filename= f'{main_path}.log', level=logging.DEBUG)
+        #Set the logging Config
+        logging.basicConfig(filename= f'/Temp/Debug.log', level=logging.DEBUG)
 
         #Check for updates and update the neural nets
         try:
+            network_folder = "Netzwerke"
+            if not os.path.exists(network_folder):
+                os.mkdir(network_folder)
             update_neural_nets()
         except:
             print('Could not update neuralnets! Check your internet connection.\n', 'Start with old ones.')
-            logging.warning('Could not update neuralnets! Check your internet connection.\n Start with old ones.')
 
                      
         hernia_analysis()
@@ -377,7 +379,7 @@ try:
 # Catch the error and log it to a file in the main Directory
 except Exception as Argument: 
     #open the error txt file to write to
-    f = open("D:\\Hernien_Analyse_Single\Error_file.txt", "a")
+    f = open("Hernien_Analyse_Single\Error_file.txt", "a")
     #Write into the error file
     f.write(str(Argument))
     #close the error file
