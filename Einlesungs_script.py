@@ -32,7 +32,7 @@ def ask_continue():
 
 def update_neural_nets():
     sources = ['https://biomedisa.org/media/img_hernie.h5','https://biomedisa.org/media/Hernien_detector_x.h5','https://biomedisa.org/media/Hernien_detector_z.h5']
-    destinations = [r"\Netzwerke\img_hernie.h5",r"\Netzwerke\hernien_detector_x.h5",r"\Netzwerke\hernien_detector_z.h5"]
+    destinations = [r"Netzwerke\img_hernie.h5",r"Netzwerke\hernien_detector_x.h5",r"Netzwerke\hernien_detector_z.h5"]
     for src, dst in zip(sources,destinations):
         update = False
         if os.path.exists(dst):
@@ -217,7 +217,7 @@ def hernia_analysis():
 
     logging.debug('Starting Samuels script.')
     #Execute Samuels script automaticaly and combine results
-    sam = run([r"\hernia-repair\Hernienauswertung_v0_12.exe",
+    sam = run([r"hernia-repair\Hernienauswertung_v0_12.exe",
                     observation_path['Nativ']['dcm_dir'], 
                     observation_path['Valsalva']['dcm_dir']
                 ])
@@ -248,8 +248,8 @@ def hernia_analysis():
         
         
         #Create the classification proposal, in form of a tif
-        net = run(["python",r"\biomedisa\demo\biomedisa_deeplearning.py", 
-                    observation_path[observation]['dcm_dir'], r"\Netzwerke\img_hernie.h5", "-p","-bs","6"]
+        net = run(["python",r"biomedisa\demo\biomedisa_deeplearning.py", 
+                    observation_path[observation]['dcm_dir'], r"Netzwerke\img_hernie.h5", "-p","-bs","6"]
                     )
         
         
@@ -263,14 +263,14 @@ def hernia_analysis():
         
         #Create nativ mesh, in vtk format for Paraview
         print(f'Creating Mesh...')
-        mesh = run(["python",r"\hernia-repair\create_mesh.py", 
+        mesh = run(["python",r"hernia-repair\create_mesh.py", 
                     observation_path[observation]['tif'], observation_path[observation]['vtk'], observation_path[observation]['slice_thickness'] ]
                     )
 
         #Create image using Paraview
         print(f'Creating Image...')
         screenshot = run(["python",
-                        r"\hernia-repair\paraview_screenshot.py",
+                        r"hernia-repair\paraview_screenshot.py",
                         observation_path[observation]['vtk'],
                         observation_path[observation]['png']
                         ])
@@ -290,7 +290,7 @@ def hernia_analysis():
         #Annotate the images
         print('Annotating image...')
         annotate = run(["python",
-                        r"\hernia-repair\Prediction.py",
+                        r"hernia-repair\Prediction.py",
                         observation,
                         observation_path[observation]['dcm_dir'],
                         observation_path[observation]['length_dir'],
@@ -358,7 +358,7 @@ try:
             os.mkdir(main_folder) 
 
         #Set the logging Config
-        logging.basicConfig(filename= f'/Temp/Debug.log', level=logging.DEBUG)
+        logging.basicConfig(filename= f'\\Temp\\Debug.log', level=logging.DEBUG)
 
         #Check for updates and update the neural nets
         try:
