@@ -13,7 +13,7 @@ import glob
 import tkinter as tk
 import logging
 from tkinter.filedialog import askdirectory
-from subprocess import call
+from subprocess import run
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
 from dateutil import tz
@@ -217,7 +217,7 @@ def hernia_analysis():
 
     logging.debug('Starting Samuels script.')
     #Execute Samuels script automaticaly and combine results
-    sam = call([r"\hernia-repair\Hernienauswertung_v0_12.exe",
+    sam = run([r"\hernia-repair\Hernienauswertung_v0_12.exe",
                     observation_path['Nativ']['dcm_dir'], 
                     observation_path['Valsalva']['dcm_dir']
                 ])
@@ -248,7 +248,7 @@ def hernia_analysis():
         
         
         #Create the classification proposal, in form of a tif
-        net = call(["python",r"\biomedisa\demo\biomedisa_deeplearning.py", 
+        net = run(["python",r"\biomedisa\demo\biomedisa_deeplearning.py", 
                     observation_path[observation]['dcm_dir'], r"\Netzwerke\img_hernie.h5", "-p","-bs","6"]
                     )
         
@@ -263,13 +263,13 @@ def hernia_analysis():
         
         #Create nativ mesh, in vtk format for Paraview
         print(f'Creating Mesh...')
-        mesh = call(["python",r"\hernia-repair\create_mesh.py", 
+        mesh = run(["python",r"\hernia-repair\create_mesh.py", 
                     observation_path[observation]['tif'], observation_path[observation]['vtk'], observation_path[observation]['slice_thickness'] ]
                     )
 
         #Create image using Paraview
         print(f'Creating Image...')
-        screenshot = call(["python",
+        screenshot = run(["python",
                         r"\hernia-repair\paraview_screenshot.py",
                         observation_path[observation]['vtk'],
                         observation_path[observation]['png']
@@ -289,7 +289,7 @@ def hernia_analysis():
 
         #Annotate the images
         print('Annotating image...')
-        annotate = call(["python",
+        annotate = run(["python",
                         r"\hernia-repair\Prediction.py",
                         observation,
                         observation_path[observation]['dcm_dir'],
