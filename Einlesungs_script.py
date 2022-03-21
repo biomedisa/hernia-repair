@@ -358,7 +358,7 @@ try:
             os.mkdir(main_folder) 
 
         #Set the logging Config
-        logging.basicConfig(filename= f'\\Temp\\Debug.log', level=logging.DEBUG)
+        logging.basicConfig(filename= f'Temp\\Debug.log', level=logging.DEBUG)
 
         #Check for updates and update the neural nets
         try:
@@ -379,7 +379,7 @@ try:
 # Catch the error and log it to a file in the main Directory
 except Exception as Argument: 
     #open the error txt file to write to
-    f = open("Hernien_Analyse_Single\Error_file.txt", "a")
+    f = open("Temp\Error_file.txt", "a")
     #Write into the error file
     f.write(str(Argument))
     #close the error file
