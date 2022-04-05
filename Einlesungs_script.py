@@ -32,7 +32,7 @@ def ask_continue():
 
 def update_neural_nets():
     sources = ['https://biomedisa.org/media/img_hernie.h5','https://biomedisa.org/media/Hernien_detector_x.h5','https://biomedisa.org/media/Hernien_detector_z.h5']
-    destinations = [f"C:\\os.environ['userprofile']\\Netzwerke\\img_hernie.h5",f"C:\\os.environ['userprofile']\\Netzwerke\\hernien_detector_x.h5",f"C:\\os.environ['userprofile']\\Netzwerke\\hernien_detector_z.h5"]
+    destinations = [f"{os.environ['userprofile']}\\Netzwerke\\img_hernie.h5",f"{os.environ['userprofile']}\\Netzwerke\\hernien_detector_x.h5",f"{os.environ['userprofile']}\\Netzwerke\\hernien_detector_z.h5"]
     for src, dst in zip(sources,destinations):
         update = False
         if os.path.exists(dst):
@@ -355,7 +355,7 @@ try:
         start_time = datetime.now()
 
         #Set the main save directory    
-        main_folder = f"C:\\{os.environ['userprofile']}\\Hernien_Analyse_Single"
+        main_folder = f"{os.environ['userprofile']}\\Hernien_Analyse_Single"
         if not os.path.exists(main_folder):
             os.mkdir(main_folder) 
 
@@ -364,7 +364,7 @@ try:
 
         #Check for updates and update the neural nets
         try:
-            network_folder = f"C:\\os.environ['userprofile']\\git\\Netzwerke"
+            network_folder = f"{os.environ['userprofile']}\\git\\Netzwerke"
             if not os.path.exists(network_folder):
                 os.mkdir(network_folder)
             update_neural_nets()
