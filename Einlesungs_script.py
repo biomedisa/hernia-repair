@@ -219,14 +219,14 @@ def hernia_analysis():
 
     logging.debug('Starting Samuels script.')
     #Execute Samuels script automaticaly and combine results
-    sam = run([f"{os.environ['userprofile']}\\git\\hernia-repair\\Hernienauswertung_v0_13.exe",
+    sam = run([f'{os.environ["userprofile"]}\\git\\hernia-repair\\Hernienauswertung_v0_13.exe',
                     observation_path['Nativ']['dcm_dir'], 
                     observation_path['Valsalva']['dcm_dir']
                 ])
     logging.debug('Finished Samuels Script.')
   
     #Set the saving paths for the optained data
-    temp_paths = sorted(os.listdir(f'{os.environ['userprofile']}\\git\\Temp')) 
+    temp_paths = sorted(os.listdir(f'{os.environ["userprofile"]}\\git\\Temp')) 
     temp_path_to_archiv = temp_paths[0]
     temp_path_to_evaluation = temp_paths[1]
 
@@ -250,8 +250,8 @@ def hernia_analysis():
         
         
         #Create the classification proposal, in form of a tif
-        net = run(["python",f"{os.environ['userprofile']}\\git\\biomedisa\\demo\\biomedisa_deeplearning.py", 
-                    observation_path[observation]['dcm_dir'], f"{os.environ['userprofile']}\\git\\Netzwerke\\img_hernie.h5", "-p","-bs","6"]
+        net = run(["python",f'{os.environ["userprofile"]}\\git\\biomedisa\\demo\\biomedisa_deeplearning.py', 
+                    observation_path[observation]['dcm_dir'], f'{os.environ["userprofile"]}\\git\\Netzwerke\\img_hernie.h5', "-p","-bs","6"]
                     )
         
         
@@ -265,14 +265,14 @@ def hernia_analysis():
         
         #Create nativ mesh, in vtk format for Paraview
         print(f'Creating Mesh...')
-        mesh = run(["python",f"{os.environ['userprofile']}\\git\\hernia-repair\\create_mesh.py", 
+        mesh = run(["python",f'{os.environ["userprofile"]}\\git\\hernia-repair\\create_mesh.py', 
                     observation_path[observation]['tif'], observation_path[observation]['vtk'], observation_path[observation]['slice_thickness'] ]
                     )
 
         #Create image using Paraview
         print(f'Creating Image...')
         screenshot = run(["python",
-                        f"{os.environ['userprofile']}\\git\\hernia-repair\\paraview_screenshot.py",
+                        f'{os.environ["userprofile"]}\\git\\hernia-repair\\paraview_screenshot.py',
                         observation_path[observation]['vtk'],
                         observation_path[observation]['png']
                         ])
@@ -292,7 +292,7 @@ def hernia_analysis():
         #Annotate the images
         print('Annotating image...')
         annotate = run(["python",
-                        f"{os.environ['userprofile']}\\git\\hernia-repair\\Prediction.py",
+                        f'{os.environ["userprofile"]}\\git\\hernia-repair\\Prediction.py',
                         observation,
                         observation_path[observation]['dcm_dir'],
                         observation_path[observation]['length_dir'],
@@ -349,7 +349,7 @@ try:
         start_time = datetime.now()
 
         #Set the main save directory    
-        main_folder = f"{os.environ['userprofile']}\\Hernien_Analyse_Single"
+        main_folder = f'{os.environ["userprofile"]}\\Hernien_Analyse_Single'
         if not os.path.exists(main_folder):
             os.mkdir(main_folder) 
 
@@ -358,7 +358,7 @@ try:
 
         #Check for updates and update the neural nets
         try:
-            network_folder = f"{os.environ['userprofile']}\\git\\Netzwerke"
+            network_folder = f'{os.environ["userprofile"]}\\git\\Netzwerke'
             if not os.path.exists(network_folder):
                 os.mkdir(network_folder)
             update_neural_nets()
@@ -375,7 +375,7 @@ try:
 # Catch the error and log it to a file in the main Directory
 except Exception as Argument: 
     #open the error txt file to write to
-    f = open("Error_file.txt", "a")
+    f = open('Error_file.txt', 'a')
     #Write into the error file
     f.write(str(Argument))
     #close the error file
