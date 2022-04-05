@@ -32,7 +32,7 @@ def ask_continue():
 
 def update_neural_nets():
     sources = ['https://biomedisa.org/media/img_hernie.h5','https://biomedisa.org/media/Hernien_detector_x.h5','https://biomedisa.org/media/Hernien_detector_z.h5']
-    destinations = [f"{os.environ['userprofile']}\\Netzwerke\\img_hernie.h5",f"{os.environ['userprofile']}\\Netzwerke\\hernien_detector_x.h5",f"{os.environ['userprofile']}\\Netzwerke\\hernien_detector_z.h5"]
+    destinations = [f'{os.environ["userprofile"]}\\git\\Netzwerke\\img_hernie.h5',f'{os.environ["userprofile"]}\\git\\Netzwerke\\hernien_detector_x.h5',f'{os.environ["userprofile"]}\\git\\Netzwerke\\hernien_detector_z.h5']
     for src, dst in zip(sources,destinations):
         update = False
         if os.path.exists(dst):
