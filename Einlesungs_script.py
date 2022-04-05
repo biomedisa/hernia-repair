@@ -353,7 +353,7 @@ try:
         start_time = datetime.now()
 
         #Set the main save directory    
-        main_folder = "Hernien_Analyse_Single"
+        main_folder = "C:\\%Userprofile%\\Hernien_Analyse_Single"
         if not os.path.exists(main_folder):
             os.mkdir(main_folder) 
 
@@ -362,7 +362,7 @@ try:
 
         #Check for updates and update the neural nets
         try:
-            network_folder = "Netzwerke"
+            network_folder = "C:\\%Userprofile%\\git\\Netzwerke"
             if not os.path.exists(network_folder):
                 os.mkdir(network_folder)
             update_neural_nets()
@@ -379,7 +379,7 @@ try:
 # Catch the error and log it to a file in the main Directory
 except Exception as Argument: 
     #open the error txt file to write to
-    f = open("Temp\Error_file.txt", "a")
+    f = open("Temp\\Error_file.txt", "a")
     #Write into the error file
     f.write(str(Argument))
     #close the error file
