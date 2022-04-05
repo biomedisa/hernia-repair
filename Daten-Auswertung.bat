@@ -9,12 +9,12 @@ git pull
 cd ..
 
 
-call %Userprofile%\anaconda3\Scripts\activate.bat 
+call "%Userprofile%\anaconda3\Scripts\activate.bat" 
 call activate biomedisa
 
 rmdir /s /Q Temp
 mkdir Temp
 
-call python %Userprofile%\git\hernia-repair\Einlesungs_script.py
+call python "%Userprofile%\git\hernia-repair\Einlesungs_script.py"
 
 pause
