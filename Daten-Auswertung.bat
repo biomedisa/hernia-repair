@@ -7,10 +7,9 @@ cd biomedisa
 git checkout main
 git pull
 cd ..
-cd ..
 
 
-call anaconda3\Scripts\activate.bat \anaconda3
+call C:%Userprofile%\anaconda3\Scripts\activate.bat \anaconda3
 call activate biomedisa
 
 cd git
@@ -18,7 +17,7 @@ cd git
 rmdir /s /Q Temp
 mkdir Temp
 
-call python \hernia-repair\Einlesungs_script.py
+call python C:%Userprofile%\git\hernia-repair\Einlesungs_script.py
 
 rmdir /s /Q Temp
 
