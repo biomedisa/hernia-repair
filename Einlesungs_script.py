@@ -85,17 +85,18 @@ def load_directorys():
             if not 'first_level' in locals():
                 #name the directory containing all results after patient name + Birthdate     	      
                 first_level = f'{main_folder}\\{ds.PatientName}_{ds.PatientBirthDate}'
+                '''
                 first_level = first_level.replace('^','_')
                 first_level = first_level.replace('/',' ')
                 first_level = first_level.replace(' ','_')
-                '''
                 first_level = first_level.replace('ü','ue')
                 first_level = first_level.replace('ä','ae')
                 first_level = first_level.replace('ö','oe')
                 first_level = first_level.replace('ß','ss')
                 '''
-            second_level = f'{first_level}\\{ds.StudyDate}_{ds.StudyDescription}'
-            #second_level = second_level.replace('/',' ') 
+            if not 'second_level' in locals():    
+                second_level = f'{first_level}\\{ds.StudyDate}_{ds.StudyDescription}'
+                #second_level = second_level.replace('/',' ')
             third_level = f'{second_level}\\{ds.SeriesNumber}_{ds.SeriesDescription}'
             #third_level = third_level.replace('/',' ') 
             #third_level = third_level.replace('|','_')
