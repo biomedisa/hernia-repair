@@ -32,7 +32,7 @@ def ask_continue():
 
 def update_neural_nets():
     sources = ['https://biomedisa.org/media/img_hernie.h5','https://biomedisa.org/media/Hernien_detector_x.h5','https://biomedisa.org/media/Hernien_detector_z.h5']
-    destinations = ["C:\\%Userprofile%\\Netzwerke\\img_hernie.h5","C:\\%Userprofile%\\Netzwerke\\hernien_detector_x.h5",r"C:\\%Userprofile%\\Netzwerke\\hernien_detector_z.h5"]
+    destinations = [f"C:\\os.environ['userprofile']\\Netzwerke\\img_hernie.h5",f"C:\\os.environ['userprofile']\\Netzwerke\\hernien_detector_x.h5",f"C:\\os.environ['userprofile']\\Netzwerke\\hernien_detector_z.h5"]
     for src, dst in zip(sources,destinations):
         update = False
         if os.path.exists(dst):
@@ -219,7 +219,7 @@ def hernia_analysis():
 
     logging.debug('Starting Samuels script.')
     #Execute Samuels script automaticaly and combine results
-    sam = run(["C:\\%Userprofile\\git\\hernia-repair\\Hernienauswertung_v0_12.exe",
+    sam = run([r"hernia-repair\Hernienauswertung_v0_12.exe",
                     observation_path['Nativ']['dcm_dir'], 
                     observation_path['Valsalva']['dcm_dir']
                 ])
@@ -355,7 +355,7 @@ try:
         start_time = datetime.now()
 
         #Set the main save directory    
-        main_folder = "C:\\%Userprofile%\\Hernien_Analyse_Single"
+        main_folder = f"C:\\{os.environ['userprofile']}\\Hernien_Analyse_Single"
         if not os.path.exists(main_folder):
             os.mkdir(main_folder) 
 
@@ -364,7 +364,7 @@ try:
 
         #Check for updates and update the neural nets
         try:
-            network_folder = "C:\\%Userprofile%\\git\\Netzwerke"
+            network_folder = f"C:\\os.environ['userprofile']\\git\\Netzwerke"
             if not os.path.exists(network_folder):
                 os.mkdir(network_folder)
             update_neural_nets()
