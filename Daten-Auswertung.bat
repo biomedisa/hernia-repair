@@ -15,6 +15,8 @@ call activate biomedisa
 rmdir /s /Q Temp
 mkdir Temp
 
+cd Temp
+
 call python "%Userprofile%\git\hernia-repair\Einlesungs_script.py"
 
 pause
