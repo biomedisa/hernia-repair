@@ -344,7 +344,11 @@ def hernia_analysis():
 #Try loop in case of error
 try:
     if __name__ == "__main__":
-
+        
+        #Clear the consoloutput
+        os.system('cls')
+        print('Updating neuralnets')
+        
         #Get time to measure execution time
         start_time = datetime.now()
 
