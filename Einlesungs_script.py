@@ -32,7 +32,7 @@ def ask_continue():
 
 def update_neural_nets():
     sources = ['https://biomedisa.org/media/img_hernie.h5','https://biomedisa.org/media/Hernien_detector_x.h5','https://biomedisa.org/media/Hernien_detector_z.h5']
-    destinations = [r"Netzwerke\img_hernie.h5",r"Netzwerke\hernien_detector_x.h5",r"Netzwerke\hernien_detector_z.h5"]
+    destinations = ["C:\\%Userprofile%\\Netzwerke\\img_hernie.h5","C:\\%Userprofile%\\Netzwerke\\hernien_detector_x.h5",r"C:\\%Userprofile%\\Netzwerke\\hernien_detector_z.h5"]
     for src, dst in zip(sources,destinations):
         update = False
         if os.path.exists(dst):
@@ -85,6 +85,8 @@ def load_directorys():
             if not 'first_level' in locals():
                 #name the directory containing all results after patient name + Birthdate     	      
                 first_level = f'{main_folder}\\{ds.PatientName}_{ds.PatientBirthDate}'
+                first_level = first_level.encode()
+                '''
                 first_level = first_level.replace('^','_')
                 first_level = first_level.replace('/',' ')
                 first_level = first_level.replace(' ','_') 
@@ -92,7 +94,7 @@ def load_directorys():
                 first_level = first_level.replace('ä','ae')
                 first_level = first_level.replace('ö','oe')
                 first_level = first_level.replace('ß','ss')
-                first_level = first_level.replace('/',' ') 
+                '''
             second_level = f'{first_level}\\{ds.StudyDate}_{ds.StudyDescription}'
             second_level = second_level.replace('/',' ') 
             third_level = f'{second_level}\\{ds.SeriesNumber}_{ds.SeriesDescription}'
@@ -217,7 +219,7 @@ def hernia_analysis():
 
     logging.debug('Starting Samuels script.')
     #Execute Samuels script automaticaly and combine results
-    sam = run([r"hernia-repair\Hernienauswertung_v0_12.exe",
+    sam = run(["C:\\%Userprofile\\git\\hernia-repair\\Hernienauswertung_v0_12.exe",
                     observation_path['Nativ']['dcm_dir'], 
                     observation_path['Valsalva']['dcm_dir']
                 ])
