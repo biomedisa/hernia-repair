@@ -84,7 +84,7 @@ def load_directorys():
             ds = pydicom.filereader.dcmread(file)
             if not 'first_level' in locals():
                 #name the directory containing all results after patient name + Birthdate     	      
-                first_level = f'{main_folder}\\{ds.PatientName.encode()}_{ds.PatientBirthDate.encode()}'
+                first_level = f'{main_folder}\\{ds.PatientName}_{ds.PatientBirthDate}'
                 '''
                 first_level = first_level.replace('^','_')
                 first_level = first_level.replace('/',' ')
@@ -94,9 +94,9 @@ def load_directorys():
                 first_level = first_level.replace('ö','oe')
                 first_level = first_level.replace('ß','ss')
                 '''
-            second_level = f'{first_level}\\{str(ds.StudyDate).encode()}_{str(ds.StudyDescription).encode()}'
+            second_level = f'{first_level}\\{ds.StudyDate}_{ds.StudyDescription}'
             #second_level = second_level.replace('/',' ') 
-            third_level = f'{second_level}\\{str(ds.SeriesNumber).encode()}_{str(ds.SeriesDescription).encode()}'
+            third_level = f'{second_level}\\{ds.SeriesNumber}_{ds.SeriesDescription}'
             #third_level = third_level.replace('/',' ') 
             #third_level = third_level.replace('|','_')
             #third_level = third_level.replace('*',' ') 
