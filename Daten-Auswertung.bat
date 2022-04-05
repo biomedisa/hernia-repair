@@ -4,7 +4,7 @@ git pull
 cd ..
 
 cd biomedisa
-git checkout main
+git checkout master
 git pull
 cd ..
 
