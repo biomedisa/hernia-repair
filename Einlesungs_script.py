@@ -219,14 +219,14 @@ def hernia_analysis():
 
     logging.debug('Starting Samuels script.')
     #Execute Samuels script automaticaly and combine results
-    sam = run([r"hernia-repair\Hernienauswertung_v0_13.exe",
+    sam = run([f"{os.environ['userprofile']}\\git\\hernia-repair\\Hernienauswertung_v0_13.exe",
                     observation_path['Nativ']['dcm_dir'], 
                     observation_path['Valsalva']['dcm_dir']
                 ])
     logging.debug('Finished Samuels Script.')
   
     #Set the saving paths for the optained data
-    temp_paths = sorted(os.listdir('.\\Temp')) 
+    temp_paths = sorted(os.listdir(f'{os.environ['userprofile']}\\git\\Temp')) 
     temp_path_to_archiv = temp_paths[0]
     temp_path_to_evaluation = temp_paths[1]
 
@@ -250,8 +250,8 @@ def hernia_analysis():
         
         
         #Create the classification proposal, in form of a tif
-        net = run(["python",r"biomedisa\demo\biomedisa_deeplearning.py", 
-                    observation_path[observation]['dcm_dir'], r"Netzwerke\img_hernie.h5", "-p","-bs","6"]
+        net = run(["python",f"{os.environ['userprofile']}\\git\\biomedisa\\demo\\biomedisa_deeplearning.py", 
+                    observation_path[observation]['dcm_dir'], f"{os.environ['userprofile']}\\git\\Netzwerke\\img_hernie.h5", "-p","-bs","6"]
                     )
         
         
@@ -265,14 +265,14 @@ def hernia_analysis():
         
         #Create nativ mesh, in vtk format for Paraview
         print(f'Creating Mesh...')
-        mesh = run(["python",r"hernia-repair\create_mesh.py", 
+        mesh = run(["python",f"{os.environ['userprofile']}\\git\\hernia-repair\\create_mesh.py", 
                     observation_path[observation]['tif'], observation_path[observation]['vtk'], observation_path[observation]['slice_thickness'] ]
                     )
 
         #Create image using Paraview
         print(f'Creating Image...')
         screenshot = run(["python",
-                        r"hernia-repair\paraview_screenshot.py",
+                        f"{os.environ['userprofile']}\\git\\hernia-repair\\paraview_screenshot.py",
                         observation_path[observation]['vtk'],
                         observation_path[observation]['png']
                         ])
@@ -292,7 +292,7 @@ def hernia_analysis():
         #Annotate the images
         print('Annotating image...')
         annotate = run(["python",
-                        r"hernia-repair\Prediction.py",
+                        f"{os.environ['userprofile']}\\git\\hernia-repair\\Prediction.py",
                         observation,
                         observation_path[observation]['dcm_dir'],
                         observation_path[observation]['length_dir'],
@@ -306,12 +306,6 @@ def hernia_analysis():
 
     #Get the crossection image as the layer with the biggest offset between nativ and valsalva
     creat_ct_crosssection(f'{path_to_archiv}\\sliceID and sliceName maxDisplacement.txt',observation_path)
-    
-    '''
-    #Add used dcm paths to top of the upper image
-    #Removed for now
-    #annotate_info(f'{path_to_evaluation}\\Verschiebung und Verzerrung.png',observation_path['Nativ']['dcm_dir'],observation_path['Valsalva']['dcm_dir'])
-    '''
 
     #Load all images
     sam_img = plt.imread(f'{path_to_evaluation}\\Verschiebung und Verzerrung.png')
@@ -333,7 +327,7 @@ def hernia_analysis():
     plt.imsave(f'{path_to_evaluation}\\Finale_Auswertung.png',combined_img)
 
     #console Output
-    print('')
+    print('Moveing used Data')
 
 
     #Move used Data into the archiv folder
