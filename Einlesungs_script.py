@@ -226,7 +226,7 @@ def hernia_analysis():
     logging.debug('Finished Samuels Script.')
   
     #Set the saving paths for the optained data
-    temp_paths = sorted(os.listdir('\\Temp')) 
+    temp_paths = sorted(os.listdir('.\\Temp')) 
     temp_path_to_archiv = temp_paths[0]
     temp_path_to_evaluation = temp_paths[1]
 
