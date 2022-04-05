@@ -219,7 +219,7 @@ def hernia_analysis():
 
     logging.debug('Starting Samuels script.')
     #Execute Samuels script automaticaly and combine results
-    sam = run([r"hernia-repair\Hernienauswertung_v0_12.exe",
+    sam = run([r"hernia-repair\Hernienauswertung_v0_13.exe",
                     observation_path['Nativ']['dcm_dir'], 
                     observation_path['Valsalva']['dcm_dir']
                 ])
