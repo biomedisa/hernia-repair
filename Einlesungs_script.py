@@ -257,9 +257,7 @@ def hernia_analysis():
         
         #Move the segmentiation propasal into the correct folder
         print(f'Moveing temporary files...')
-        shutil.move(os.path.join(
-                        os.path.dirname(observation_path[observation]['dcm_dir']),
-                        'final.') + os.path.splitext(observation_path[observation]['dcm_dir']) + '.tif',
+        shutil.move(f'{os.path.dirname(observation_path[observation]['dcm_dir']}\\final.{os.path.splitext(observation_path[observation]['dcm_dir']}.tif',
                         observation_path[observation]['tif'])
         
         
