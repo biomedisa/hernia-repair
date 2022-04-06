@@ -252,14 +252,14 @@ def hernia_analysis():
         #Create the classification proposal, in form of a tif
         net = run([
                         'python',f'{os.environ["userprofile"]}\\git\\biomedisa\\demo\\biomedisa_deeplearning.py', 
-                        observation_path[observation]['dcm_dir'], f'{os.environ["userprofile"]}\\git\\Netzwerke\\img_hernie.h5', "-p","-bs","6"
+                        observation_path[observation]["dcm_dir"], f'{os.environ["userprofile"]}\\git\\Netzwerke\\img_hernie.h5', "-p","-bs","6"
                    ])
         
         
         #Move the segmentiation propasal into the correct folder
         print(f'Moveing temporary files...')
-        shutil.move(f'{os.path.dirname(observation_path[observation]['dcm_dir'])}\\final.{os.path.splitext(observation_path[observation]['dcm_dir'])}.tif',
-                        observation_path[observation]['tif'])
+        shutil.move(f'{os.path.dirname(observation_path[observation]["dcm_dir"])}\\final.{os.path.splitext(observation_path[observation]["dcm_dir"])}.tif',
+                        observation_path[observation]["tif"])
         
         
         #Create nativ mesh, in vtk format for Paraview
