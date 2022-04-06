@@ -259,7 +259,7 @@ def hernia_analysis():
         print(f'Moveing temporary files...')
         shutil.move(os.path.join(
                         os.path.dirname(observation_path[observation]['dcm_dir']),
-                        'final.',os.path.basename(observation_path[observation]['dcm_dir']),'.tif'),
+                        'final.') + os.path.splitext(observation_path[observation]['dcm_dir']) + '.tif',
                         observation_path[observation]['tif'])
         
         
