@@ -1,4 +1,5 @@
 import sys
+import os
 
 sys.path.append(f'{os.environ["userprofile"]}\\Paraview\\ParaView 5.10.1-Windows-Python3.9-msvc2017-AMD64\\bin\\Lib')
 sys.path.append(f'{os.environ["userprofile"]}\\Paraview\\ParaView 5.10.1-Windows-Python3.9-msvc2017-AMD64\\bin\\Lib\\site-packages')
