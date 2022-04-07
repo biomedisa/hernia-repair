@@ -1,9 +1,8 @@
 import sys
 import os
 
-sys.path.append(f'{os.environ["userprofile"]}\\Paraview\\ParaView 5.10.1-Windows-Python3.9-msvc2017-AMD64\\bin')
-sys.path.append(f'{os.environ["userprofile"]}\\Paraview\\ParaView 5.10.1-Windows-Python3.9-msvc2017-AMD64\\bin\\Lib')
-sys.path.append(f'{os.environ["userprofile"]}\\Paraview\\ParaView 5.10.1-Windows-Python3.9-msvc2017-AMD64\\bin\\Lib\\site-packages')
+sys.path.insert(0,f'{os.environ["userprofile"]}\\Paraview\\ParaView 5.10.1-Windows-Python3.9-msvc2017-AMD64\\bin\\Lib')
+sys.path.insert(0,f'{os.environ["userprofile"]}\\Paraview\\ParaView 5.10.1-Windows-Python3.9-msvc2017-AMD64\\bin\\Lib\\site-packages')
 print(sys.path)
 
 from paraview.simple import *
