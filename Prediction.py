@@ -139,9 +139,9 @@ def annotate_image(observation,path_to_dcm,path_to_length_dir,path_to_tif,path_t
     draw = ImageDraw.Draw(to_annotate)
     font = ImageFont.truetype("arial.ttf",size=20)
     draw.text(xy=(to_annotate.width/2,0),
-            text= observation + 
-            '\nBerechnete Größen:\n' + 'Breite:' + str(round(hernia_width_by_nn,1)) + 'cm     Länge:'+ str(round(hernia_height_by_nn,1)) + 'cm    Bruchpforten Fläche:' + str(round(hernia_area_by_nn,1)) + 'cm²' +
-            '\nGrößen im Bild:\n' + 'Instabile_Fläche:'+ str(round(instable_area_by_label*0.01,1)) + 'cm²    Projezierte Fläche:' + str(round(hernia_area_by_label*0.01,1)) + 'cm²',     
+            text= (f'{observation}\n'
+                   f'(Berechnete Größen) Breite: {str(round(hernia_width_by_nn,1))}cm   Länge: {str(round(hernia_height_by_nn,1))}cm    Bruchpforten Fläche: {str(round(hernia_area_by_nn,1))}cm²\n'
+                   f'(Größen im Bild) Instabile_Fläche: {str(round(instable_area_by_label*0.01,1))}cm²   Projezierte Fläche: {str(round(hernia_area_by_label*0.01,1))}cm²',     
             fill=(0,0,0),
             anchor="ma",
             font=font,
