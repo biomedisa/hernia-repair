@@ -340,7 +340,7 @@ def hernia_analysis():
         shutil.move(file, path_to_archiv)
     
     #show final result
-    os.system(f'"{path_to_evaluation}\\Finale_Auswertung.png"')
+    os.startfile("{path_to_evaluation}\\Finale_Auswertung.png")
 
 #Try loop in case of error
 try:
