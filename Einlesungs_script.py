@@ -167,9 +167,33 @@ def creat_ct_crosssection(path_to_layer_txt,observation_path):
         img.save(observation_path[observation]['crosssection'],format='png')
 
 def create_numpy_layer(path_to_data):        
-        
+    file = open(path_to_data,mode='r')
+    data_string = file.read()
+    data_list = data_string.split("\n")
+    vector_array = [data_list[i].split(',') for i in range(512)]
+    vector_array = np.array(vector_array, dtype=float)
+    data_array = np.empty((512,512),dtype=float)
+    for vector in range(0,512):
+        data_array[:,vector] = np.sqrt(vector_array[:,vector]**2 + vector_array[:,512+vector]**2) 
+    return data_array
+
 def create_distortion_array(path_to_dir, number_of_slices, max_slice_id, path_to_save):
- 
+    Volume = np.zeros((number_of_slices,512,512),dtype=float)
+    old_ind = -1
+    for current_ind, slice_number in enumerate(range(max_slice_id+1-number_of_slices,max_slice_id + 1,1)):
+        current_path = f'{path_to_dir}\\Verschiebung_{str(slice_number).zfill(3)}.csv'
+        if os.path.exists(current_path):
+            Volume[current_ind,...] = create_numpy_layer(current_path) 
+            if old_ind!=-1:
+                distance = current_ind - old_ind
+                for step in range(1, distance, 1):
+                    Volume[old_ind + step,...] = ( (distance - step)*Volume[old_ind,...] + (step)*Volume[current_ind,...] ) / distance 
+            old_ind = current_ind
+    if Volume[-1,...].all() == 0: 
+        distance = Volume.shape[0]-1 - old_ind
+        for step in range(1, distance + 1, 1):
+            Volume[old_ind + step,...] = Volume[old_ind,...]*(1-(step/distance))
+    imsave(path_to_save,Volume)
         
         
 def merge_tifs(path_to_volume,path_to_distortion_array,path_to_merged_tif):
