@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
-import os
 
+#imports
+import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 import pydicom
 import time,shutil,ssl
@@ -9,6 +10,7 @@ import requests
 import urllib.request
 import numpy as np
 import matplotlib.pyplot as plt
+from tifffile import imsave,imread
 import glob
 import tkinter as tk
 import logging
@@ -18,6 +20,7 @@ from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
 from dateutil import tz
 
+#Update and interface functions
 def ask_continue():
     print(f'Do You want to continue (y) or close the Application (n)?\n')
     user_input = input()
@@ -64,6 +67,8 @@ def update_neural_nets():
             with urllib.request.urlopen(src,context=ssl._create_unverified_context()) as response,open(dst,'wb') as out_file: 
                 shutil.copyfileobj(response,out_file)
 
+                
+                
 def load_directorys():
     #Ask the user for the Path to the Data via Tkinterface
     tk.Tk().withdraw()
@@ -131,10 +136,10 @@ def compare_slice_amount(nativ_dcm_dir, valsalva_dcm_dir):
     nativ_slice_amount = len(os.listdir(nativ_dcm_dir))
     valsalva_slice_amount = len(os.listdir(valsalva_dcm_dir))
     if nativ_slice_amount > valsalva_slice_amount:
-        print(f'There are {nativ_slice_amount - valsalva_slice_amount} more nativ than valsalva scans! \n This will impact the result. \n\n')
+        print(f'There are {nativ_slice_amount - valsalva_slice_amount} more nativ than valsalva({valsalva_slice_amount}) scans! \n This will impact the result. \n\n')
         ask_continue()
     elif nativ_slice_amount < valsalva_slice_amount:
-        print(f'There are {valsalva_slice_amount - nativ_slice_amount} more nativ than valsalva scans! \n This will impact the result. \n\n')
+        print(f'There are {valsalva_slice_amount - nativ_slice_amount} more valsalva than nativ({nativ_slice_amount}) scans! \n This will impact the result. \n\n')
         ask_continue()
 
 def creat_ct_crosssection(path_to_layer_txt,observation_path):
@@ -161,21 +166,20 @@ def creat_ct_crosssection(path_to_layer_txt,observation_path):
         #save the crosssection
         img.save(observation_path[observation]['crosssection'],format='png')
 
-def annotate_info(path_to_img,used_dmc_path_1,used_dmc_path_2):
-        img = Image.open(path_to_img)
-        #annotate the image
-        draw = ImageDraw.Draw(img)
-        font = ImageFont.truetype("arial.ttf",size=20)
-        draw.text(xy=(img.width,0),
-                text= f'Benutzter Datensatz: {used_dmc_path_1} und {used_dmc_path_2}',
-                fill=(255,255,255),
-                anchor='rt',
-                direction='ttb',
-                font=font,
-                )
-        #save the crosssection
-        img.save(path_to_img,format='png')
-
+def create_numpy_layer(path_to_data):        
+        
+def create_distortion_array(path_to_dir, number_of_slices, max_slice_id, path_to_save):
+ 
+        
+        
+def merge_tifs(path_to_volume,path_to_distortion_array,path_to_merged_tif):
+    img = imread(path_to_volume)
+    distortion_array = imread(path_to_distortion_array)
+    img[img!=0] = distortion_array[img!=0]
+    imsave(path_to_merged_tif,img)
+    
+        
+        
 def hernia_analysis():
     #Set the paths for both observations
     Observations = ["Nativ","Valsalva"]
@@ -186,15 +190,18 @@ def hernia_analysis():
     for observation in sorted(Observations):            
         #Create Paths to the mesh and the img
         observation_path[observation]['tif'] = f'{first_level}\\final.{observation}.tif'
+        observation_path[observation]['projection_tif'] = f'{first_level}\\{observation}_projection.tif'        
         observation_path[observation]['vtk'] = f'{first_level}\\{observation}_for_paraview.vtk'
+        observation_path[observation]['projection_vtk'] = f'{first_level}\\{observation}_projection.vtk'        
         observation_path[observation]['png'] = f'{first_level}\\{observation}_front_view.png'
+        observation_path[observation]['projection_png'] = f'{first_level}\\{observation}_projection.png'        
         observation_path[observation]['length_dir'] = f'{first_level}\\{observation}_length'  
         observation_path[observation]['crosssection'] = f'{first_level}\\{observation}_crosssection.png'        
         observation_path[observation]['dcm_dir'] = askdirectory(initialdir = first_level, title=f'Select {observation} Directory')
         observation_path[observation]['slice_thickness'],\
         observation_path[observation]['y_dim'],\
         observation_path[observation]['x_dim'] = get_slice_dims(observation_path[observation]['dcm_dir'])
-
+        
         if not os.path.exists(observation_path[observation]['length_dir']):
             os.mkdir(observation_path[observation]['length_dir']) 
 
@@ -239,6 +246,11 @@ def hernia_analysis():
     shutil.move(temp_path_to_evaluation, path_to_evaluation)
     shutil.move(temp_path_to_archiv, path_to_archiv)    
     
+    #Create the distortion array
+    path_to_distortion_array = f'{path_to_archiv}\\distortion_array.tif'
+    create_distortion_array(path_to_archiv, len(os.listdir(obseravtion_path['Nativ']['dcm_dir']))), 
+                            lstrip(sorted(os.listdir(obseravtion_path['Nativ']['dcm_dir']))[-1])[:-4],
+                            path_to_distortion_array)
     
     #Run all subprocesses for both observations
     for observation in Observations:
@@ -263,21 +275,40 @@ def hernia_analysis():
         shutil.move(f'{os.path.dirname(temp_path_to_tif)}\\final.{os.path.basename(temp_path_to_tif)}.tif',
                         observation_path[observation]["tif"])
         
-        
-        #Create nativ mesh, in vtk format for Paraview
-        print(f'Creating Mesh...')
-        mesh = run(["python",f'{os.environ["userprofile"]}\\git\\hernia-repair\\create_mesh.py', 
+        #Create the Distortion Array and the distortion projection tif
+
+        merge_tifs(observation_path[observation]['tif'],path_to_distortion_array,observation_path[observation]['projection_tif'])     
+   
+        #Create meshes, in vtk format for Paraview
+        print(f'Creating Meshes...')
+        #Mesh of the Neural Network proposal
+        mesh1 = run(["python",f'{os.environ["userprofile"]}\\git\\hernia-repair\\create_mesh.py', 
                     observation_path[observation]['tif'], observation_path[observation]['vtk'],observation_path[observation]['x_dim'],
                     observation_path[observation]['y_dim'],observation_path[observation]['slice_thickness'] ]
                     )
-
-        #Create image using Paraview
-        print(f'Creating Image...')
-        screenshot = run(["python",
+        #Mesh of the distortion projection
+        mesh2 = run(["python",f'{os.environ["userprofile"]}\\git\\hernia-repair\\create_mesh.py', 
+                    observation_path[observation]['projection_tif'], observation_path[observation]['projection_vtk'],observation_path[observation]['x_dim'],
+                    observation_path[observation]['y_dim'],observation_path[observation]['slice_thickness'] ]
+                    )
+        
+        #Create images using Paraview
+        print(f'Creating Imagees...')
+        #image of the neural network projection
+        screenshot1 = run(["python",
                         f'{os.environ["userprofile"]}\\git\\hernia-repair\\paraview_screenshot.py',
                         observation_path[observation]['vtk'],
                         observation_path[observation]['png']
                         ])
+        
+        #image of the distortion projection
+        screenshot2 = run(["python",
+                        f'{os.environ["userprofile"]}\\git\\hernia-repair\\paraview_screenshot.py',
+                        observation_path[observation]['projection_vtk'],
+                        observation_path[observation]['projection_png']
+                        ])
+        
+        
 
         #Preprocess and Annotate the Paraview labeled images
         print(f'Scaling image...')
