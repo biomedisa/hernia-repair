@@ -272,7 +272,7 @@ def hernia_analysis():
     
     #Create the distortion array
     path_to_distortion_array = f'{path_to_archiv}\\distortion_array.tif'
-    create_distortion_array(path_to_archiv, len(os.listdir(obseravtion_path['Nativ']['dcm_dir']))), 
+    create_distortion_array(path_to_archiv, len(os.listdir(obseravtion_path['Nativ']['dcm_dir'])),
                             lstrip(sorted(os.listdir(obseravtion_path['Nativ']['dcm_dir']))[-1])[:-4],
                             path_to_distortion_array)
     
