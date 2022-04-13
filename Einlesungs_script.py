@@ -272,8 +272,8 @@ def hernia_analysis():
     
     #Create the distortion array
     path_to_distortion_array = f'{path_to_archiv}\\distortion_array.tif'
-    create_distortion_array(path_to_archiv, len(os.listdir(obseravtion_path['Nativ']['dcm_dir'])),
-                            lstrip(sorted(os.listdir(obseravtion_path['Nativ']['dcm_dir']))[-1])[:-4],
+    create_distortion_array(path_to_archiv, len(os.listdir(observation_path['Nativ']['dcm_dir'])),
+                            lstrip(sorted(os.listdir(observation_path['Nativ']['dcm_dir']))[-1])[:-4],
                             path_to_distortion_array)
     
     #Run all subprocesses for both observations
@@ -338,14 +338,14 @@ def hernia_analysis():
         print(f'Scaling images...')
         #Read the image
         observation_img = plt.imread(observation_path[observation]['png'])
-        projection_img  = plt.imread(obseravtion_path[observation]['png'])
+        projection_img  = plt.imread(observation_path[observation]['png'])
         #Reshape to match size of sam_img and to fit annotation
         if observation == 'Nativ':
             observation_img = np.pad(observation_img, ((50,0),(0,1),(0,0)), mode='constant',constant_values=1)
-            projection_img  = plt.imread(obseravtion_path[observation]['png'])
+            projection_img  = plt.imread(observation_path[observation]['png'])
         elif observation == 'Valsalva':
             observation_img = np.pad(observation_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1)
-            projection_img  = plt.imread(obseravtion_path[observation]['png'])
+            projection_img  = plt.imread(observation_path[observation]['png'])
         plt.imsave(observation_path[observation]['png'],observation_img)       
         plt.imsave(observation_path[observation]['projection_png'],projection_img)
 
