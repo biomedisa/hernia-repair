@@ -54,7 +54,7 @@ def CreateVTK(image,path_to_save,x_thickness,y_thickness,slice_thickness):
     sc = numpy_to_vtk(num_array=image.ravel(), deep=True, array_type=vtk.VTK_UNSIGNED_CHAR)
     imageData = vtk.vtkImageData()
     imageData.SetOrigin(0, 0, 0)
-    imageData.SetSpacing(y_thickness, x_thickness, slice_thickness)
+    imageData.SetSpacing(x_thickness, y_thickness, slice_thickness)
     #imageData.SetDimensions(zsh, ysh, xsh)
     imageData.SetExtent(0,xsh-1,0,ysh-1,0,zsh-1)
     imageData.GetPointData().SetScalars(sc)
