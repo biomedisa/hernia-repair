@@ -76,5 +76,5 @@ if __name__ == "__main__":
     data = imread(path_to_data)
 
     # create vtk file
-    CreateVTK(data, path_to_save,int(sys.argv[3]),int(sys.argv[4]),int(sys.argv[5]))
+    CreateVTK(data, path_to_save,float(sys.argv[3]),float(sys.argv[4]),float(sys.argv[5]))
 
