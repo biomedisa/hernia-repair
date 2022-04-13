@@ -41,7 +41,7 @@ def MarchingCubes(image,max_val):
     return finalPoly#confilter.GetOutput()
 
 
-def CreateVTK(image,path_to_save,slice_thickness):
+def CreateVTK(image,path_to_save,x_thickness,y_thickness,slice_thickness):
     
     #flip image
     image = np.flip(image, axis=(0))
@@ -54,7 +54,7 @@ def CreateVTK(image,path_to_save,slice_thickness):
     sc = numpy_to_vtk(num_array=image.ravel(), deep=True, array_type=vtk.VTK_UNSIGNED_CHAR)
     imageData = vtk.vtkImageData()
     imageData.SetOrigin(0, 0, 0)
-    imageData.SetSpacing(1, 1, slice_thickness)
+    imageData.SetSpacing(y_thickness, x_thickness, slice_thickness)
     #imageData.SetDimensions(zsh, ysh, xsh)
     imageData.SetExtent(0,xsh-1,0,ysh-1,0,zsh-1)
     imageData.GetPointData().SetScalars(sc)
@@ -71,11 +71,10 @@ if __name__ == "__main__":
     # path to data
     path_to_data = sys.argv[1]
     path_to_save = sys.argv[2]
-    slice_thickness = int(sys.argv[3])
 
     # load data
     data = imread(path_to_data)
 
     # create vtk file
-    CreateVTK(data, path_to_save, slice_thickness)
+    CreateVTK(data, path_to_save,int(sys.argv[3]),int(sys.argv[4]),int(sys.argv[5]))
 
