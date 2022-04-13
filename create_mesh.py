@@ -5,14 +5,14 @@ import vtk
 from vtk.util.numpy_support import numpy_to_vtk
 
 
-def MarchingCubes(image,labels):
+def MarchingCubes(image,max_val):
 
     # marching cubes
     mc = vtk.vtkDiscreteMarchingCubes()
     mc.SetInputData(image)
     mc.ComputeNormalsOn()
     mc.ComputeGradientsOn()
-    mc.GenerateValues(7,1,7)
+    mc.GenerateValues(max_val,1,max_val)
     mc.Update()
 
     # To remain largest region
@@ -46,9 +46,9 @@ def CreateVTK(image,path_to_save,slice_thickness):
     #flip image
     image = np.flip(image, axis=(0))
 
-    # get labels
+    # get image dims
     zsh,ysh,xsh=image.shape
-    allLabels = np.unique(image)
+    max_val = np.amax(image)
 
     # numpy to vtk
     sc = numpy_to_vtk(num_array=image.ravel(), deep=True, array_type=vtk.VTK_UNSIGNED_CHAR)
@@ -60,7 +60,7 @@ def CreateVTK(image,path_to_save,slice_thickness):
     imageData.GetPointData().SetScalars(sc)
 
     # get poly data
-    poly = MarchingCubes(imageData,allLabels)
+    poly = MarchingCubes(imageData,max_val)
     writer = vtk.vtkPolyDataWriter()
     writer.SetInputData(poly)
     writer.SetFileName(path_to_save)
