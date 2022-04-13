@@ -26,14 +26,13 @@ renderView1 = GetActiveViewOrCreate('RenderView')
 ParaviewDisplay = Show(Paraview, renderView1, 'GeometryRepresentation')
 
 # get color transfer function/color map for 'scalars'
-#scalarsLUT = GetColorTransferFunction('scalars')
-#scalarsLUT.RescaleTransferFunction(1.0, 7.0)
+scalarsLUT = GetColorTransferFunction('scalars')
 
 # trace defaults for the display properties.
-ParaviewDisplay.RescaleTransferFunctionToDataRange(False,True)
+ParaviewDisplay.RescaleTransferFunctionToDataRange(True,False)
 ParaviewDisplay.Representation = 'Surface'
 ParaviewDisplay.ColorArrayName = ['CELLS', 'scalars']
-#ParaviewDisplay.LookupTable = scalarsLUT
+ParaviewDisplay.LookupTable = scalarsLUT
 ParaviewDisplay.SelectTCoordArray = 'None'
 ParaviewDisplay.SelectNormalArray = 'None'
 ParaviewDisplay.SelectTangentArray = 'None'
@@ -51,8 +50,8 @@ ParaviewDisplay.OpacityTransferFunction = 'PiecewiseFunction'
 ParaviewDisplay.DataAxesGrid = 'GridAxesRepresentation'
 ParaviewDisplay.PolarAxes = 'PolarAxesRepresentation'
 
-# hide color bar/color legend
-#ParaviewDisplay.SetScalarBarVisibility(renderView1, False)
+# show color bar/color legend
+ParaviewDisplay.SetScalarBarVisibility(renderView1, True)
 
 # Hide orientation axes
 renderView1.OrientationAxesVisibility = 0
