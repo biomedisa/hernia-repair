@@ -199,6 +199,7 @@ def create_distortion_array(path_to_dir, number_of_slices, max_slice_id, path_to
 def merge_tifs(path_to_volume,path_to_distortion_array,path_to_merged_tif):
     img = imread(path_to_volume)
     distortion_array = imread(path_to_distortion_array)
+    distortion_array += 1
     img[img!=0] = distortion_array[img!=0]
     imsave(path_to_merged_tif,img)
     
@@ -308,9 +309,10 @@ def hernia_analysis():
         print(f'Creating Meshes...')
         #Mesh of the Neural Network proposal
         mesh1 = run(["python",f'{os.environ["userprofile"]}\\git\\hernia-repair\\create_mesh.py', 
-                    observation_path[observation]['tif'], observation_path[observation]['vtk'],observation_path[observation]['x_dim'],
-                    observation_path[observation]['y_dim'],observation_path[observation]['slice_thickness'] ]
-                    )
+                    observation_path[observation]['tif'], observation_path[observation]['vtk'], observation_path[observation]['x_dim'],
+                    observation_path[observation]['y_dim'], observation_path[observation]['slice_thickness'] 
+                    ])
+        
         #Mesh of the distortion projection
         mesh2 = run(["python",f'{os.environ["userprofile"]}\\git\\hernia-repair\\create_mesh.py', 
                     observation_path[observation]['projection_tif'], observation_path[observation]['projection_vtk'],observation_path[observation]['x_dim'],
