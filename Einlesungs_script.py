@@ -335,19 +335,22 @@ def hernia_analysis():
         
 
         #Preprocess and Annotate the Paraview labeled images
-        print(f'Scaling image...')
+        print(f'Scaling images...')
         #Read the image
         observation_img = plt.imread(observation_path[observation]['png'])
+        projection_img  = plt.imread(obseravtion_path[observation]['png'])
         #Reshape to match size of sam_img and to fit annotation
         if observation == 'Nativ':
             observation_img = np.pad(observation_img, ((50,0),(0,1),(0,0)), mode='constant',constant_values=1)
+            projection_img  = plt.imread(obseravtion_path[observation]['png'])
         elif observation == 'Valsalva':
             observation_img = np.pad(observation_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1)
+            projection_img  = plt.imread(obseravtion_path[observation]['png'])
         plt.imsave(observation_path[observation]['png'],observation_img)       
-        
+        plt.imsave(observation_path[observation]['projection_png'],projection_img)
 
         #Annotate the images
-        print('Annotating image...')
+        print('Annotating images...')
         annotate = run(["python",
                         f'{os.environ["userprofile"]}\\git\\hernia-repair\\Prediction.py',
                         observation,
@@ -367,7 +370,9 @@ def hernia_analysis():
     #Load all images
     sam_img = plt.imread(f'{path_to_evaluation}\\Verschiebung und Verzerrung.png')
     nat_img = plt.imread(observation_path['Nativ']['png'])[:,:,:3]
+    nat_proj_img = plt.imread(observation_path['Nativ']['projection_png'])[:,:,:3]
     val_img = plt.imread(observation_path['Valsalva']['png'])[:,:,:3]
+    val_proj_img = plt.imread(observation_path['Valsalva']['projection_png'])[:,:,:3]
     nativ_crosssection = plt.imread(observation_path['Nativ']['crosssection'])[:,:,:3]
     valsalva_crosssection = plt.imread(observation_path['Valsalva']['crosssection'])[:,:,:3]
 
@@ -377,9 +382,10 @@ def hernia_analysis():
     
     #Stack the image pairs
     nat_and_val = np.hstack((nat_img,val_img))
+    double_proj = np.hstack((nat_proj_img,val_proj_img))
     double_cross = np.hstack((nativ_crosssection,valsalva_crosssection))
     #Stack result, paraview images and crosssections
-    combined_img = np.vstack((sam_img,nat_and_val,double_cross))
+    combined_img = np.vstack((sam_img,nat_and_val,double_proj,double_cross))
     #Save image in evaluation directory
     plt.imsave(f'{path_to_evaluation}\\Finale_Auswertung.png',combined_img)
 
