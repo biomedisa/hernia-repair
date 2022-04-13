@@ -273,7 +273,7 @@ def hernia_analysis():
     #Create the distortion array
     path_to_distortion_array = f'{path_to_archiv}\\distortion_array.tif'
     create_distortion_array(path_to_archiv, len(os.listdir(observation_path['Nativ']['dcm_dir'])),
-                            sorted(os.listdir(observation_path['Nativ']['dcm_dir']))[-1].lstrip('0')[:-4],
+                            int(sorted(os.listdir(observation_path['Nativ']['dcm_dir']))[-1].lstrip('0')[:-4]),
                             path_to_distortion_array)
     
     #Run all subprocesses for both observations
