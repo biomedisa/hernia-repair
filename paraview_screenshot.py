@@ -29,7 +29,7 @@ ParaviewDisplay = Show(Paraview, renderView1, 'GeometryRepresentation')
 scalarsLUT = GetColorTransferFunction('scalars')
 
 # trace defaults for the display properties.
-ParaviewDisplay.RescaleTransferFunctionToDataRange(True,False)
+
 ParaviewDisplay.Representation = 'Surface'
 ParaviewDisplay.ColorArrayName = ['CELLS', 'scalars']
 ParaviewDisplay.LookupTable = scalarsLUT
@@ -52,6 +52,12 @@ ParaviewDisplay.PolarAxes = 'PolarAxesRepresentation'
 
 # show color bar/color legend
 ParaviewDisplay.SetScalarBarVisibility(renderView1, True)
+
+# get the material library
+materialLibrary1 = GetMaterialLibrary()
+
+# Hide the scalar bar for this color map if no visible data is colored by it.
+ParaviewDisplay.RescaleTransferFunctionToDataRange(False,True)
 
 # Hide orientation axes
 renderView1.OrientationAxesVisibility = 0
