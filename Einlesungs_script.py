@@ -10,7 +10,7 @@ import requests
 import urllib.request
 import numpy as np
 import matplotlib.pyplot as plt
-from tifffile import imsave,imread
+from tifffile import imsave, imwrite
 import glob
 import tkinter as tk
 import logging
@@ -193,7 +193,7 @@ def create_distortion_array(path_to_dir, number_of_slices, max_slice_id, path_to
         distance = Volume.shape[0]-1 - old_ind
         for step in range(1, distance + 1, 1):
             Volume[old_ind + step,...] = Volume[old_ind,...]*(1-(step/distance))
-    imsave(path_to_save,Volume)
+    imwrite(path_to_save,Volume)
         
         
 def merge_tifs(path_to_volume,path_to_distortion_array,path_to_merged_tif):
@@ -201,7 +201,7 @@ def merge_tifs(path_to_volume,path_to_distortion_array,path_to_merged_tif):
     distortion_array = imread(path_to_distortion_array)
     distortion_array += 1
     img[img!=0] = distortion_array[img!=0]
-    imsave(path_to_merged_tif,img)
+    imwrite(path_to_merged_tif,img)
     
         
         
@@ -340,14 +340,14 @@ def hernia_analysis():
         print(f'Scaling images...')
         #Read the image
         observation_img = plt.imread(observation_path[observation]['png'])
-        projection_img  = plt.imread(observation_path[observation]['png'])
+        projection_img  = plt.imread(observation_path[observation]['projection_png'])
         #Reshape to match size of sam_img and to fit annotation
         if observation == 'Nativ':
             observation_img = np.pad(observation_img, ((50,0),(0,1),(0,0)), mode='constant',constant_values=1)
-            projection_img  = plt.imread(observation_path[observation]['png'])
+            projection_img  = np.pad(observation_img, ((50,0),(0,1),(0,0)), mode='constant',constant_values=1)
         elif observation == 'Valsalva':
             observation_img = np.pad(observation_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1)
-            projection_img  = plt.imread(observation_path[observation]['png'])
+            projection_img  = np.pad(observation_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1)
         plt.imsave(observation_path[observation]['png'],observation_img)       
         plt.imsave(observation_path[observation]['projection_png'],projection_img)
 
