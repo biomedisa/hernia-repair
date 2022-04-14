@@ -9,6 +9,7 @@ import time,shutil,ssl
 import requests
 import urllib.request
 import numpy as np
+import scipy.ndimage.zoom
 import matplotlib.pyplot as plt
 from tifffile import imread, imwrite
 import glob
