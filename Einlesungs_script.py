@@ -172,7 +172,7 @@ def create_numpy_layer(path_to_data):
     data_list = data_string.split("\n")
     vector_array = [data_list[i].split(',') for i in range(len(data_list)-1)]
     vector_array = np.array(vector_array, dtype=float)
-    data_array = np.sqrt(vector_array[:,:vector_array.shape[1]/2]**2 + vector_array[:,vector_array.shape[1]/2:]**2)
+    data_array = np.sqrt(vector_array[:,:vector_array.shape[1]//2]**2 + vector_array[:,vector_array.shape[1]//2:]**2)
     data_array = scipy.ndimage.zoom(data_array, (512/data_array.shape[0],512/data_array.shape[1]), order=3)
     return data_array
 
