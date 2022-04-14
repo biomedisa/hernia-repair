@@ -10,7 +10,7 @@ import requests
 import urllib.request
 import numpy as np
 import matplotlib.pyplot as plt
-from tifffile import imsave, imwrite
+from tifffile import imread, imwrite
 import glob
 import tkinter as tk
 import logging
@@ -170,11 +170,10 @@ def create_numpy_layer(path_to_data):
     file = open(path_to_data,mode='r')
     data_string = file.read()
     data_list = data_string.split("\n")
-    vector_array = [data_list[i].split(',') for i in range(512)]
+    vector_array = [data_list[i].split(',') for i in range(len(data_list))]
     vector_array = np.array(vector_array, dtype=float)
-    data_array = np.empty((512,512),dtype=float)
-    for vector in range(0,512):
-        data_array[:,vector] = np.sqrt(vector_array[:,vector]**2 + vector_array[:,512+vector]**2) 
+    data_array = np.sqrt(vector_array[:,:vector_array.shape[1]/2]**2 + vector_array[:,vector_array.shape[1]/2:]**2)
+    data_array = scipy.ndimage.zoom(data_array, (512/data_array.shape[0],512/data_array.shape[1]), order=3)
     return data_array
 
 def create_distortion_array(path_to_dir, number_of_slices, max_slice_id, path_to_save):
