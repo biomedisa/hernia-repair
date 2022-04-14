@@ -193,7 +193,7 @@ def create_distortion_array(path_to_dir, number_of_slices, max_slice_id, path_to
         distance = Volume.shape[0]-1 - old_ind
         for step in range(1, distance + 1, 1):
             Volume[old_ind + step,...] = Volume[old_ind,...]*(1-(step/distance))
-    Volume = np.uint8(Volume*255/np.amax(Volume))
+    #Volume = np.uint8(Volume*255/np.amax(Volume))
     imwrite(path_to_save,Volume)
         
         
