@@ -23,6 +23,17 @@ from dateutil import tz
 
 #Update and interface functions
 def ask_continue():
+    '''
+    Asks the user if he wishes to continue the execution in case of 
+    problems with the data.
+
+    Requires user input: 
+    
+    y for yes 
+    n for no
+
+    '''
+
     print(f'Do You want to continue (y) or close the Application (n)?\n')
     user_input = input()
     if user_input in ['y','yes', 'ja' ]:
@@ -34,9 +45,21 @@ def ask_continue():
         print('Please enter only "y" or "n"!')
         ask_continue()
 
+
+
 def update_neural_nets():
-    sources = ['https://biomedisa.org/media/img_hernie.h5','https://biomedisa.org/media/Hernien_detector_x.h5','https://biomedisa.org/media/Hernien_detector_z.h5']
-    destinations = [f'{os.environ["userprofile"]}\\git\\Netzwerke\\img_hernie.h5',f'{os.environ["userprofile"]}\\git\\Netzwerke\\hernien_detector_x.h5',f'{os.environ["userprofile"]}\\git\\Netzwerke\\hernien_detector_z.h5']
+    '''
+    Updates the neuralnetworks by checking if there are any updates on the server.
+    
+    '''
+    sources = ['https://biomedisa.org/media/img_hernie.h5',
+               'https://biomedisa.org/media/Hernien_detector_x.h5',
+               'https://biomedisa.org/media/Hernien_detector_z.h5']
+
+    destinations = [f'{os.environ["userprofile"]}\\git\\Netzwerke\\img_hernie.h5',
+                    f'{os.environ["userprofile"]}\\git\\Netzwerke\\hernien_detector_x.h5',
+                    f'{os.environ["userprofile"]}\\git\\Netzwerke\\hernien_detector_z.h5']
+
     for src, dst in zip(sources,destinations):
         update = False
         if os.path.exists(dst):
@@ -71,6 +94,17 @@ def update_neural_nets():
                 
                 
 def load_directorys():
+    ''' 
+    Asks the user to select a Dicom Dataset and builds the required 
+    directory structur by extracting the information from the Dataset.
+
+    Returns
+    -------
+    string
+        Path to the patients main directory
+    
+    '''
+
     #Ask the user for the Path to the Data via Tkinterface
     tk.Tk().withdraw()
     path_to_dir = askdirectory(title='Select Dataset')
@@ -108,14 +142,15 @@ def load_directorys():
             #third_level = third_level.replace('|','_')
             #third_level = third_level.replace('*',' ') 
             
-
+            #Check existence and create non existing directorys
             if not os.path.exists(first_level):                       
                 os.mkdir(first_level)
             if not os.path.exists(second_level):                       
                 os.mkdir(second_level)
             if not os.path.exists(third_level):
                 os.mkdir(third_level)
-
+            
+            #Set the path to the current .dcm files and copy it 
             path_to_dest = f'{third_level}\\{str(ds.InstanceNumber).zfill(6)}.dcm'
             if not os.path.exists(path_to_dest):			
                 shutil.copy(file, path_to_dest)
@@ -125,8 +160,25 @@ def load_directorys():
     return first_level
 
 def get_slice_dims(dcm_dir):
+    '''
+    Returns the three voxel sidelengths of the given dataset.
+
+    Parameter
+    ---------
+    dcm_dir: string
+        path to the directory of the dcm datset
+
+    Returns
+    -------
+    z_res: string
+        the voxel length in z-direction
+    y_res: string
+        the voxel length in y-direction
+    x_res: string
+        the voxel length in x-direction
+    '''
     files = os.listdir(dcm_dir)
-    #Set patients directory 
+    #Load a .dcm file of the datset and extract voxel side lengths
     ds = pydicom.filereader.dcmread(f'{dcm_dir}\\{files[1]}')
     z_res = ds.SliceThickness
     y_res, x_res = ds.PixelSpacing
@@ -134,6 +186,23 @@ def get_slice_dims(dcm_dir):
     return str(z_res), str(y_res), str(x_res)
 
 def compare_slice_amount(nativ_dcm_dir, valsalva_dcm_dir):
+    '''
+    Compare the amount of slices between the nativ and valsalva Dataset.
+    Prompts the user in case of a missmatch.
+    
+    Parameters
+    ----------
+    nativ_dcm_dir: string
+        Path to the directory containing the nativ data
+    valsalva_dcm_dir: string
+        Path to the directory containing the valsalva data
+
+    Raises
+    ------
+    ask_continue()
+        when the data has a missmatch
+    '''
+    
     nativ_slice_amount = len(os.listdir(nativ_dcm_dir))
     valsalva_slice_amount = len(os.listdir(valsalva_dcm_dir))
     if nativ_slice_amount > valsalva_slice_amount:
@@ -144,6 +213,16 @@ def compare_slice_amount(nativ_dcm_dir, valsalva_dcm_dir):
         ask_continue()
 
 def creat_ct_crosssection(path_to_layer_txt,observation_path):
+    '''
+    Create a png of the ct-slice with the largest amount of translation.
+
+    Parameters
+    ----------
+    path_to_layer_txt: string
+        path to the .txt file containg the ct-slice id
+    observation_path: dict of dict of string
+        dict with the Patients Path information
+    '''
     layer_file = open(path_to_layer_txt,'r',encoding='utf8')
     layer = int(float(layer_file.readlines()[1]))
     layer_file.close()
@@ -167,7 +246,21 @@ def creat_ct_crosssection(path_to_layer_txt,observation_path):
         #save the crosssection
         img.save(observation_path[observation]['crosssection'],format='png')
 
-def create_numpy_layer(path_to_data):        
+def create_numpy_layer(path_to_data): 
+    '''
+    Create an array out of a textfile containg the x and y values of a 2 diamensional vectorfield.
+
+    Parameter
+    --------
+    path_to_data: string
+        the path to the txt file
+    
+    Returns
+    -------
+    data_array: nd.array
+        the numpy array with the absolut values of the vectorfield
+    
+    '''      
     file = open(path_to_data,mode='r')
     data_string = file.read()
     data_list = data_string.split("\n")
@@ -193,17 +286,14 @@ def create_distortion_array(path_to_dir, number_of_slices, max_slice_id, path_to
         distance = Volume.shape[0]-1 - old_ind
         for step in range(1, distance + 1, 1):
             Volume[old_ind + step,...] = Volume[old_ind,...]*(1-(step/distance))
-    #Volume = np.uint8(Volume*255/np.amax(Volume))
     imwrite(path_to_save,Volume)
         
         
 def merge_tifs(path_to_volume,path_to_distortion_array,path_to_merged_tif):
-    img = imread(path_to_volume)
+    label_array = imread(path_to_volume)
     distortion_array = imread(path_to_distortion_array)
-    distortion_array += 1
-    img[img!=0] = distortion_array[img!=0]
-    imwrite(path_to_merged_tif,img)
-    
+    distortion_array[label_array==0] = 0
+    imwrite(path_to_merged_tif,distortion_array)
         
         
 def hernia_analysis():
@@ -310,14 +400,14 @@ def hernia_analysis():
         #Mesh of the Neural Network proposal
         mesh1 = run(["python",f'{os.environ["userprofile"]}\\git\\hernia-repair\\create_mesh.py', 
                     observation_path[observation]['tif'], observation_path[observation]['vtk'], observation_path[observation]['x_dim'],
-                    observation_path[observation]['y_dim'], observation_path[observation]['slice_thickness'] 
+                    observation_path[observation]['y_dim'], observation_path[observation]['slice_thickness'], 'labels'
                     ])
         
         #Mesh of the distortion projection
         mesh2 = run(["python",f'{os.environ["userprofile"]}\\git\\hernia-repair\\create_mesh.py', 
                     observation_path[observation]['projection_tif'], observation_path[observation]['projection_vtk'],observation_path[observation]['x_dim'],
-                    observation_path[observation]['y_dim'],observation_path[observation]['slice_thickness'] ]
-                    )
+                    observation_path[observation]['y_dim'],observation_path[observation]['slice_thickness'], 'labels' 
+                    ])
         
         #Create images using Paraview
         print(f'Creating Imagees...')

@@ -5,14 +5,14 @@ import vtk
 from vtk.util.numpy_support import numpy_to_vtk
 
 
-def MarchingCubes(image,max_val):
+def MarchingCubes(image,scale,scale_max):
 
     # marching cubes
     mc = vtk.vtkDiscreteMarchingCubes()
     mc.SetInputData(image)
     mc.ComputeNormalsOn()
     mc.ComputeGradientsOn()
-    mc.GenerateValues(max_val,1,max_val)
+    mc.GenerateValues(scale,1,scale_max)
     mc.Update()
 
     # To remain largest region
@@ -41,8 +41,16 @@ def MarchingCubes(image,max_val):
     return finalPoly#confilter.GetOutput()
 
 
-def CreateVTK(image,path_to_save,x_thickness,y_thickness,slice_thickness):
+def CreateVTK(image,path_to_save,x_thickness,y_thickness,slice_thickness,mode='labels'):
     
+    if mode == 'distortion':
+        if np.amax(image) > 15:
+            scale, scale_max = 50,50
+        else: scale , scale_max = 30,15
+    elif mode == 'labels':
+        scale, scale_max = 7
+    else: raise ValueError('mode must be one of "labels", "distortion".')
+
     #flip image
     image = np.flip(image, axis=(0))
 
@@ -60,7 +68,7 @@ def CreateVTK(image,path_to_save,x_thickness,y_thickness,slice_thickness):
     imageData.GetPointData().SetScalars(sc)
 
     # get poly data
-    poly = MarchingCubes(imageData,max_val)
+    poly = MarchingCubes(imageData,scale,scale_max)
     writer = vtk.vtkPolyDataWriter()
     writer.SetInputData(poly)
     writer.SetFileName(path_to_save)
@@ -76,5 +84,5 @@ if __name__ == "__main__":
     data = imread(path_to_data)
 
     # create vtk file
-    CreateVTK(data, path_to_save,float(sys.argv[3]),float(sys.argv[4]),float(sys.argv[5]))
+    CreateVTK(data, path_to_save,float(sys.argv[3]),float(sys.argv[4]),float(sys.argv[5]),sys.argv[6])
 
