@@ -14,6 +14,6 @@ cd Temp
 call %userprofile%\anaconda3\Scripts\activate.bat
 call activate biomedisa
 
-call python C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\vollauswertung_automatisch.py
+call python C:\Users\Hernienforschung\Documents\Python_Scripts\hernia-repair\Einlesungs_script.py Multi
 
 pause
