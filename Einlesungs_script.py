@@ -2,7 +2,7 @@
 # coding: utf-8
 
 #imports
-import os
+import os, sys
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 import pydicom
 import time,shutil,ssl
@@ -159,6 +159,40 @@ def load_directorys():
 
     return first_level
 
+def create_patient_directory_auto(path_to_dir):
+    '''
+    Creates the main directory of a single Patient when programm is run in
+    auto mode.
+
+    Parameters
+    ----------
+    path_to_dir: string
+        path to a patients dicom data
+    '''
+    #Console output
+    os.system('cls')
+    print('Loading Data...')
+
+    #Get the raw dcm files
+    files = os.listdir(path_to_dir)
+    #Set patients directory 
+    ds = pydicom.filereader.dcmread(f'{path_to_dir}\\{files[1]}')
+    #name the directory containing all results after patient name + Birthdate     	      
+    first_level = f'{main_folder}\\{ds.PatientName}_{ds.PatientBirthDate}'
+    '''
+    first_level = first_level.replace('^','_')
+    first_level = first_level.replace('/',' ')
+    first_level = first_level.replace(' ','_')
+    first_level = first_level.replace('ü','ue')
+    first_level = first_level.replace('ä','ae')
+    first_level = first_level.replace('ö','oe')
+    first_level = first_level.replace('ß','ss')
+    '''
+    if not os.path.exists(first_level):                       
+        os.mkdir(first_level)
+
+    return first_level
+
 def get_slice_dims(dcm_dir):
     '''
     Returns the three voxel sidelengths of the given dataset.
@@ -271,6 +305,23 @@ def create_numpy_layer(path_to_data):
     return data_array
 
 def create_distortion_array(path_to_dir, number_of_slices, max_slice_id, path_to_save):
+    '''
+    Create the 3-dimensional distortion array.
+
+    Parameters
+    ----------
+    path_to_dir: string
+        path to directory with array information
+    number_of_slices: int
+        total number of slices for the dataset
+    max_slice_id: int
+        maximum slice id. If 0 is included this is different from number_of_slices
+    path_to_save: string
+        path to the saving location of the final array
+
+    Returns  
+    '''
+
     Volume = np.zeros((number_of_slices,512,512),dtype=float)
     old_ind = -1
     for current_ind, slice_number in enumerate(range(max_slice_id+1-number_of_slices,max_slice_id + 1,1)):
@@ -287,22 +338,43 @@ def create_distortion_array(path_to_dir, number_of_slices, max_slice_id, path_to
         for step in range(1, distance + 1, 1):
             Volume[old_ind + step,...] = Volume[old_ind,...]*(1-(step/distance))
     imwrite(path_to_save,Volume)
-        
-        
-def merge_tifs(path_to_volume,path_to_distortion_array,path_to_merged_tif):
-    label_array = imread(path_to_volume)
+             
+def merge_tifs(path_to_label,path_to_distortion_array,path_to_merged_tif):
+    '''
+    Replaces labels with the distortion information.
+
+    Parameters
+    ----------
+    path_to_label: string
+        path to the labeld tif
+    path_to_distortion_array: string
+        path to the distortion array
+    path_to_merged_tif: string
+        path to the destination of 
+    
+    '''
+    label_array = imread(path_to_label)
     distortion_array = imread(path_to_distortion_array)
     distortion_array[label_array==0] = 0
     imwrite(path_to_merged_tif,distortion_array)
-        
-        
-def hernia_analysis():
+             
+def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
     #Set the paths for both observations
     Observations = ["Nativ","Valsalva"]
     observation_path = {observation:{"tif":"","vtk":"","png":"","crosssection":"","dcm_dir":"","length_dir":"","slice_thickness":""}for observation in Observations}
-    
-    #Create and get the patients working directory
-    first_level = load_directorys()
+
+    if path_to_nativ != None:
+        first_level = create_patient_directory_auto(path_to_nativ)
+        #Create and get the patients working directory
+        observation_path['Nativ']['dcm_dir'] = path_to_nativ 
+        observation_path['Valsalva']['dcm_dir'] = path_to_valsalva
+
+    else: 
+        #Create and get the patients working directory
+        first_level = load_directorys()
+        for observation in sorted(Observations):
+            observation_path[observation]['dcm_dir'] = askdirectory(initialdir = first_level, title=f'Select {observation} Directory')
+
     for observation in sorted(Observations):            
         #Create Paths to the mesh and the img
         observation_path[observation]['tif'] = f'{first_level}\\final.{observation}.tif'
@@ -312,8 +384,7 @@ def hernia_analysis():
         observation_path[observation]['png'] = f'{first_level}\\{observation}_front_view.png'
         observation_path[observation]['projection_png'] = f'{first_level}\\{observation}_projection.png'        
         observation_path[observation]['length_dir'] = f'{first_level}\\{observation}_length'  
-        observation_path[observation]['crosssection'] = f'{first_level}\\{observation}_crosssection.png'        
-        observation_path[observation]['dcm_dir'] = askdirectory(initialdir = first_level, title=f'Select {observation} Directory')
+        observation_path[observation]['crosssection'] = f'{first_level}\\{observation}_crosssection.png'
         observation_path[observation]['slice_thickness'],\
         observation_path[observation]['y_dim'],\
         observation_path[observation]['x_dim'] = get_slice_dims(observation_path[observation]['dcm_dir'])
@@ -506,10 +577,13 @@ try:
         print('Updating neuralnets')
         
         #Get time to measure execution time
-        start_time = datetime.now()
+        total_start_time = datetime.now()
+        
+        #Get the operation mode
+        mode = sys.argv[1]
 
         #Set the main save directory    
-        main_folder = f'{os.environ["userprofile"]}\\Hernien_Analyse_Single'
+        main_folder = f'{os.environ["userprofile"]}\\Hernien_Analyse_{mode}'
         if not os.path.exists(main_folder):
             os.mkdir(main_folder) 
 
@@ -525,13 +599,34 @@ try:
         except:
             print('Could not update neuralnets! Check your internet connection.\n', 'Start with old ones.')
 
-                     
-        hernia_analysis()
+        if mode == "Single":
+            hernia_analysis()
+        elif mode == "Multi":
+            #open txt file with paths to the data
+            txt_file = open(f'{os.environ["userprofile"]}\\git\\Pfade.txt','r',encoding='utf8')
+            #read the first emptyline
+            line = txt_file.readline()
+            #loop over the file till EOF is reached
+            while line:
+                #get the starting time of the current iteration
+                single_case_start_time = datetime.now()
+                hernia_analysis(txt_file.readline()[1:-2],txt_file.readline()[1:-2])
+                #get the end time of the current itteration
+                single_case_end_time = datetime.now()
+                #log the used time for the current itteration
+                logging.INFO(f'Execution time: {single_case_end_time - single_case_start_time}')
+                #skip the next empty line in the txt file
+                line = txt_file.readline()
+
+            #close the file
+            txt_file.close()
+        else: raise ValueError('Wrong operation Mode. Must be one of "Single" or "Multi"')
+
+        total_end_time = datetime.now()
+        print(f'Execution time: {total_end_time - total_start_time}')
+        logging.info(f'Execution time: {total_end_time - total_start_time}')
 
 
-        end_time = datetime.now()
-        print(f'Execution time: {end_time - start_time}')
-        logging.info(f'Execution time: {end_time - start_time}')
 # Catch the error and log it to a file in the main Directory
 except Exception as Argument: 
     #open the error txt file to write to
