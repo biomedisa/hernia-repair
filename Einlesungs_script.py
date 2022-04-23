@@ -562,6 +562,9 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
                 observation_path['Nativ']['tif'],observation_path['Valsalva']['tif'],
                 observation_path['Nativ']['vtk'],observation_path['Valsalva']['vtk'],
                 observation_path['Nativ']['crosssection'],observation_path['Valsalva']['crosssection'],
+                observation_path['Nativ']['projection_png'],observation_path['Valsalva']['projection_png'],
+                 observation_path['Nativ']['projection_tif'],observation_path['Valsalva']['projection_tif'],
+                 observation_path['Nativ']['projection_vtk'],observation_path['Valsalva']['projection_vtk']
                 ):
         shutil.move(file, path_to_archiv)
     
