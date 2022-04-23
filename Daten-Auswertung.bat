@@ -17,6 +17,6 @@ mkdir Temp
 
 cd Temp
 
-call python "%Userprofile%\git\hernia-repair\Einlesungs_script.py Single"
+call python "%Userprofile%\git\hernia-repair\Einlesungs_script.py" Single
 
 pause
