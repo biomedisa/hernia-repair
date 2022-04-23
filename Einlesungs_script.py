@@ -477,7 +477,7 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
         #Mesh of the distortion projection
         mesh2 = run(["python",f'{os.environ["userprofile"]}\\git\\hernia-repair\\create_mesh.py', 
                     observation_path[observation]['projection_tif'], observation_path[observation]['projection_vtk'],observation_path[observation]['x_dim'],
-                    observation_path[observation]['y_dim'],observation_path[observation]['slice_thickness'], 'labels' 
+                    observation_path[observation]['y_dim'],observation_path[observation]['slice_thickness'], 'distortion'
                     ])
         
         #Create images using Paraview
