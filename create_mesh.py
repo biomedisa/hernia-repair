@@ -48,9 +48,11 @@ def CreateVTK(image,path_to_save,x_thickness,y_thickness,slice_thickness,mode='l
             scale, scale_min, scale_max = 50,1,50 
             
         elif np.amax(image) > 5:
+            image = np.around(2*image, 0)/2
             scale, scale_min, scale_max = 29,1,15
             
-        else: 
+        else:
+            image = np.around(image, 1)
             scale, scale_min, scale_max = 50,0.1,5
     
     elif mode == 'labels':
