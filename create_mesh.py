@@ -56,7 +56,6 @@ def CreateVTK(image,path_to_save,x_thickness,y_thickness,slice_thickness,mode='l
 
     # get image dims
     zsh,ysh,xsh=image.shape
-    max_val = np.amax(image)
 
     # numpy to vtk
     sc = numpy_to_vtk(num_array=image.ravel(), deep=True, array_type=vtk.VTK_UNSIGNED_CHAR)
