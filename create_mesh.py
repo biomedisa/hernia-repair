@@ -45,8 +45,8 @@ def CreateVTK(image,path_to_save,x_thickness,y_thickness,slice_thickness,mode='l
     
     if mode == 'distortion':
         if np.amax(image) > 15:
-            scale, scale_max = 50,50
-        else: scale , scale_max = 30,15
+            scale, scale_max = 50
+        else: scale , scale_max = 29,15
     elif mode == 'labels':
         scale, scale_max = 7
     else: raise ValueError('mode must be one of "labels", "distortion".')
