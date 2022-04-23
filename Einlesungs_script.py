@@ -31,7 +31,6 @@ def ask_continue():
     
     y for yes 
     n for no
-
     '''
 
     print(f'Do You want to continue (y) or close the Application (n)?\n')
@@ -52,6 +51,7 @@ def update_neural_nets():
     Updates the neuralnetworks by checking if there are any updates on the server.
     
     '''
+    
     sources = ['https://biomedisa.org/media/img_hernie.h5',
                'https://biomedisa.org/media/Hernien_detector_x.h5',
                'https://biomedisa.org/media/Hernien_detector_z.h5']
@@ -102,9 +102,8 @@ def load_directorys():
     -------
     string
         Path to the patients main directory
-    
     '''
-
+    
     #Ask the user for the Path to the Data via Tkinterface
     tk.Tk().withdraw()
     path_to_dir = askdirectory(title='Select Dataset')
@@ -169,6 +168,7 @@ def create_patient_directory_auto(path_to_dir):
     path_to_dir: string
         path to a patients dicom data
     '''
+    
     #Console output
     os.system('cls')
     print('Loading Data...')
@@ -211,6 +211,7 @@ def get_slice_dims(dcm_dir):
     x_res: string
         the voxel length in x-direction
     '''
+    
     files = os.listdir(dcm_dir)
     #Load a .dcm file of the datset and extract voxel side lengths
     ds = pydicom.filereader.dcmread(f'{dcm_dir}\\{files[1]}')
@@ -257,6 +258,7 @@ def creat_ct_crosssection(path_to_layer_txt,observation_path):
     observation_path: dict of dict of string
         dict with the Patients Path information
     '''
+    
     layer_file = open(path_to_layer_txt,'r',encoding='utf8')
     layer = int(float(layer_file.readlines()[1]))
     layer_file.close()
@@ -293,8 +295,8 @@ def create_numpy_layer(path_to_data):
     -------
     data_array: nd.array
         the numpy array with the absolut values of the vectorfield
+    '''
     
-    '''      
     file = open(path_to_data,mode='r')
     data_string = file.read()
     data_list = data_string.split("\n")
@@ -318,8 +320,6 @@ def create_distortion_array(path_to_dir, number_of_slices, max_slice_id, path_to
         maximum slice id. If 0 is included this is different from number_of_slices
     path_to_save: string
         path to the saving location of the final array
-
-    Returns  
     '''
 
     Volume = np.zeros((number_of_slices,512,512),dtype=float)
@@ -350,9 +350,9 @@ def merge_tifs(path_to_label,path_to_distortion_array,path_to_merged_tif):
     path_to_distortion_array: string
         path to the distortion array
     path_to_merged_tif: string
-        path to the destination of 
-    
+        path to the destination of the merged arrays
     '''
+    
     label_array = imread(path_to_label)
     distortion_array = imread(path_to_distortion_array)
     distortion_array[label_array==0] = 0
