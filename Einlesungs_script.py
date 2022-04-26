@@ -413,11 +413,19 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
 
     logging.debug('Starting Samuels script.')
     #Execute Samuels script automaticaly and combine results
-    sam = run([f'{os.environ["userprofile"]}\\git\\hernia-repair\\Hernienauswertung_v0_13.exe',
-                    observation_path['Nativ']['dcm_dir'], 
-                    observation_path['Valsalva']['dcm_dir']
-                ])
-    logging.debug('Finished Samuels Script.')
+    if mode == "Single"
+        sam = run([f'{os.environ["userprofile"]}\\git\\hernia-repair\\Hernienauswertung_v0_13.exe',
+                        observation_path['Nativ']['dcm_dir'], 
+                        observation_path['Valsalva']['dcm_dir']
+                    ])
+        logging.debug('Finished Samuels Script.')
+    elif mode == "Multi"
+        sam = run([f'{os.environ["userprofile"]}\\git\\hernia-repair\\Hernienauswertung_v0_13batch.exe',
+                observation_path['Nativ']['dcm_dir'], 
+                observation_path['Valsalva']['dcm_dir']
+            ])
+        logging.debug('Finished Samuels Script.')
+    
   
     #Set the saving paths for the optained data
     temp_paths = sorted(os.listdir(f'{os.environ["userprofile"]}\\git\\Temp')) 
