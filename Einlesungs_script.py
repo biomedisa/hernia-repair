@@ -576,8 +576,9 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
                 ):
         shutil.move(file, path_to_archiv)
     
-    #show final result
-    os.startfile(f'{path_to_evaluation}\\Finale_Auswertung.png')
+    if mode == "Single":
+        #show final result
+        os.startfile(f'{path_to_evaluation}\\Finale_Auswertung.png')
 
 #Try loop in case of error
 try:
@@ -625,7 +626,7 @@ try:
                 #get the end time of the current itteration
                 single_case_end_time = datetime.now()
                 #log the used time for the current itteration
-                logging.INFO(f'Execution time: {single_case_end_time - single_case_start_time}')
+                logging.info(f'Execution time: {single_case_end_time - single_case_start_time}')
                 #skip the next empty line in the txt file
                 line = txt_file.readline()
 
