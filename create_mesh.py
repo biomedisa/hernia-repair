@@ -60,6 +60,7 @@ def CreateVTK(image,path_to_save,x_thickness,y_thickness,slice_thickness,mode='l
             scale, scale_min, scale_max = 50,0.1,5
     
     elif mode == 'labels':
+        image[0,0,0] = 7
         scale, scale_min, scale_max = 7,1,7
         
     else: raise ValueError('mode must be one of "labels", "distortion".')
