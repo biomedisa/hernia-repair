@@ -1,4 +1,4 @@
-git checkout 21.03
+git checkout main
 git pull
 
 cd ..
