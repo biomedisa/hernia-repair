@@ -32,7 +32,10 @@ def ask_continue():
     y for yes 
     n for no
     '''
-
+    
+    if mode == "Multi":
+        return
+    
     print(f'Do You want to continue (y) or close the Application (n)?\n')
     user_input = input()
     if user_input in ['y','yes', 'ja' ]:
