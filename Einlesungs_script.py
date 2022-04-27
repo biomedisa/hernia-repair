@@ -459,7 +459,7 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
         net = run([
                         'python',f'{os.environ["userprofile"]}\\git\\biomedisa\\demo\\biomedisa_deeplearning.py', 
                         observation_path[observation]["dcm_dir"], f'{os.environ["userprofile"]}\\git\\Netzwerke\\img_hernie.h5', "-p","-bs","6"
-                   ])
+                  ])
         
         
         #Move the segmentiation propasal into the correct folder
