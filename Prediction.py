@@ -141,14 +141,14 @@ def annotate_image(observation,path_to_dcm,path_to_length_dir,path_to_tif,path_t
     draw.text(xy=(to_annotate.width/2,0),
             text= (f'{observation}\n'
                    f'(Berechnete Größen) Breite: {str(round(hernia_width_by_nn,1))}cm   Länge: {str(round(hernia_height_by_nn,1))}cm    Bruchpforten Fläche: {str(round(hernia_area_by_nn,1))}cm²\n'
-                   f'(Größen im Bild) Instabile_Fläche: {str(round(instable_area_by_label*0.01,1))}cm²   Projezierte Fläche: {str(round(hernia_area_by_label*0.01,1))}cm²',     
+                   f'(Größen im Bild) Instabile_Fläche: {str(round(instable_area_by_label*0.01,1))}cm²   Projezierte Fläche: {str(round(hernia_area_by_label*0.01,1))}cm²'),     
             fill=(0,0,0),
             anchor="ma",
             font=font,
             )
     to_annotate.save(path_to_png,format='png')
 
-print(yes)
+
 observation = sys.argv[1]
 path_to_dcm = sys.argv[2]
 path_to_length_dir = sys.argv[3]
