@@ -103,7 +103,7 @@ def load_directorys():
     string
         Path to the patients main directory
     '''
-    
+
     #Ask the user for the Path to the Data via Tkinterface
     tk.Tk().withdraw()
     path_to_dir = askdirectory(title='Select Dataset')
@@ -211,7 +211,7 @@ def get_slice_dims(dcm_dir):
     x_res: string
         the voxel length in x-direction
     '''
-    
+
     files = os.listdir(dcm_dir)
     #Load a .dcm file of the datset and extract voxel side lengths
     ds = pydicom.filereader.dcmread(f'{dcm_dir}\\{files[1]}')
@@ -258,7 +258,7 @@ def creat_ct_crosssection(path_to_layer_txt,observation_path):
     observation_path: dict of dict of string
         dict with the Patients Path information
     '''
-    
+
     layer_file = open(path_to_layer_txt,'r',encoding='utf8')
     layer = int(float(layer_file.readlines()[1]))
     layer_file.close()
@@ -425,7 +425,6 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
                 observation_path['Valsalva']['dcm_dir']
             ])
         logging.debug('Finished Samuels Script.')
-    
   
     #Set the saving paths for the optained data
     temp_paths = sorted(os.listdir(f'{os.environ["userprofile"]}\\git\\Temp')) 
@@ -465,8 +464,7 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
         
         #Move the segmentiation propasal into the correct folder
         print(f'Moveing temporary files...')
-        temp_path_to_tif = os.path.splitext(observation_path[observation]["dcm_dir"])[0]
-        
+        temp_path_to_tif = os.path.splitext(observation_path[observation]["dcm_dir"])[0]  
         shutil.move(f'{os.path.dirname(temp_path_to_tif)}\\final.{os.path.basename(temp_path_to_tif)}.tif',
                         observation_path[observation]["tif"])
         
