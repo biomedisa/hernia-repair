@@ -31,7 +31,6 @@ def ask_continue():
     
     y for yes 
     n for no
-
     '''
 
     print(f'Do You want to continue (y) or close the Application (n)?\n')
@@ -52,6 +51,7 @@ def update_neural_nets():
     Updates the neuralnetworks by checking if there are any updates on the server.
     
     '''
+    
     sources = ['https://biomedisa.org/media/img_hernie.h5',
                'https://biomedisa.org/media/Hernien_detector_x.h5',
                'https://biomedisa.org/media/Hernien_detector_z.h5']
@@ -102,7 +102,6 @@ def load_directorys():
     -------
     string
         Path to the patients main directory
-    
     '''
 
     #Ask the user for the Path to the Data via Tkinterface
@@ -160,6 +159,16 @@ def load_directorys():
     return first_level
 
 def create_patient_directory_auto(path_to_dir):
+    '''
+    Creates the main directory of a single Patient when programm is run in
+    auto mode.
+
+    Parameters
+    ----------
+    path_to_dir: string
+        path to a patients dicom data
+    '''
+    
     #Console output
     os.system('cls')
     print('Loading Data...')
@@ -202,6 +211,7 @@ def get_slice_dims(dcm_dir):
     x_res: string
         the voxel length in x-direction
     '''
+
     files = os.listdir(dcm_dir)
     #Load a .dcm file of the datset and extract voxel side lengths
     ds = pydicom.filereader.dcmread(f'{dcm_dir}\\{files[1]}')
@@ -248,6 +258,7 @@ def creat_ct_crosssection(path_to_layer_txt,observation_path):
     observation_path: dict of dict of string
         dict with the Patients Path information
     '''
+
     layer_file = open(path_to_layer_txt,'r',encoding='utf8')
     layer = int(float(layer_file.readlines()[1]))
     layer_file.close()
@@ -284,8 +295,8 @@ def create_numpy_layer(path_to_data):
     -------
     data_array: nd.array
         the numpy array with the absolut values of the vectorfield
+    '''
     
-    '''      
     file = open(path_to_data,mode='r')
     data_string = file.read()
     data_list = data_string.split("\n")
@@ -309,8 +320,6 @@ def create_distortion_array(path_to_dir, number_of_slices, max_slice_id, path_to
         maximum slice id. If 0 is included this is different from number_of_slices
     path_to_save: string
         path to the saving location of the final array
-
-    Returns  
     '''
 
     Volume = np.zeros((number_of_slices,512,512),dtype=float)
@@ -341,9 +350,9 @@ def merge_tifs(path_to_label,path_to_distortion_array,path_to_merged_tif):
     path_to_distortion_array: string
         path to the distortion array
     path_to_merged_tif: string
-        path to the destination of 
-    
+        path to the destination of the merged arrays
     '''
+    
     label_array = imread(path_to_label)
     distortion_array = imread(path_to_distortion_array)
     distortion_array[label_array==0] = 0
@@ -404,11 +413,18 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
 
     logging.debug('Starting Samuels script.')
     #Execute Samuels script automaticaly and combine results
-    sam = run([f'{os.environ["userprofile"]}\\git\\hernia-repair\\Hernienauswertung_v0_13.exe',
-                    observation_path['Nativ']['dcm_dir'], 
-                    observation_path['Valsalva']['dcm_dir']
-                ])
-    logging.debug('Finished Samuels Script.')
+    if mode == "Single":
+        sam = run([f'{os.environ["userprofile"]}\\git\\hernia-repair\\Hernienauswertung_v0_13.exe',
+                        observation_path['Nativ']['dcm_dir'], 
+                        observation_path['Valsalva']['dcm_dir']
+                    ])
+        logging.debug('Finished Samuels Script.')
+    elif mode == "Multi":
+        sam = run([f'{os.environ["userprofile"]}\\git\\hernia-repair\\Hernienauswertung_v0_13batch.exe',
+                observation_path['Nativ']['dcm_dir'], 
+                observation_path['Valsalva']['dcm_dir']
+            ])
+        logging.debug('Finished Samuels Script.')
   
     #Set the saving paths for the optained data
     temp_paths = sorted(os.listdir(f'{os.environ["userprofile"]}\\git\\Temp')) 
@@ -448,8 +464,7 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
         
         #Move the segmentiation propasal into the correct folder
         print(f'Moveing temporary files...')
-        temp_path_to_tif = os.path.splitext(observation_path[observation]["dcm_dir"])[0]
-        
+        temp_path_to_tif = os.path.splitext(observation_path[observation]["dcm_dir"])[0]  
         shutil.move(f'{os.path.dirname(temp_path_to_tif)}\\final.{os.path.basename(temp_path_to_tif)}.tif',
                         observation_path[observation]["tif"])
         
@@ -468,7 +483,7 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
         #Mesh of the distortion projection
         mesh2 = run(["python",f'{os.environ["userprofile"]}\\git\\hernia-repair\\create_mesh.py', 
                     observation_path[observation]['projection_tif'], observation_path[observation]['projection_vtk'],observation_path[observation]['x_dim'],
-                    observation_path[observation]['y_dim'],observation_path[observation]['slice_thickness'], 'labels' 
+                    observation_path[observation]['y_dim'],observation_path[observation]['slice_thickness'], 'distortion'
                     ])
         
         #Create images using Paraview
@@ -553,11 +568,15 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
                 observation_path['Nativ']['tif'],observation_path['Valsalva']['tif'],
                 observation_path['Nativ']['vtk'],observation_path['Valsalva']['vtk'],
                 observation_path['Nativ']['crosssection'],observation_path['Valsalva']['crosssection'],
+                observation_path['Nativ']['projection_png'],observation_path['Valsalva']['projection_png'],
+                 observation_path['Nativ']['projection_tif'],observation_path['Valsalva']['projection_tif'],
+                 observation_path['Nativ']['projection_vtk'],observation_path['Valsalva']['projection_vtk']
                 ):
         shutil.move(file, path_to_archiv)
     
-    #show final result
-    os.startfile(f'{path_to_evaluation}\\Finale_Auswertung.png')
+    if mode == "Single":
+        #show final result
+        os.startfile(f'{path_to_evaluation}\\Finale_Auswertung.png')
 
 #Try loop in case of error
 try:
@@ -605,7 +624,7 @@ try:
                 #get the end time of the current itteration
                 single_case_end_time = datetime.now()
                 #log the used time for the current itteration
-                logging.INFO(f'Execution time: {single_case_end_time - single_case_start_time}')
+                logging.info(f'Execution time: {single_case_end_time - single_case_start_time}')
                 #skip the next empty line in the txt file
                 line = txt_file.readline()
 

@@ -1,4 +1,9 @@
 import sys
+import os
+
+sys.path.insert(0,f'{os.environ["userprofile"]}\\Paraview\\ParaView 5.10.1-Windows-Python3.9-msvc2017-AMD64\\bin\\Lib')
+sys.path.insert(0,f'{os.environ["userprofile"]}\\Paraview\\ParaView 5.10.1-Windows-Python3.9-msvc2017-AMD64\\bin\\Lib\\site-packages')
+
 from paraview.simple import *
 
 mesh = sys.argv[1]
@@ -22,9 +27,9 @@ ParaviewDisplay = Show(Paraview, renderView1, 'GeometryRepresentation')
 
 # get color transfer function/color map for 'scalars'
 scalarsLUT = GetColorTransferFunction('scalars')
-scalarsLUT.RescaleTransferFunction(1.0, 7.0)
 
 # trace defaults for the display properties.
+
 ParaviewDisplay.Representation = 'Surface'
 ParaviewDisplay.ColorArrayName = ['CELLS', 'scalars']
 ParaviewDisplay.LookupTable = scalarsLUT
@@ -45,8 +50,14 @@ ParaviewDisplay.OpacityTransferFunction = 'PiecewiseFunction'
 ParaviewDisplay.DataAxesGrid = 'GridAxesRepresentation'
 ParaviewDisplay.PolarAxes = 'PolarAxesRepresentation'
 
-# hide color bar/color legend
-ParaviewDisplay.SetScalarBarVisibility(renderView1, False)
+# show color bar/color legend
+ParaviewDisplay.SetScalarBarVisibility(renderView1, True)
+
+# get the material library
+materialLibrary1 = GetMaterialLibrary()
+
+# Hide the scalar bar for this color map if no visible data is colored by it.
+ParaviewDisplay.RescaleTransferFunctionToDataRange(False,True)
 
 # Hide orientation axes
 renderView1.OrientationAxesVisibility = 0
