@@ -45,9 +45,9 @@ def CreateVTK(image,path_to_save,x_thickness,y_thickness,slice_thickness,mode='l
     
     if mode == 'distortion':
         if np.amax(image) > 15:
-            image[0,0,0] = 50
+            image[image>50] = 50
             image = np.rint(image)
-            scale, scale_min, scale_max = 50,1,50
+            scale, scale_min, scale_max = np.amax(image),1,np.amax(image)
             
         elif np.amax(image) > 5:
             image[0,0,0] = 15
