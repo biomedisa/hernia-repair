@@ -7,6 +7,7 @@ from tifffile import imread
 def load_data(path_to_data):
     #get the dcm files
     slices = glob.glob(path_to_data+'/**/*', recursive=True)
+    print(slices)
     #set start values
     ds = pydicom.filereader.dcmread(slices[0])
     img = ds.pixel_array
