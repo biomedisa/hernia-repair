@@ -364,7 +364,7 @@ def merge_tifs(path_to_label,path_to_distortion_array,path_to_merged_tif):
 def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
     #Set the paths for both observations
     Observations = ["Nativ","Valsalva"]
-    observation_path = {observation:{"tif":"","vtk":"","png":"","crosssection":"","dcm_dir":"","length_dir":"","slice_thickness":""}for observation in Observations}
+    observation_path = {observation:{"tif":"","vtk":"","png":"","crosssection":"","dcm_dir":"","slice_thickness":""}for observation in Observations}
 
     if path_to_nativ != None:
         first_level = create_patient_directory_auto(path_to_nativ)
@@ -385,15 +385,11 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
         observation_path[observation]['vtk'] = f'{first_level}\\{observation}_for_paraview.vtk'
         observation_path[observation]['projection_vtk'] = f'{first_level}\\{observation}_projection.vtk'        
         observation_path[observation]['png'] = f'{first_level}\\{observation}_front_view.png'
-        observation_path[observation]['projection_png'] = f'{first_level}\\{observation}_projection.png'        
-        observation_path[observation]['length_dir'] = f'{first_level}\\{observation}_length'  
+        observation_path[observation]['projection_png'] = f'{first_level}\\{observation}_projection.png'
         observation_path[observation]['crosssection'] = f'{first_level}\\{observation}_crosssection.png'
         observation_path[observation]['slice_thickness'],\
         observation_path[observation]['y_dim'],\
         observation_path[observation]['x_dim'] = get_slice_dims(observation_path[observation]['dcm_dir'])
-        
-        if not os.path.exists(observation_path[observation]['length_dir']):
-            os.mkdir(observation_path[observation]['length_dir']) 
 
     #selection Checks (Are the Dimensions of Nativ and Valsalva the same)
     if observation_path['Nativ']['slice_thickness'] != observation_path['Valsalva']['slice_thickness']:
@@ -528,7 +524,6 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
                         f'{os.environ["userprofile"]}\\git\\hernia-repair\\Prediction.py',
                         observation,
                         observation_path[observation]['dcm_dir'],
-                        observation_path[observation]['length_dir'],
                         observation_path[observation]['tif'],
                         observation_path[observation]['png']
                         ])
