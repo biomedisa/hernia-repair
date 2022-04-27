@@ -47,7 +47,7 @@ def CreateVTK(image,path_to_save,x_thickness,y_thickness,slice_thickness,mode='l
         if np.amax(image) > 15:
             image[image>50] = 50
             image = np.rint(image)
-            image.astype(int)
+            image = image.astype(int)
             scale, scale_min, scale_max = np.amax(image),1,np.amax(image)
             
         elif np.amax(image) > 5:
