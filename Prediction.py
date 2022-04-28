@@ -37,9 +37,9 @@ def load_data(path_to_data):
     '''
     return data,header
 
-def get_hernia_length(path_to_model,data):
+def get_hernia_length(data):
 
-    model = load_model(path_to_model)
+    model = load_model(f'{os.environ["userprofile"]}\\git\\Netzwerke\\hernien_detector_z.h5')
 
     prediction = model.predict(data, batch_size = 32,verbose = 0)
 
@@ -98,7 +98,7 @@ def annotate_by_neural_net(path_to_dcm):
     #hernia_width = get_hernia_length(f'{os.environ["userprofile"]}\\git\\Netzwerke\\z_dense_fine.h5',np.swapaxes(data,0,2))
     #hernia_width *= slice_width*0.1
     hernia_width = 0.
-    hernia_height = get_hernia_length(f'{os.environ["userprofile"]}\\git\\Netzwerke\\z_dense_fine.h5' ,data)
+    hernia_height = get_hernia_length(data)
     hernia_height *= slice_thickness*0.1
     hernia_area = get_hernia_area(hernia_height,hernia_width)
     return hernia_width, hernia_height ,hernia_area
