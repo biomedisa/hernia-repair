@@ -1,6 +1,6 @@
 import numpy as np
 import pydicom, glob, sys, os
-import tensorflow as tf
+from tensorflow.python.keras.models import load_model
 from PIL import Image, ImageDraw
 from tifffile import imread
 
@@ -39,7 +39,7 @@ def load_data(path_to_data):
 
 def get_hernia_length(path_to_model,data):
 
-    model = tf.keras.models.load_model(path_to_model)
+    model = load_model(path_to_model)
 
     prediction = model.predict(data, batch_size = 32,verbose = 0)
 
