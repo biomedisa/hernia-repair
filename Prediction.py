@@ -37,10 +37,12 @@ def load_data(path_to_data):
     '''
     return data,header
 
-def get_hernia_length(data):
-
-    model = load_model(f'{os.environ["userprofile"]}\\git\\Netzwerke\\hernien_detector_z.h5')
-
+def get_hernia_length(data,mode):
+    if mode == "length":
+        model = load_model(f'{os.environ["userprofile"]}\\git\\Netzwerke\\hernien_detector_z.h5')
+    elif mode == "width":
+        model = load_model(f'{os.environ["userprofile"]}\\git\\Netzwerke\\hernien_detector_x.h5')
+        
     prediction = model.predict(data, batch_size = 32,verbose = 0)
 
     hernia_interval = (prediction > 0.5).nonzero()[0]
@@ -89,18 +91,30 @@ def annotate_by_label(path_to_tif,path_to_dcm):
             hernia_area += np.sqrt((x_res*(x_max-x_min))**2) * z_res
     return area, hernia_area
 
+def resize_array(data):
+    resized_data = np.array((512,512,512,3),dtype=data.dtype)
+    for i in range(data.shape[0]):
+        slice = Image.fromarray(data[i])
+        slice = slice.resize((512,512))
+        resized_data[i] = slice
+    return(resized_data)
+
 def annotate_by_neural_net(path_to_dcm):
     #Get slice width 
     data, header = load_data(path_to_dcm)
     slice_thickness = header[0].SliceThickness
     _ , slice_width = header[0].PixelSpacing
     #Get Height,width and area of the hernia
-    #hernia_width = get_hernia_length(f'{os.environ["userprofile"]}\\git\\Netzwerke\\z_dense_fine.h5',np.swapaxes(data,0,2))
-    #hernia_width *= slice_width*0.1
-    hernia_width = 0.
-    hernia_height = get_hernia_length(data)
+    hernia_height = get_hernia_length(data, mode = "length")
     hernia_height *= slice_thickness*0.1
+    
+    width_data = resize_array(np.swapaxes(data,0,2))
+    
+    hernia_width = get_hernia_length(width_data,mode = "width")
+    hernia_width *= slice_width*0.1
+    
     hernia_area = get_hernia_area(hernia_height,hernia_width)
+    
     return hernia_width, hernia_height ,hernia_area
 
 def annotate_image(observation,path_to_dcm,path_to_tif,path_to_png):
