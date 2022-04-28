@@ -96,6 +96,7 @@ def resize_array(data):
     for i in range(data.shape[0]):
         slice = Image.fromarray(data[i])
         slice = slice.resize((512,512))
+        slice = np.array(slice)
         resized_data[i] = slice
     return(resized_data)
 
