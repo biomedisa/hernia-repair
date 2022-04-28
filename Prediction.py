@@ -92,13 +92,11 @@ def annotate_by_label(path_to_tif,path_to_dcm):
     return area, hernia_area
 
 def resize_array(data):
-    resized_data = np.array((512,512,512,3),dtype=data.dtype)
+    resized_data = np.zeros((512,512,512,3),dtype=data.dtype)
     for i in range(data.shape[0]):
         img = Image.fromarray(data[i],mode = "RGB")
         img = img.resize((512,512))
         slice = np.array(img)
-        print(slice.shape)
-        print(resized_data[i].shape)
         resized_data[i] = slice
     return(resized_data)
 
