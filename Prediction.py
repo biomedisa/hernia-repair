@@ -94,9 +94,10 @@ def annotate_by_label(path_to_tif,path_to_dcm):
 def resize_array(data):
     resized_data = np.array((512,512,512,3),dtype=data.dtype)
     for i in range(data.shape[0]):
-        slice = Image.fromarray(data[i],mode = "RGB")
-        slice = slice.resize((512,512))
-        slice = np.array(slice)
+        img = Image.fromarray(data[i],mode = "RGB")
+        img = img.resize((512,512))
+        slice = np.array(img)
+        print(slice)
         resized_data[i] = slice
     return(resized_data)
 
