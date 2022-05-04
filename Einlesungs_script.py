@@ -234,7 +234,11 @@ def compare_slice_amount(nativ_dcm_dir, valsalva_dcm_dir):
         Path to the directory containing the nativ data
     valsalva_dcm_dir: string
         Path to the directory containing the valsalva data
-
+    
+    Returns
+    -------
+    True if missmatch is detected
+    
     Raises
     ------
     ask_continue()
@@ -245,10 +249,14 @@ def compare_slice_amount(nativ_dcm_dir, valsalva_dcm_dir):
     valsalva_slice_amount = len(os.listdir(valsalva_dcm_dir))
     if nativ_slice_amount > valsalva_slice_amount:
         print(f'There are {nativ_slice_amount - valsalva_slice_amount} more nativ than valsalva({valsalva_slice_amount}) scans! \n This will impact the result. \n\n')
+        logging.warning(f'There are {nativ_slice_amount - valsalva_slice_amount} more nativ than valsalva({valsalva_slice_amount}) scans! \n This will impact the result. \n\n')
         ask_continue()
+        return True
     elif nativ_slice_amount < valsalva_slice_amount:
         print(f'There are {valsalva_slice_amount - nativ_slice_amount} more valsalva than nativ({nativ_slice_amount}) scans! \n This will impact the result. \n\n')
+        logging.warning(f'There are {valsalva_slice_amount - nativ_slice_amount} more valsalva than nativ({nativ_slice_amount}) scans! \n\n')
         ask_continue()
+        return True
 
 def creat_ct_crosssection(path_to_layer_txt,observation_path):
     '''
@@ -407,8 +415,8 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
         logging.warning(f'Nativ and Valsalva width (x-dim) missmatch! \n This will impact the result. \n\n')
         ask_continue()
     
-    compare_slice_amount(observation_path['Nativ']['dcm_dir'],observation_path['Valsalva']['dcm_dir'])
-
+    if compare_slice_amount(observation_path['Nativ']['dcm_dir'],observation_path['Valsalva']['dcm_dir']):
+        return
 
     logging.debug('Starting Samuels script.')
     #Execute Samuels script automaticaly and combine results
