@@ -134,8 +134,9 @@ def load_directorys():
                 first_level = first_level.replace('ü','ue')
                 first_level = first_level.replace('ä','ae')
                 first_level = first_level.replace('ö','oe')
-                first_level = first_level.replace('ß','ss')
                 '''
+                first_level = first_level.replace('ß','ss')
+             
             if not 'second_level' in locals():    
                 second_level = f'{first_level}\\{ds.StudyDate}_{ds.StudyDescription}'
                 #second_level = second_level.replace('/',' ')
