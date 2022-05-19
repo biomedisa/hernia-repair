@@ -541,7 +541,7 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
                     ])
         
         #Create images using Paraview
-        print(f'Creating Imagees...')
+        print(f'Creating images...')
         #image of the neural network projection
         screenshot1 = run(["python",
                         f'{os.environ["userprofile"]}\\git\\hernia-repair\\paraview_screenshot.py',
