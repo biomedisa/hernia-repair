@@ -412,7 +412,8 @@ def merge_tifs(path_to_label,path_to_distortion_array,path_to_merged_tif):
     
     label_array = imread(path_to_label)
     distortion_array = imread(path_to_distortion_array)
-    distortion_array[label_array==0] = 0
+    label_array[label_array != 0] = 1
+    label_array[distortion_array > 15] = distortion_array[distortion_array > 15]
     imwrite(path_to_merged_tif,distortion_array)
              
 def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
