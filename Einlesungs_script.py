@@ -294,6 +294,29 @@ def creat_ct_crosssection(path_to_layer_txt,observation_path):
         #save the crosssection
         img.save(observation_path[observation]['crosssection'],format='png')
 
+def annotate_distortion_image(path_to_png):
+    '''
+    Annotate the distortion projection image.
+    Adding name and dimensions of relevant area.
+    
+    Parameter
+    ---------
+    path_to_png: string
+        The path to the distortion png
+    '''
+    img = Image.open(path_to_png)
+    #annotate the image
+    draw = ImageDraw.Draw(img)
+    font = ImageFont.truetype("arial.ttf",size=20)
+    draw.text(xy=(0,0),
+            text= (f'Instabile Bauchwand (Verschiebung > 1.5cm)'
+                   f'Höhe:      Breite:       Fläche:       ' ),
+            fill=(0,0,0),
+            align = "center",
+            )
+    #save the crosssection
+    img.save(path_to_png,format='png')
+        
 def create_numpy_layer(path_to_data): 
     '''
     Create an array out of a textfile containg the x and y values of a 2 diamensional vectorfield.
@@ -537,6 +560,8 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
                         observation_path[observation]['tif'],
                         observation_path[observation]['png']
                         ])
+        
+        annotate_distortion_image(observation_path[observation]['projection_png'])
     
     #Patching Images togther for presentation
     os.system('cls')
