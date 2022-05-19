@@ -302,7 +302,7 @@ def get_distortion_dim(path_to_tif,slice_thickness, x_dim):
     try: 
         height = (np.flatnonzero(height_array)[-1] - np.flatnonzero(height_array)[0]) * slice_thickness * 0.1
     except:
-        heigth = 0
+        height = 0
     width_array = np.any(img, axis =(0,1))
     try:
         width = (np.flatnonzero(width_array)[-1] - np.flat.nonzero(width_array)[0]) * x_dim * 0.1
