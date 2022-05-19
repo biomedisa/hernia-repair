@@ -294,28 +294,44 @@ def creat_ct_crosssection(path_to_layer_txt,observation_path):
         #save the crosssection
         img.save(observation_path[observation]['crosssection'],format='png')
 
-def annotate_distortion_image(path_to_png):
+def get_distortion_dim(path_to_tif,slice_thickness, x_dim):
+    img = imread(path_to_tif)
+    img = (img >= 15)
+    zsh, _, _ = img.shape
+    heigth_array = np.any(img, axis =(1,2))
+    heigth = (np.flatnonzero(heigth_array)[-1] - np.flatnonzero(heigth_array)[0]) * slice_thickness * 0.1
+    
+    width_array = np.any(img, axis =(0,1)) 
+    width = (np.flatnonzero(width_array)[-1] - np.flat.nonzero(width_array)[0]) * x_dim * 0.1
+    
+    area_array = np.any(img, axis=1)
+    area = np.count_nonzero(area_array)* x_dim * slice_thickness * 0.01
+    
+    return height, width, area
+            
+            
+def annotate_distortion_image(patient_dict):
     '''
     Annotate the distortion projection image.
     Adding name and dimensions of relevant area.
     
     Parameter
     ---------
-    path_to_png: string
-        The path to the distortion png
+    patient_dict: dictionary
+        The dictionary containg the information of the data set
     '''
-    img = Image.open(path_to_png)
+    img = Image.open(patient_dict['projection_png'])
+    height, width, area = get_distortion_dim(patient_dict['projection_tif'],patient_dict['slice_thickness'],patient_dict['x_dim'])
     #annotate the image
     draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype("arial.ttf",size=20)
     draw.text(xy=(0,0),
             text= (f'Instabile Bauchwand (Verschiebung > 1.5cm)'
-                   f'Höhe:      Breite:       Fläche:       ' ),
+                   f'Höhe: {height}cm,      Breite: {width}cm,      Fläche: {area}cm²' ),
             fill=(0,0,0),
             align = "center",
             )
     #save the crosssection
-    img.save(path_to_png,format='png')
+    img.save(patient_dict['projection_png'],format='png')
         
 def create_numpy_layer(path_to_data): 
     '''
@@ -561,7 +577,7 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
                         observation_path[observation]['png']
                         ])
         
-        annotate_distortion_image(observation_path[observation]['projection_png'])
+        annotate_distortion_image(observation_path[observation])
     
     #Patching Images togther for presentation
     os.system('cls')
