@@ -44,12 +44,13 @@ def MarchingCubes(image,scale,scale_min,scale_max):
 def CreateVTK(image,path_to_save,x_thickness,y_thickness,slice_thickness,mode='labels'):
     
     if mode == 'distortion':
-        if np.amax(image) > 15:
-            image[image>50] = 50
-            image = np.rint(image)
-            image = image.astype(int)
-            scale, scale_min, scale_max = np.amax(image),1,np.amax(image)
-            
+        image[image < 15] = 1
+        image[image>60] = 60
+        image = np.rint(image)
+        image = image.astype(int)
+        scale, scale_min, scale_max = np.amax(image),1,np.amax(image)
+        #old scale to_be_removed
+        '''
         elif np.amax(image) > 5:
             image[0,0,0] = 15
             image = np.rint(2*image)/2
@@ -59,7 +60,7 @@ def CreateVTK(image,path_to_save,x_thickness,y_thickness,slice_thickness,mode='l
             image[0,0,0] = 5
             image = np.rint(10*image)/10
             scale, scale_min, scale_max = 50,0.1,5
-    
+        '''
     elif mode == 'labels':
         image[0,0,0] = 7
         scale, scale_min, scale_max = 7,1,7
