@@ -3,7 +3,7 @@
 
 #imports
 import os, sys
-#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 import pydicom
 import time,shutil,ssl
 import requests
