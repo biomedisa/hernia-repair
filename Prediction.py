@@ -127,6 +127,7 @@ def annotate_image(observation,path_to_dcm,path_to_tif,path_to_png):
     draw = ImageDraw.Draw(to_annotate)
     draw.text(xy=(0,0),
             text= (f'{observation}\n'
+                   f'Detektiertes Bruchsackvolumen (rot)\n'
                    f'(Berechnete Größen) Breite: {str(round(hernia_width_by_nn,1))}cm   Länge: {str(round(hernia_height_by_nn,1))}cm    Bruchpforten Fläche: {str(round(hernia_area_by_nn,1))}cm²\n'
                    f'(Größen im Bild) Instabile_Fläche: {str(round(instable_area_by_label*0.01,1))}cm²   Projezierte Fläche: {str(round(hernia_area_by_label*0.01,1))}cm²'),     
             fill=(0,0,0),
