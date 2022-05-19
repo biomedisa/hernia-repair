@@ -507,8 +507,6 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
         print(f'Processing {observation}:\n Computing Labels...')
         logging.debug(f'Processing {observation}:\n Computing Labels...')
         
-        print(observation_path[observation]["dcm_dir"])
-        
         #Create the classification proposal, in form of a tif
         net = run([
                         'python',f'{os.environ["userprofile"]}\\git\\biomedisa\\demo\\biomedisa_deeplearning.py', 
