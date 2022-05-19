@@ -298,9 +298,9 @@ def get_distortion_dim(path_to_tif,slice_thickness, x_dim):
     img = imread(path_to_tif)
     img = (img >= 15)
     zsh, _, _ = img.shape
-    heigth_array = np.any(img, axis =(1,2))
+    height_array = np.any(img, axis =(1,2))
     try: 
-        heigth = (np.flatnonzero(heigth_array)[-1] - np.flatnonzero(heigth_array)[0]) * slice_thickness * 0.1
+        height = (np.flatnonzero(height_array)[-1] - np.flatnonzero(height_array)[0]) * slice_thickness * 0.1
     except:
         heigth = 0
     width_array = np.any(img, axis =(0,1))
