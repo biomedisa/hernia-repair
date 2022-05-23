@@ -296,23 +296,19 @@ def creat_ct_crosssection(path_to_layer_txt,observation_path):
 
 def get_distortion_dim(path_to_tif,slice_thickness, x_dim):
     img = imread(path_to_tif)
-    img = (img >= 15)
     zsh, _, _ = img.shape
-    height_array = np.any(img, axis =(1,2))
-    try: 
+    height_array = np.any(img >= 15, axis =(1,2))
+    if height_array.size !=0:
         height = (np.flatnonzero(height_array)[-1] - np.flatnonzero(height_array)[0]) * slice_thickness * 0.1
-    except:
-        height = 0
-    width_array = np.any(img, axis =(0,1))
-    try:
+    else: height = 0
+    width_array = np.any(img >= 15, axis =(0,1))
+    if width_array.size !=0:
         width = (np.flatnonzero(width_array)[-1] - np.flat.nonzero(width_array)[0]) * x_dim * 0.1
-    except:
-        width = 0
-    area_array = np.any(img, axis=1)
-    try:
+    else: width = 0
+    area_array = np.any(img >= 15, axis=1)
+    if area_array.size != 0:
         area = np.count_nonzero(area_array)* x_dim * slice_thickness * 0.01
-    except:
-        area = 0
+    else: area = 0
     return height, width, area
             
             
@@ -409,11 +405,19 @@ def merge_tifs(path_to_label,path_to_distortion_array,path_to_merged_tif):
     path_to_merged_tif: string
         path to the destination of the merged arrays
     '''
-    
+    #Read both tif arrays
     label_array = imread(path_to_label)
     distortion_array = imread(path_to_distortion_array)
+    #set all labels to 1
     label_array[label_array != 0] = 1
-    label_array[distortion_array > 15] = distortion_array[distortion_array > 15]
+    #were label !=0 set it overwrite it with the distortionvalue but at least 1
+    label_array[label_array != 0] = max(distortion_array[label_array !=0],1)
+    #Treshold cutoff 60mm
+    label_array[label_array >60] = 60
+    #make the array intervalued for later use
+    label_array = np.rint(label_array)
+    label_array.astype(int)
+    #save the merged tif
     imwrite(path_to_merged_tif,label_array)
              
 def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
@@ -545,14 +549,16 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
         screenshot1 = run(["python",
                         f'{os.environ["userprofile"]}\\git\\hernia-repair\\paraview_screenshot.py',
                         observation_path[observation]['vtk'],
-                        observation_path[observation]['png']
+                        observation_path[observation]['png'],
+                        "labels"
                         ])
         
         #image of the distortion projection
         screenshot2 = run(["python",
                         f'{os.environ["userprofile"]}\\git\\hernia-repair\\paraview_screenshot.py',
                         observation_path[observation]['projection_vtk'],
-                        observation_path[observation]['projection_png']
+                        observation_path[observation]['projection_png'],
+                        "distortion"
                         ])
         
         
