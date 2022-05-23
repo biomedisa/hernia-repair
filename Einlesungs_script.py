@@ -310,7 +310,7 @@ def get_distortion_dim(path_to_tif,slice_thickness, x_dim):
     else: width = 0
     area_array = np.any(img >= 15, axis=1)
     if area_array.size != 0:
-        area = np.count_nonzero(area_array)* int(x_dim) * int(slice_thickness) * 0.01
+        area = np.count_nonzero(area_array)* float(x_dim) * float(slice_thickness) * 0.01
     else: area = 0
     return height, width, area
             
