@@ -298,12 +298,11 @@ def get_distortion_dim(path_to_tif,slice_thickness, x_dim):
     img = imread(path_to_tif)
     zsh, _, _ = img.shape
     height_array = np.any(img >= 15, axis =(1,2))
-    print(height_array)
-    if height_array.size !=0:
+    if np.any(height_array):
         height = (np.flatnonzero(height_array)[-1] - np.flatnonzero(height_array)[0]) * slice_thickness * 0.1
     else: height = 0
     width_array = np.any(img >= 15, axis =(0,1))
-    if width_array.size !=0:
+    if np.any(width_array):
         width = (np.flatnonzero(width_array)[-1] - np.flat.nonzero(width_array)[0]) * x_dim * 0.1
     else: width = 0
     area_array = np.any(img >= 15, axis=1)
@@ -630,8 +629,8 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
                 observation_path['Nativ']['vtk'],observation_path['Valsalva']['vtk'],
                 observation_path['Nativ']['crosssection'],observation_path['Valsalva']['crosssection'],
                 observation_path['Nativ']['projection_png'],observation_path['Valsalva']['projection_png'],
-                 observation_path['Nativ']['projection_tif'],observation_path['Valsalva']['projection_tif'],
-                 observation_path['Nativ']['projection_vtk'],observation_path['Valsalva']['projection_vtk']
+                observation_path['Nativ']['projection_tif'],observation_path['Valsalva']['projection_tif'],
+                observation_path['Nativ']['projection_vtk'],observation_path['Valsalva']['projection_vtk']
                 ):
         shutil.move(file, path_to_archiv)
     
