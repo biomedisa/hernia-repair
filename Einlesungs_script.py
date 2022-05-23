@@ -302,15 +302,15 @@ def get_distortion_dim(path_to_tif,slice_thickness, x_dim):
     zsh, _, _ = img.shape
     height_array = np.any(img >= 15, axis =(1,2))
     if np.any(height_array):
-        height = (np.flatnonzero(height_array)[-1] - np.flatnonzero(height_array)[0]) * slice_thickness * 0.1
+        height = (np.flatnonzero(height_array)[-1] - np.flatnonzero(height_array)[0]) * int(slice_thickness) * 0.1
     else: height = 0
     width_array = np.any(img >= 15, axis =(0,1))
     if np.any(width_array):
-        width = (np.flatnonzero(width_array)[-1] - np.flatnonzero(width_array)[0]) * x_dim * 0.1
+        width = (np.flatnonzero(width_array)[-1] - np.flatnonzero(width_array)[0]) * int(x_dim) * 0.1
     else: width = 0
     area_array = np.any(img >= 15, axis=1)
     if area_array.size != 0:
-        area = np.count_nonzero(area_array)* x_dim * slice_thickness * 0.01
+        area = np.count_nonzero(area_array)* int(x_dim) * int(slice_thickness) * 0.01
     else: area = 0
     return height, width, area
             
