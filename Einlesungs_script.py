@@ -298,6 +298,7 @@ def get_distortion_dim(path_to_tif,slice_thickness, x_dim):
     img = imread(path_to_tif)
     zsh, _, _ = img.shape
     height_array = np.any(img >= 15, axis =(1,2))
+    print(height_array)
     if height_array.size !=0:
         height = (np.flatnonzero(height_array)[-1] - np.flatnonzero(height_array)[0]) * slice_thickness * 0.1
     else: height = 0
@@ -411,7 +412,7 @@ def merge_tifs(path_to_label,path_to_distortion_array,path_to_merged_tif):
     #set all labels to 1
     label_array[label_array != 0] = 1
     #were label !=0 set it overwrite it with the distortionvalue but at least 1
-    label_array[label_array != 0] = np.maximum(distortion_array[label_array !=0],1)
+    label_array[label_array != 0] = np.maximum(distortion_array[label_array !=0] , 1)
     #Treshold cutoff 60mm
     label_array[label_array >60] = 60
     #make the array intervalued for later use
