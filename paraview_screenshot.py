@@ -65,7 +65,7 @@ renderView1.OrientationAxesVisibility = 0
 
 # reset view to fit data
 renderView1.ResetCamera()
-if mode = "distortion":
+if mode == "distortion":
     # Apply a preset using its name. Note this may not work as expected when presets have duplicate names.
     scalarsLUT.ApplyPreset('Cold and Hot', True)
     scalarsLUT.RGBPoints = [1.0, 0.0, 1.0, 1.0, 15.0, 0.0, 0.0, 1.0, 15.0, 0.0, 0.0, 0.5, 15.0, 1.0, 0.0, 0.0, 60, 1.0, 1.0, 0.0]
