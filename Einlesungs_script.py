@@ -31,15 +31,20 @@ def ask_continue():
     
     y for yes 
     n for no
+    
+    Returns
+    -------
+    True if the user wants to continue
     '''
     
     if mode == "Multi":
-        return
+        return True
     
     print(f'Do You want to continue (y) or close the Application (n)?\n')
     user_input = input()
     if user_input in ['y','yes', 'ja' ]:
         print('Continuing...')
+        return True
     elif user_input in ['n', 'no', 'nein']:
         print('Shuting Down.')
         exit()
@@ -251,13 +256,11 @@ def compare_slice_amount(nativ_dcm_dir, valsalva_dcm_dir):
     if nativ_slice_amount > valsalva_slice_amount:
         print(f'There are {nativ_slice_amount - valsalva_slice_amount} more nativ than valsalva({valsalva_slice_amount}) scans! \n This will impact the result. \n\n')
         logging.warning(f'There are {nativ_slice_amount - valsalva_slice_amount} more nativ than valsalva({valsalva_slice_amount}) scans! \n This will impact the result. \n\n')
-        ask_continue()
-        return True
+        return ask_continue()
     elif nativ_slice_amount < valsalva_slice_amount:
         print(f'There are {valsalva_slice_amount - nativ_slice_amount} more valsalva than nativ({nativ_slice_amount}) scans! \n This will impact the result. \n\n')
-        logging.warning(f'There are {valsalva_slice_amount - nativ_slice_amount} more valsalva than nativ({nativ_slice_amount}) scans! \n\n')
-        ask_continue()
-        return True
+        logging.warning(f'There are {valsalva_slice_amount - nativ_slice_amount} more valsalva than nativ({nativ_slice_amount}) scans! \n\n')        
+        return ask_continue()
 
 def creat_ct_crosssection(path_to_layer_txt,observation_path):
     '''
