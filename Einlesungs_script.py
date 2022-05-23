@@ -553,8 +553,8 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
                         f'{os.environ["userprofile"]}\\git\\hernia-repair\\paraview_screenshot.py',
                         observation_path[observation]['vtk'],
                         observation_path[observation]['png'],
-                        "labels"
-                        None
+                        "labels",
+                        None,
                         ])
         
         #image of the distortion projection
@@ -563,7 +563,7 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
                         observation_path[observation]['projection_vtk'],
                         observation_path[observation]['projection_png'],
                         "distortion",
-                        np.amax(imread(observation_path[observation]['projection_tif']))
+                        np.amax(imread(observation_path[observation]['projection_tif'])),
                         ])
         
         
