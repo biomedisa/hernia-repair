@@ -9,7 +9,7 @@ from paraview.simple import *
 mesh = sys.argv[1]
 path_to_save = sys.argv[2]
 mode = sys.argv[3]
-max_range = sys.argv[4]
+max_range = float(sys.argv[4])
 
 Connect()
 #### disable automatic camera reset on 'Show'
