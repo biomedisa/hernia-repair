@@ -44,7 +44,7 @@ def MarchingCubes(image,scale,scale_min,scale_max):
 def CreateVTK(image,path_to_save,x_thickness,y_thickness,slice_thickness,mode='labels'):
     
     if mode == 'distortion':
-        scale, scale_min, scale_max = np.amax(image),1,np.amax(image)
+        scale, scale_min, scale_max = int(np.amax(image)),1,int(np.amax(image))
     elif mode == 'labels':
         image[0,0,0] = 7
         scale, scale_min, scale_max = 7,1,7
