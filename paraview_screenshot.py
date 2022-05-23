@@ -9,6 +9,7 @@ from paraview.simple import *
 mesh = sys.argv[1]
 path_to_save = sys.argv[2]
 mode = sys.argv[3]
+max_range = sys.argv[4]
 
 Connect()
 #### disable automatic camera reset on 'Show'
@@ -68,7 +69,7 @@ renderView1.ResetCamera()
 if mode == "distortion":
     # Apply a preset using its name. Note this may not work as expected when presets have duplicate names.
     scalarsLUT.ApplyPreset('Cold and Hot', True)
-    scalarsLUT.RGBPoints = [1.0, 0.0, 1.0, 1.0, 15.0, 0.0, 0.0, 1.0, 15.0, 0.0, 0.0, 0.5, 15.0, 1.0, 0.0, 0.0, 60, 1.0, 1.0, 0.0]
+    scalarsLUT.RGBPoints = [1.0, 0.0, 1.0, 1.0, 15.0, 0.0, 0.0, 1.0, 15.0, 0.0, 0.0, 0.5, 15.0, 1.0, 0.0, 0.0, max_range, 1.0, 1.0, 0.0]
 
 
 # get layout
