@@ -327,8 +327,8 @@ def annotate_distortion_image(patient_dict):
     height, width, area = get_distortion_dim(patient_dict['projection_tif'],patient_dict['slice_thickness'],patient_dict['x_dim'])
     #annotate the image
     draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype("arial.ttf",size=15)
-    draw.text(xy=(0,0),
+    font = ImageFont.truetype("arial.ttf",size=20)
+    draw.text(xy=(img.width/2,0),
             text= (f'Instabile Bauchwand (Verschiebung > 1.5cm)\n'
                    f'Höhe: {height}cm,      Breite: {width}cm,      Fläche: {area}cm²' ),
             fill=(0,0,0),
