@@ -703,13 +703,10 @@ try:
 
 
 # Catch the error and log it to a file in the main Directory
-except Exception as Argument: 
+except: 
     #open the error txt file to write to
-    f = open('Error_file.txt', 'a')
-    #Write into the error file
-    f.write(str(Argument))
-    #close the error file
-    f.close()
+    logging.exception('Fehler bei der Ausführung!')
+    raise
     
     
     
