@@ -132,7 +132,7 @@ def annotate_image(observation,path_to_dcm,path_to_tif,path_to_png):
                    f'(Berechnete Größen) Breite: {round(hernia_width_by_nn,1)}cm,   Länge: {round(hernia_height_by_nn,1)}cm,    Bruchpforten Fläche: {round(hernia_area_by_nn,1)}cm²\n'
                    f'(Größen im Bild) Instabile_Fläche: {round(instable_area_by_label*0.01,1)}cm²,  Projezierte Fläche: {round(hernia_area_by_label*0.01,1)}cm²'),     
             fill=(0,0,0),
-            anchor='ma'
+            anchor='ma',
             align = 'center',
             font = font,
             )
