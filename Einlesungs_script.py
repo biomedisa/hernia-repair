@@ -287,7 +287,8 @@ def creat_ct_crosssection(path_to_layer_txt,observation_path):
         draw = ImageDraw.Draw(img)
         font = ImageFont.truetype("arial.ttf",size=20)
         draw.text(xy=(img.width/2,0),
-                text= f'{observation} \n Layer: {layer}',
+                text= (f'{observation} \n'
+                       f'Layer: {layer}'),
                 fill=(255,255,255),
                 anchor='ma',
                 font=font,
@@ -328,7 +329,7 @@ def annotate_distortion_image(patient_dict):
     #annotate the image
     draw = ImageDraw.Draw(img)
     font = ImageFont.truetype("arial.ttf",size=20)
-    draw.text(xy=(img.width/2,0),
+    draw.text(xy=(0,0),
             text= (f'Instabile Bauchwand (Verschiebung > 1.5cm)\n'
                    f'Höhe: {height}cm,      Breite: {width}cm,      Fläche: {area}cm²' ),
             fill=(0,0,0),
