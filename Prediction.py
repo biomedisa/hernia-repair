@@ -1,7 +1,7 @@
 import numpy as np
 import pydicom, glob, sys, os
 from tensorflow.python.keras.models import load_model
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 from tifffile import imread
 
 def load_data(path_to_data):
@@ -125,7 +125,8 @@ def annotate_image(observation,path_to_dcm,path_to_tif,path_to_png):
     #write hernia dimensions on the image
     to_annotate = Image.open(path_to_png)
     draw = ImageDraw.Draw(to_annotate)
-    draw.text(xy=(0,0),
+    font = ImageFont.truetype("arial.ttf", 20)
+    draw.text(xy=(to_annotat.width/2,0),
             text= (f'{observation}\n'
                    f'Detektiertes Bruchsackvolumen (rot)\n'
                    f'(Berechnete Größen) Breite: {str(round(hernia_width_by_nn,1))}cm   Länge: {str(round(hernia_height_by_nn,1))}cm    Bruchpforten Fläche: {str(round(hernia_area_by_nn,1))}cm²\n'
