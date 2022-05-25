@@ -125,7 +125,7 @@ def annotate_image(observation,path_to_dcm,path_to_tif,path_to_png):
     #write hernia dimensions on the image
     to_annotate = Image.open(path_to_png)
     draw = ImageDraw.Draw(to_annotate)
-    font = ImageFont.truetype("arial.ttf", size=20)
+    font = ImageFont.truetype("arial.ttf", size=15)
     draw.text(xy=(to_annotate.width/2,0),
             text= (f'{observation}\n'
                    f'Detektiertes Bruchsackvolumen (rot)\n'
