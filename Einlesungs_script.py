@@ -132,23 +132,21 @@ def load_directorys():
             if not 'first_level' in locals():
                 #name the directory containing all results after patient name + Birthdate     	      
                 first_level = f'{main_folder}\\{ds.PatientName}_{ds.PatientBirthDate}'
-                '''
                 first_level = first_level.replace('^','_')
-                first_level = first_level.replace('/',' ')
+                #first_level = first_level.replace('/',' ')
                 first_level = first_level.replace(' ','_')
                 first_level = first_level.replace('ü','ue')
                 first_level = first_level.replace('ä','ae')
                 first_level = first_level.replace('ö','oe')
-                '''
                 first_level = first_level.replace('ß','ss')
-             
             if not 'second_level' in locals():    
                 second_level = f'{first_level}\\{ds.StudyDate}_{ds.StudyDescription}'
                 #second_level = second_level.replace('/',' ')
             third_level = f'{second_level}\\{ds.SeriesNumber}_{ds.SeriesDescription}'
             #third_level = third_level.replace('/',' ') 
             #third_level = third_level.replace('|','_')
-            #third_level = third_level.replace('*',' ') 
+            #third_level = third_level.replace('*',' ')
+            third_level = third_level.replace('#',' ') 
             
             #Check existence and create non existing directorys
             if not os.path.exists(first_level):                       
@@ -312,7 +310,7 @@ def get_distortion_dim(path_to_tif,slice_thickness, x_dim):
     if area_array.size != 0:
         area = np.count_nonzero(area_array)* float(x_dim) * float(slice_thickness) * 0.01
     else: area = 0
-    return height, width, area
+    return round(height,2), round(width,2), round(area,2)
             
             
 def annotate_distortion_image(patient_dict):
@@ -329,11 +327,13 @@ def annotate_distortion_image(patient_dict):
     height, width, area = get_distortion_dim(patient_dict['projection_tif'],patient_dict['slice_thickness'],patient_dict['x_dim'])
     #annotate the image
     draw = ImageDraw.Draw(img)
+    font = ImageFont.truetype(font=None, size=15)
     draw.text(xy=(0,0),
             text= (f'Instabile Bauchwand (Verschiebung > 1.5cm)\n'
                    f'Höhe: {height}cm,      Breite: {width}cm,      Fläche: {area}cm²' ),
             fill=(0,0,0),
             align = "center",
+            font=font
             )
     #save the crosssection
     img.save(patient_dict['projection_png'],format='png')
