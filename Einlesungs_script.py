@@ -333,7 +333,8 @@ def annotate_distortion_image(patient_dict):
             text= (f'Instabile Bauchwand (Verschiebung > 1.5cm)\n'
                    f'Höhe: {height}cm,      Breite: {width}cm,      Fläche: {area}cm²' ),
             fill=(0,0,0),
-            align = "center",
+            anchor='ma'
+            align = 'center',
             font=font
             )
     #save the crosssection
