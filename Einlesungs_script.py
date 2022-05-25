@@ -331,11 +331,11 @@ def annotate_distortion_image(patient_dict):
     font = ImageFont.truetype("arial.ttf",size=20)
     draw.text(xy=(0,0),
             text= (f'Instabile Bauchwand (Verschiebung > 1.5cm)\n'
-                   f'Höhe: {height}cm,      Breite: {width}cm,      Fläche: {area}cm²' ),
+                   f'Höhe: {height}cm,      Breite: {width}cm,      Fläche: {area}cm²'),
             fill=(0,0,0),
-            anchor='ma'
+            anchor='ma',
             align = 'center',
-            font=font
+            font=font,
             )
     #save the crosssection
     img.save(patient_dict['projection_png'],format='png')
