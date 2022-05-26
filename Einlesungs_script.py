@@ -260,41 +260,60 @@ def compare_slice_amount(nativ_dcm_dir, valsalva_dcm_dir):
         logging.warning(f'There are {valsalva_slice_amount - nativ_slice_amount} more valsalva than nativ({nativ_slice_amount}) scans! \n\n')        
         return ask_continue()
 
-def creat_ct_crosssection(path_to_layer_txt,observation_path):
+def creat_crosssection(path_to_layer_txt,observation_dict):
     '''
-    Create a png of the ct-slice with the largest amount of translation.
+    Create a png of the ct-slice with the largest translation.
 
     Parameters
     ----------
     path_to_layer_txt: string
         path to the .txt file containg the ct-slice id
-    observation_path: dict of dict of string
+    observation_dict: dict of string
         dict with the Patients Path information
+    
+    Returns
+    --------
+    layer: int
+        slice id of the slice with max. translation
+    
     '''
-
+    
+    
     layer_file = open(path_to_layer_txt,'r',encoding='utf8')
     layer = int(float(layer_file.readlines()[1]))
     layer_file.close()
-    for observation in ["Nativ","Valsalva"]:
-        #get the dcm file containg that layer
-        layer_path = f'{observation_path[observation]["dcm_dir"]}\\{str(layer).zfill(6)}.dcm'
-        #convert the dcm file into an PIL image
-        ds = pydicom.filereader.dcmread(layer_path)
-        img = ds.pixel_array
-        plt.imsave(observation_path[observation]['crosssection'],img,cmap='gray')
-        img = Image.open(observation_path[observation]['crosssection'])
-        #annotate the image
-        draw = ImageDraw.Draw(img)
-        font = ImageFont.truetype("arial.ttf",size=20)
-        draw.text(xy=(img.width/2,0),
-                text=f'Schicht der Maximalen Verschiebung: {layer}',
-                fill=(255,255,255),
-                anchor='ma',
-                align='center',
-                font=font,
-                )
-        #save the crosssection
-        img.save(observation_path[observation]['crosssection'],format='png')
+    #get the dcm file containg that layer
+    layer_path = f'{observation_dict["dcm_dir"]}\\{str(layer).zfill(6)}.dcm'
+    #convert the dcm file into an PIL image
+    ds = pydicom.filereader.dcmread(layer_path)
+    img = ds.pixel_array
+    plt.imsave(observation_dict['crosssection'],img,cmap='gray')
+    return layer
+    
+    
+def annotate_crosssection(observation_dict,layer):
+    '''
+    Annotate the ct_crosssection image.
+    Adding name and dimensions of relevant area.
+    
+    Parameter
+    ---------
+    observation_dict: dict of string
+        dict with the Patients Path information
+    '''
+    img = Image.open(observation_dict['crosssection'])
+    #annotate the image
+    draw = ImageDraw.Draw(img)
+    font = ImageFont.truetype("arial.ttf",size=20)
+    draw.text(xy=(img.width/2,0),
+            text=f'Schicht der Maximalen Verschiebung: {layer}',
+            fill=(255,255,255),
+            anchor='ma',
+            align='center',
+            font=font,
+            )
+    #save the crosssection
+    img.save(observation_dict['crosssection'],format='png')
 
 def get_distortion_dim(path_to_tif,slice_thickness, x_dim):
     img = imread(path_to_tif)
@@ -314,7 +333,7 @@ def get_distortion_dim(path_to_tif,slice_thickness, x_dim):
     return round(height,2), round(width,2), round(area,2)
             
             
-def annotate_distortion_image(patient_dict):
+def annotate_distortion_image(observation_dict):
     '''
     Annotate the distortion projection image.
     Adding name and dimensions of relevant area.
@@ -324,8 +343,8 @@ def annotate_distortion_image(patient_dict):
     patient_dict: dictionary
         The dictionary containg the information of the data set
     '''
-    img = Image.open(patient_dict['projection_png'])
-    height, width, area = get_distortion_dim(patient_dict['projection_tif'],patient_dict['slice_thickness'],patient_dict['x_dim'])
+    img = Image.open(observation_dict['projection_png'])
+    height, width, area = get_distortion_dim(observation_dict['projection_tif'],observation_dict['slice_thickness'],observation_dict['x_dim'])
     #annotate the image
     draw = ImageDraw.Draw(img)
     font = ImageFont.truetype("arial.ttf",size=20)
@@ -338,7 +357,7 @@ def annotate_distortion_image(patient_dict):
             font=font,
             )
     #save the crosssection
-    img.save(patient_dict['projection_png'],format='png')
+    img.save(observation_dict['projection_png'],format='png')
         
 def create_numpy_layer(path_to_data): 
     '''
@@ -568,22 +587,27 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
                         str(np.amax(imread(observation_path[observation]['projection_tif']))),
                         ])
         
-        
+        #Get the crossection image as the layer with the biggest offset between nativ and valsalva
+        max_translation_layer = creat_crosssection(f'{path_to_archiv}\\sliceID and sliceName maxDisplacement.txt',observation_path[observation])
 
         #Preprocess and Annotate the Paraview labeled images
         print(f'Scaling images...')
         #Read the image
         observation_img = plt.imread(observation_path[observation]['png'])
         projection_img  = plt.imread(observation_path[observation]['projection_png'])
+        crosssection_img = plt.imread(observation_path[observation]['crosssection'])
         #Reshape to match size of sam_img and to fit annotation
         if observation == 'Nativ':
             observation_img = np.pad(observation_img, ((50,0),(0,1),(0,0)), mode='constant',constant_values=1)
             projection_img  = np.pad(projection_img, ((50,0),(0,1),(0,0)), mode='constant',constant_values=1)
+            crosssection_img = np.pad(nativ_crosssection,((15,0),(39,40),(0,0)), mode='constant')
         elif observation == 'Valsalva':
             observation_img = np.pad(observation_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1)
-            projection_img  = np.pad(projection_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1)
+            projection_img  = np.pad(projection_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1) 
+            crosssection_img = np.pad(valsalva_crosssection,((15,0),(39,39),(0,0)), mode='constant')
         plt.imsave(observation_path[observation]['png'],observation_img)       
         plt.imsave(observation_path[observation]['projection_png'],projection_img)
+        plt.imsave(observation_path[observation]['crosssection'],crosssection_img)
 
         #Annotate the images
         print('Annotating images...')
@@ -596,13 +620,11 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
                         ])
         
         annotate_distortion_image(observation_path[observation])
+        annotate_crosssection(observation_path[observation],max_translation_layer)
     
     #Patching Images togther for presentation
     os.system('cls')
     print('Arranging Results...')
-
-    #Get the crossection image as the layer with the biggest offset between nativ and valsalva
-    creat_ct_crosssection(f'{path_to_archiv}\\sliceID and sliceName maxDisplacement.txt',observation_path)
 
     #Load all images
     sam_img = plt.imread(f'{path_to_evaluation}\\Verschiebung und Verzerrung.png')
@@ -612,10 +634,6 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
     val_proj_img = plt.imread(observation_path['Valsalva']['projection_png'])[:,:,:3]
     nativ_crosssection = plt.imread(observation_path['Nativ']['crosssection'])[:,:,:3]
     valsalva_crosssection = plt.imread(observation_path['Valsalva']['crosssection'])[:,:,:3]
-
-    #Resize images to same width for stacking 
-    nativ_crosssection = np.pad(nativ_crosssection,((0,0),(39,40),(0,0)), mode='constant')
-    valsalva_crosssection = np.pad(valsalva_crosssection,((0,0),(39,39),(0,0)), mode='constant')
     
     #Stack the image pairs
     nat_and_val = np.hstack((nat_img,val_img))
