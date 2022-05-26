@@ -287,10 +287,10 @@ def creat_ct_crosssection(path_to_layer_txt,observation_path):
         draw = ImageDraw.Draw(img)
         font = ImageFont.truetype("arial.ttf",size=20)
         draw.text(xy=(img.width/2,0),
-                text= (f'{observation} \n'
-                       f'Layer: {layer}'),
+                text=f'Schicht der Maximalen Verschiebung: {layer}',
                 fill=(255,255,255),
                 anchor='ma',
+                align='center',
                 font=font,
                 )
         #save the crosssection
