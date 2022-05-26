@@ -600,11 +600,11 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
         if observation == 'Nativ':
             observation_img = np.pad(observation_img, ((50,0),(0,1),(0,0)), mode='constant',constant_values=1)
             projection_img  = np.pad(projection_img, ((50,0),(0,1),(0,0)), mode='constant',constant_values=1)
-            crosssection_img = np.pad(nativ_crosssection,((15,0),(39,40),(0,0)), mode='constant')
+            crosssection_img = np.pad(crosssection_img,((15,0),(39,40),(0,0)), mode='constant')
         elif observation == 'Valsalva':
             observation_img = np.pad(observation_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1)
             projection_img  = np.pad(projection_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1) 
-            crosssection_img = np.pad(valsalva_crosssection,((15,0),(39,39),(0,0)), mode='constant')
+            crosssection_img = np.pad(crosssection_img,((15,0),(39,39),(0,0)), mode='constant')
         plt.imsave(observation_path[observation]['png'],observation_img)       
         plt.imsave(observation_path[observation]['projection_png'],projection_img)
         plt.imsave(observation_path[observation]['crosssection'],crosssection_img)
