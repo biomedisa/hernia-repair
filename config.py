@@ -4,3 +4,4 @@ path_names = {
     'neuralnet': f'{os.environ["userprofile"]}\\git\\Netzwerke',
     'multipath': f'{os.environ["userprofile"]}\\git\\Pfade.txt'
 }
+ #This is a test
