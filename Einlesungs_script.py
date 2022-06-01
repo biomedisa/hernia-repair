@@ -3,6 +3,7 @@
 
 #imports
 import os, sys
+import config
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 import pydicom
 import time,shutil,ssl
@@ -64,9 +65,9 @@ def update_neural_nets():
                'https://biomedisa.org/media/Hernien_detector_x.h5',
                'https://biomedisa.org/media/Hernien_detector_z.h5']
 
-    destinations = [f'{os.environ["userprofile"]}\\git\\Netzwerke\\img_hernie.h5',
-                    f'{os.environ["userprofile"]}\\git\\Netzwerke\\hernien_detector_x.h5',
-                    f'{os.environ["userprofile"]}\\git\\Netzwerke\\hernien_detector_z.h5']
+    destinations = [f'{[config.path_names['neuralnet']}\\img_hernie.h5',
+                   f'{[config.path_names['neuralnet']}\\hernien_detector_x.h5',
+                   f'{[config.path_names['neuralnet']}\\hernien_detector_z.h5']
 
     for src, dst in zip(sources,destinations):
         update = False
@@ -539,7 +540,7 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
         #Create the classification proposal, in form of a tif
         net = run([
                         'python',f'{os.environ["userprofile"]}\\git\\biomedisa\\demo\\biomedisa_deeplearning.py', 
-                        observation_path[observation]["dcm_dir"], f'{os.environ["userprofile"]}\\git\\Netzwerke\\img_hernie.h5', "-p","-bs","6"
+                        observation_path[observation]["dcm_dir"], f'{config.path_names['neuralnet']}\\img_hernie.h5', "-p","-bs","6"
                   ])
         
         
@@ -678,7 +679,7 @@ try:
         mode = sys.argv[1]
 
         #Set the main save directory    
-        main_folder = f'{os.environ["userprofile"]}\\Hernien_Analyse_{mode}'
+        main_folder = config.path_names['main']
         if not os.path.exists(main_folder):
             os.mkdir(main_folder) 
 
@@ -687,7 +688,7 @@ try:
 
         #Check for updates and update the neural nets
         try:
-            network_folder = f'{os.environ["userprofile"]}\\git\\Netzwerke'
+            network_folder = config.path_names['neuralnet']
             if not os.path.exists(network_folder):
                 os.mkdir(network_folder)
             update_neural_nets()
@@ -698,7 +699,7 @@ try:
             hernia_analysis()
         elif mode == "Multi":
             #open txt file with paths to the data
-            txt_file = open(f'{os.environ["userprofile"]}\\git\\Pfade.txt','r',encoding='utf8')
+            txt_file = open(config.path_names['multipath'],'r',encoding='utf8')
             #read the first emptyline
             line = txt_file.readline()
             #loop over the file till EOF is reached
