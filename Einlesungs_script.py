@@ -65,9 +65,9 @@ def update_neural_nets():
                'https://biomedisa.org/media/Hernien_detector_x.h5',
                'https://biomedisa.org/media/Hernien_detector_z.h5']
 
-    destinations = [f'{config.path_names['neuralnet']}\\img_hernie.h5',
-                   f'{config.path_names['neuralnet']}\\hernien_detector_x.h5',
-                   f'{config.path_names['neuralnet']}\\hernien_detector_z.h5']
+    destinations = [f'{config.path_names["neuralnet"]}\\img_hernie.h5',
+                   f'{config.path_names["neuralnet"]}\\hernien_detector_x.h5',
+                   f'{config.path_names["neuralnet"]}\\hernien_detector_z.h5']
 
     for src, dst in zip(sources,destinations):
         update = False
@@ -542,7 +542,7 @@ def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
         #Create the classification proposal, in form of a tif
         net = run([
                         'python',f'{os.environ["userprofile"]}\\git\\biomedisa\\demo\\biomedisa_deeplearning.py', 
-                        observation_path[observation]["dcm_dir"], f'{config.path_names['neuralnet']}\\img_hernie.h5', "-p","-bs","6"
+                        observation_path[observation]["dcm_dir"], f'{config.path_names["neuralnet"]}\\img_hernie.h5', "-p","-bs","6"
                   ])
         
         
