@@ -415,8 +415,6 @@ def create_distortion_array(path_to_dir, number_of_slices, max_slice_id, path_to
         distance = Volume.shape[0]-1 - old_ind
         for step in range(1, distance + 1, 1):
             Volume[old_ind + step,...] = Volume[old_ind,...]*(1-(step/distance))
-    mask = np.amax(Volume,axis=1)
-    Volume = np.resize(mask,Volume.shape)
     imwrite(path_to_save,Volume)
              
 def merge_tifs(path_to_label,path_to_distortion_array,path_to_merged_tif):
