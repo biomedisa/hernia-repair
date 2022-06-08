@@ -444,7 +444,7 @@ def merge_tifs(path_to_label,path_to_distortion_array,path_to_merged_tif):
     label_array.astype(int)
     #save the merged tif
     imwrite(path_to_merged_tif,label_array)
-             
+
 def hernia_analysis(path_to_nativ=None, path_to_valsalva=None):
     #Set the paths for both observations
     Observations = ["Nativ","Valsalva"]
