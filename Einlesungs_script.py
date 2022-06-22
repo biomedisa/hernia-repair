@@ -127,13 +127,17 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
                             path_to_distortion_array)
     
     for observation in Observations:
-
+        #Consol Output
+        os.system('cls')
+        print(f'Processing {observation}:\n Creating array of displacement...')
+        logging.debug(f'Processing {observation}:\n Creating array of displayement...')
         #Create the Distortion Array and the distortion projection tif
         hernia_helper.merge_tifs(observation_path[observation]['tif'],path_to_distortion_array,observation_path[observation]['projection_tif'])     
    
-        #Create meshes, in vtk format for Paraview
+        #Consol output
         print(f'Creating Meshes...')
-        #Mesh of the Neural Network proposal
+        logging.debug(f'Processing {observation}:\n Creating Meshes...')
+        #Create meshes, in vtk format for Paraview
         mesh1 = run(["python",f'{os.environ["userprofile"]}\\git\\hernia-repair\\create_mesh.py', 
                     observation_path[observation]['tif'], observation_path[observation]['vtk'], observation_path[observation]['x_dim'],
                     observation_path[observation]['y_dim'], observation_path[observation]['slice_thickness'], 'labels'
@@ -145,8 +149,10 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
                     observation_path[observation]['y_dim'],observation_path[observation]['slice_thickness'], 'distortion'
                     ])
         
-        #Create images using Paraview
+        #Consol Output
         print(f'Creating images...')
+        logging.debug(f'Processing {observation}:\n Creating images...')
+        #Create images using Paraview
         #image of the neural network projection
         screenshot1 = run(["python",
                         f'{os.environ["userprofile"]}\\git\\hernia-repair\\paraview_screenshot.py',
@@ -170,7 +176,7 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
 
         #Preprocess and Annotate the Paraview labeled images
         print(f'Scaling images...')
-        #Read the image
+        #Read the images
         observation_img = plt.imread(observation_path[observation]['png'])
         projection_img  = plt.imread(observation_path[observation]['projection_png'])
         crosssection_img = plt.imread(observation_path[observation]['crosssection'])
