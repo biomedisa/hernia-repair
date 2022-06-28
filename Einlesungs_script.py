@@ -139,11 +139,11 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
         print(f'Creating Meshes...')
         logging.debug(f'Processing {observation}:\n Creating Meshes...')
         #Create meshes, in vtk format for Paraview
-        create_mesh.createVTk(observation_path[observation]['tif'], observation_path[observation]['vtk'], observation_path[observation]['x_dim'],
+        create_mesh.CreateVTK(observation_path[observation]['tif'], observation_path[observation]['vtk'], observation_path[observation]['x_dim'],
                     observation_path[observation]['y_dim'], observation_path[observation]['slice_thickness'], 'labels')
         
         #Mesh of the translation projection
-        create_mesh.createVTK(observation_path[observation]['projection_tif'], observation_path[observation]['projection_vtk'],observation_path[observation]['x_dim'],
+        create_mesh.CreateVTK(observation_path[observation]['projection_tif'], observation_path[observation]['projection_vtk'],observation_path[observation]['x_dim'],
                     observation_path[observation]['y_dim'],observation_path[observation]['slice_thickness'], 'translation')
         
         #Consol Output
