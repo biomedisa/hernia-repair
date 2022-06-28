@@ -431,14 +431,14 @@ def create_mask(path_to_dcm,path_to_labels,path_to_mask):
 #Creation of the translation array
 #################################
 
-def get_distortion_dim(path_to_tif,slice_thickness, x_dim):
+def get_translation_dim(path_to_tif,slice_thickness, x_dim):
     '''
     Get the height, width and area of the translation region
 
     Parameter
     ---------
     path_to_tif: string
-        The pathstring to the distortion array
+        The pathstring to the translation array
     slice_thickness: float
         the thickness of a slice in the scaned array
     x_dim: the thickness of 
@@ -465,9 +465,9 @@ def get_distortion_dim(path_to_tif,slice_thickness, x_dim):
     return round(height,2), round(width,2), round(area,2)
             
             
-def annotate_distortion_image(observation_dict):
+def annotate_translation_image(observation_dict):
     '''
-    Annotate the distortion projection image.
+    Annotate the translation projection image.
     Adding name and dimensions of relevant area.
     
     Parameter
@@ -476,7 +476,7 @@ def annotate_distortion_image(observation_dict):
         The dictionary containg the information of the data set
     '''
     img = Image.open(observation_dict['projection_png'])
-    height, width, area = get_distortion_dim(observation_dict['projection_tif'],observation_dict['slice_thickness'],observation_dict['x_dim'])
+    height, width, area = get_translation_dim(observation_dict['projection_tif'],observation_dict['slice_thickness'],observation_dict['x_dim'])
     #annotate the image
     draw = ImageDraw.Draw(img)
     font = ImageFont.truetype("arial.ttf",size=20)
@@ -512,12 +512,12 @@ def create_numpy_layer(path_to_data):
     vector_array = [data_list[i].split(',') for i in range(len(data_list)-1)]
     vector_array = np.array(vector_array, dtype=float)
     data_array = np.sqrt(vector_array[:,:vector_array.shape[1]//2]**2 + vector_array[:,vector_array.shape[1]//2:]**2)
-    data_array = ndimage.zoom(data_array, (512/data_array.shape[0],512/data_array.shape[1]), order=3)
+    data_array = ndimage.zoom(input=data_array, zoom=(512/data_array.shape[0],512/data_array.shape[1]), order=3)
     return data_array
 
-def create_distortion_array(path_to_dir, number_of_slices, max_slice_id, path_to_save):
+def create_translation_array(path_to_dir, number_of_slices, max_slice_id, path_to_save):
     '''
-    Create the 3-dimensional distortion array.
+    Create the 3-dimensional translation array.
 
     Parameters
     ----------
@@ -532,42 +532,41 @@ def create_distortion_array(path_to_dir, number_of_slices, max_slice_id, path_to
     '''
 
     Volume = np.zeros((number_of_slices,512,512),dtype=float)
-    old_ind = -1
+    old_ind = number_of_slices
     for current_ind, slice_number in enumerate(range(max_slice_id+1-number_of_slices,max_slice_id + 1,1)):
         current_path = f'{path_to_dir}\\Verschiebung_{str(slice_number).zfill(3)}.csv'
         if os.path.exists(current_path):
             Volume[current_ind,...] = create_numpy_layer(current_path) 
-            if old_ind!=-1:
-                distance = current_ind - old_ind
-                for step in range(1, distance, 1):
-                    Volume[old_ind + step,...] = ( (distance - step)*Volume[old_ind,...] + (step)*Volume[current_ind,...] ) / distance 
+            distance = current_ind - old_ind
+            for step in range(1, distance, 1):
+                Volume[old_ind + step,...] = (1 - step/distance)* Volume[old_ind,...] + (step/distance)* Volume[current_ind,...]
             old_ind = current_ind
     if Volume[-1,...].all() == 0: 
         distance = Volume.shape[0]-1 - old_ind
         for step in range(1, distance + 1, 1):
-            Volume[old_ind + step,...] = Volume[old_ind,...]*(1-(step/distance))
+            Volume[old_ind + step,...] = (1 - step/distance)* Volume[old_ind,...] 
     imwrite(path_to_save,Volume)
              
-def merge_tifs(path_to_label,path_to_distortion_array,path_to_merged_tif):
+def merge_tifs(path_to_label,path_to_translation_array,path_to_merged_tif):
     '''
-    Replaces labels with the distortion information.
+    Replaces labels with the translation information.
 
     Parameters
     ----------
     path_to_label: string
         path to the labeld tif
-    path_to_distortion_array: string
-        path to the distortion array
+    path_to_trnaslation_array: string
+        path to the transwlation array
     path_to_merged_tif: string
         path to the destination of the merged arrays
     '''
     #Read both tif arrays
     label_array = imread(path_to_label)
-    distortion_array = imread(path_to_distortion_array)
+    translation_array = imread(path_to_translation_array)
     #set all labels to 1
     label_array[label_array != 0] = 1
-    #were label !=0 set it overwrite it with the distortionvalue but at least 1
-    label_array[label_array != 0] = np.maximum(distortion_array[label_array !=0] , 1)
+    #were label !=0 set it overwrite it with the translation value but at least 1
+    label_array[label_array != 0] = np.maximum(translation_array[label_array !=0] , 1)
     #Treshold cutoff 60mm
     label_array[label_array >60] = 60
     #make the array intervalued for later use
