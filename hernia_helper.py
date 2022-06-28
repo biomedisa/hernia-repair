@@ -13,7 +13,7 @@ import logging
 from tkinter.filedialog import askdirectory
 from datetime import datetime
 from dateutil import tz
-
+from tensorflow.keras.models import load_model
 import config
 
 
@@ -427,9 +427,9 @@ def create_mask(path_to_dcm,path_to_labels,path_to_mask):
     imwrite(path_to_mask,mask)
     return mask
 
-#################################
+###################################
 #Creation of the translation array
-#################################
+###################################
 
 def get_translation_dim(path_to_tif,slice_thickness, x_dim):
     '''
@@ -579,7 +579,6 @@ def merge_tifs(path_to_label,path_to_translation_array,path_to_merged_tif):
 #helper functions for the CT-Crosssection
 #########################################
 
-
 def creat_crosssection(path_to_layer_txt,observation_dict):
     '''
     Create a png of the ct-slice with the largest translation.
@@ -597,8 +596,6 @@ def creat_crosssection(path_to_layer_txt,observation_dict):
         slice id of the slice with max. translation
     
     '''
-    
-    
     layer_file = open(path_to_layer_txt,'r',encoding='utf8')
     layer = int(float(layer_file.readlines()[1]))
     layer_file.close()
@@ -634,3 +631,119 @@ def annotate_crosssection(observation_dict,layer):
             )
     #save the crosssection
     img.save(observation_dict['crosssection'],format='png')
+
+###################################
+#Anotation of the Images
+###################################
+
+def load_data(path_to_data):
+    #get the dcm files
+    slices = glob.glob(path_to_data+'/**/*', recursive=True)
+    #set start values
+    ds = pydicom.filereader.dcmread(slices[0])
+    img = ds.pixel_array
+    #initalize array for the data
+    data = np.zeros((len(slices), ds.Rows, ds.Columns), dtype=img.dtype)
+    header = [0] * len(slices)
+    #loop over all files
+    for file in slices:
+        #get slice information
+        ds = pydicom.filereader.dcmread(file)
+        img = ds.pixel_array
+        if len(img.shape) == 3 and img.shape[2] == 1:
+            img = img[:,:,0]
+        #set corresponding slice in the array
+        data[ds.InstanceNumber-1] = img
+        header[ds.InstanceNumber-1] = ds
+    #convert to uint8 and make rgb
+    data -= np.amin(data)
+    data /= np.amax(data)
+    data = np.uint8(data*255)
+    data = np.stack((data,)*3,axis=-1)
+    return data,header
+
+def get_hernia_length(data,mode):
+    if mode == "length":
+        model = load_model(f'{config.path_names["neuralnet"]}\\hernien_detector_z.h5',)
+    elif mode == "width":
+        model = load_model(f'{config.path_names["neuralnet"]}\\hernien_detector_x.h5',)
+        
+    prediction = model.predict(data, batch_size = 32,verbose = 0)
+
+    hernia_interval = (prediction > 0.5).nonzero()[0]
+    hernia_length = hernia_interval[-1] - hernia_interval[0]
+
+    return hernia_length
+
+def resize_array(data):
+    resized_data = np.zeros((512,512,512,3),dtype=data.dtype)
+    for i in range(data.shape[0]):
+        img = Image.fromarray(data[i],mode = "RGB")
+        img = img.resize((512,512))
+        slice = np.array(img)
+        resized_data[i] = slice
+    return resized_data
+
+def annotate_by_neural_net(path_to_dcm,x_res,z_res):
+    #Get slice width 
+    data, _ = load_data(path_to_dcm)
+    #Get Height,width and area of the hernia
+    hernia_height = get_hernia_length(data, mode = "length")
+    hernia_height *= z_res*0.1
+    
+    width_data = resize_array(np.swapaxes(data,0,2))
+    
+    hernia_width = get_hernia_length(width_data, mode = "width")
+    hernia_width *= x_res*0.1
+    
+    hernia_area = np.pi*hernia_height*hernia_width
+    
+    return hernia_width, hernia_height ,hernia_area
+
+def annotate_by_label(path_to_tif,x_res,y_res,z_res):
+    # load segmentation
+    a = imread(path_to_tif)
+    zsh, _, _ = a.shape
+
+    # compute size of area between rectus left and right
+    area = 0
+    for k in range(zsh):
+        y0,x0 = np.where(a[k]==1)
+        y1,x1 = np.where(a[k]==2)
+        if np.any(x0) and np.any(x1):
+            argmax = np.argmax(x0)
+            argmin = np.argmin(x1)
+            x_max,y_max = x0[argmax],y0[argmax]
+            x_min,y_min = x1[argmin],y1[argmin]
+            area += np.sqrt((x_res*(x_max-x_min))**2 + (y_res*(y_max-y_min))**2) * z_res
+
+    # compute size of hernia area
+    hernia_area = 0
+    for k in range(zsh):
+        y,x = np.where(a[k]==7)
+        if np.any(x):
+            argmax = np.argmax(x)
+            argmin = np.argmin(x)
+            x_max,x_min = x[argmax],x[argmin]
+            hernia_area += np.sqrt((x_res*(x_max-x_min))**2) * z_res
+    return area, hernia_area
+
+def annotate_image(observation,observation_paths):
+    hernia_width_by_nn, hernia_height_by_nn,hernia_area_by_nn = annotate_by_neural_net(observation_paths['dcm'],observation_paths['x_dim'],observation_paths['slice_thickness'])
+    instable_area_by_label, hernia_area_by_label = annotate_by_label(observation_paths['tif'],observation_paths['x_dim'],observation_paths['y_dim'],observation_paths['slice_thickness'])
+    
+    #write hernia dimensions on the image
+    to_annotate = Image.open(observation_paths['png'])
+    draw = ImageDraw.Draw(to_annotate)
+    font = ImageFont.truetype("arial.ttf", size=15)
+    draw.text(xy=(to_annotate.width/2,0),
+            text= (f'{observation}\n'
+                   f'Detektiertes Bruchsackvolumen (rot)\n'
+                   f'(Berechnete Größen) Breite: {round(hernia_width_by_nn,1)}cm,   Länge: {round(hernia_height_by_nn,1)}cm,    Bruchpforten Fläche: {round(hernia_area_by_nn,1)}cm²\n'
+                   f'(Größen im Bild) Instabile_Fläche: {round(instable_area_by_label*0.01,1)}cm²,  Projezierte Fläche: {round(hernia_area_by_label*0.01,1)}cm²'),     
+            fill=(0,0,0),
+            anchor='ma',
+            align = 'center',
+            font = font,
+            )
+    to_annotate.save(observation_paths['png'],format='png')
