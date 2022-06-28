@@ -121,19 +121,19 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
     shutil.move(temp_path_to_evaluation, path_to_evaluation)
     shutil.move(temp_path_to_archiv, path_to_archiv)   
     
-    #Create the distortion array
-    path_to_distortion_array = f'{path_to_archiv}\\distortion_array.tif'
-    hernia_helper.create_distortion_array(path_to_archiv, len(os.listdir(observation_path['Nativ']['dcm_dir'])),
+    #Create the translation array
+    path_to_translation_array = f'{path_to_archiv}\\translation_array.tif'
+    hernia_helper.create_translation_array(path_to_archiv, len(os.listdir(observation_path['Nativ']['dcm_dir'])),
                             int(sorted(os.listdir(observation_path['Nativ']['dcm_dir']))[-1].lstrip('0').rstrip('.dcm')),
-                            path_to_distortion_array)
+                            path_to_translation_array)
     
     for observation in Observations:
         #Consol Output
         os.system('cls')
         print(f'Processing {observation}:\n Creating array of displacement...')
         logging.debug(f'Processing {observation}:\n Creating array of displayement...')
-        #Create the Distortion Array and the distortion projection tif
-        hernia_helper.merge_tifs(observation_path[observation]['tif'],path_to_distortion_array,observation_path[observation]['projection_tif'])     
+        #Create the Translation Array and the translation projection tif
+        hernia_helper.merge_tifs(observation_path[observation]['tif'],path_to_translation_array,observation_path[observation]['projection_tif'])     
    
         #Consol output
         print(f'Creating Meshes...')
@@ -142,15 +142,15 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
         create_mesh.createVTk(observation_path[observation]['tif'], observation_path[observation]['vtk'], observation_path[observation]['x_dim'],
                     observation_path[observation]['y_dim'], observation_path[observation]['slice_thickness'], 'labels')
         
-        #Mesh of the distortion projection
+        #Mesh of the translation projection
         create_mesh.createVTK(observation_path[observation]['projection_tif'], observation_path[observation]['projection_vtk'],observation_path[observation]['x_dim'],
-                    observation_path[observation]['y_dim'],observation_path[observation]['slice_thickness'], 'distortion')
+                    observation_path[observation]['y_dim'],observation_path[observation]['slice_thickness'], 'translation')
         
         #Consol Output
         print(f'Creating images...')
         logging.debug(f'Processing {observation}:\n Creating images...')
         #Create images using Paraview
-        #image of the neural network projection
+          #image of the neural network projection
         screenshot1 = run(["python",
                         f'{os.environ["userprofile"]}\\git\\hernia-repair\\paraview_screenshot.py',
                         observation_path[observation]['vtk'],
@@ -159,12 +159,12 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
                         "7",
                         ])
         
-        #image of the distortion projection
+          #image of the translation projection
         screenshot2 = run(["python",
                         f'{os.environ["userprofile"]}\\git\\hernia-repair\\paraview_screenshot.py',
                         observation_path[observation]['projection_vtk'],
                         observation_path[observation]['projection_png'],
-                        "distortion",
+                        "translation",
                         str(np.amax(imread(observation_path[observation]['projection_tif']))),
                         ])
         
@@ -200,7 +200,7 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
                         observation_path[observation]['png']
                         ])
         
-        hernia_helper.annotate_distortion_image(observation_path[observation])
+        hernia_helper.annotate_translation_image(observation_path[observation])
         hernia_helper.annotate_crosssection(observation_path[observation],max_translation_layer)
     
     #Patching Images togther for presentation
