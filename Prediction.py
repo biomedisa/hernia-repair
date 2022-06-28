@@ -26,15 +26,6 @@ def load_data(path_to_data):
     #convert to uint8 and make rgb
     data = np.uint8(data*255./np.amax(data))
     data = np.stack((data,)*3,axis=-1)
-
-    #for width detection
-    '''
-    for x in range(data.shape[2]):
-        ## save data as tif
-        img = Image.fromarray(data[:,:,x], mode='L')
-        img.resize((512,512))
-        img.save(save_path +'\\Breite\\Daten\\'+ str(x).zfill(6) +'.tif')
-    '''
     return data,header
 
 def get_hernia_length(data,mode):
