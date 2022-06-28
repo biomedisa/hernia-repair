@@ -45,13 +45,13 @@ def CreateVTK(path_to_data,path_to_save,x_thickness,y_thickness,slice_thickness,
     
     data = imread(path_to_data)
     
-    if mode == 'distortion':
+    if mode == 'translation':
         scale, scale_min, scale_max = int(np.amax(image)),1,int(np.amax(image))
     elif mode == 'labels':
         image[0,0,0] = 7
         scale, scale_min, scale_max = 7,1,7
         
-    else: raise ValueError('mode must be one of "labels", "distortion".')
+    else: raise ValueError('mode must be one of "labels", "translation".')
 
     #flip image
     image = np.flip(image, axis=(0))
