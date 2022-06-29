@@ -43,7 +43,7 @@ def MarchingCubes(image,scale,scale_min,scale_max):
 
 def CreateVTK(path_to_data,path_to_save,x_thickness,y_thickness,slice_thickness,mode='labels'):
     
-    data = imread(path_to_data)
+    image = imread(path_to_data)
     
     if mode == 'translation':
         scale, scale_min, scale_max = int(np.amax(image)),1,int(np.amax(image))
