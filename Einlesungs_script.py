@@ -218,9 +218,9 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
     #Save image in evaluation directory
     plt.imsave(f'{path_to_evaluation}\\Finale_Auswertung.png',combined_img)
 
+   
     #console Output
     print('Moveing used Data')
-
 
     #Move used Data into the archiv folder
     for file in (observation_path['Nativ']['png'],observation_path['Valsalva']['png'],
