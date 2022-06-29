@@ -272,7 +272,7 @@ def compare_slice_amount(nativ_dcm_dir, valsalva_dcm_dir,mode):
 #Creation of the mask for translation detection
 ################################################
 
-def load_data(path_to_data):
+def load_mask_data(path_to_data):
 
     if os.path.isdir(path_to_data):
         files = glob.glob(path_to_data+'/**/*', recursive=True)
@@ -417,7 +417,7 @@ def threshold(img):
     return a
 
 def create_mask(path_to_dcm,path_to_labels,path_to_mask):
-    data, header = load_data(path_to_dcm)
+    data, header = load_mask_data(path_to_dcm)
     body_outline = threshold(data)
     muscle_mask = imread(path_to_labels)
     muscle_mask[muscle_mask == 7] = 0
@@ -636,7 +636,7 @@ def annotate_crosssection(observation_dict,layer):
 #Anotation of the Images
 ###################################
 
-def load_data(path_to_data):
+def load_anotation_data(path_to_data):
     #get the dcm files
     slices = glob.glob(path_to_data+'/**/*', recursive=True)
     #set start values
@@ -686,7 +686,7 @@ def resize_array(data):
 
 def annotate_by_neural_net(path_to_dcm,x_res,z_res):
     #Get slice width 
-    data, _ = load_data(path_to_dcm)
+    data, _ = load_anotation_data(path_to_dcm)
     #Get Height,width and area of the hernia
     hernia_height = get_hernia_length(data, mode = "length")
     hernia_height *= z_res*0.1
