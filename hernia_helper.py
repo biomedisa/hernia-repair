@@ -657,8 +657,8 @@ def load_anotation_data(path_to_data):
         header[ds.InstanceNumber-1] = ds
     #convert to uint8 and make rgb
     data -= np.amin(data)
-    data /= np.amax(data)
-    data = np.uint8(data*255)
+    data = data*255/np.amax(data)
+    data = np.uint8(data)
     data = np.stack((data,)*3,axis=-1)
     return data,header
 
