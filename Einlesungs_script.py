@@ -130,7 +130,8 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
     for observation in Observations:
         #Consol Output
         os.system('cls')
-        print(f'Processing {observation}:\n Creating array of displacement...')
+        print(f'Processing {observation}:\n) 
+        print(f'Creating array of displacement...') 
         logging.debug(f'Processing {observation}:\n Creating array of displayement...')
         #Create the Translation Array and the translation projection tif
         hernia_helper.merge_tifs(observation_path[observation]['tif'],path_to_translation_array,observation_path[observation]['projection_tif'])     
@@ -138,10 +139,10 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
         #Consol output
         print(f'Creating Meshes...')
         logging.debug(f'Processing {observation}:\n Creating Meshes...')
-        #Create meshes, in vtk format for Paraview
+        #Create meshes, in vtk format for Paraview     
+          #Mesh of the prediction   
         create_mesh.CreateVTK(observation_path[observation], 'labels')
-        
-        #Mesh of the translation projection
+          #Mesh of the translation projection
         create_mesh.CreateVTK(observation_path[observation], 'translation')
         
         #Consol Output
