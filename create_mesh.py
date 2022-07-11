@@ -41,7 +41,12 @@ def MarchingCubes(image,scale,scale_min,scale_max):
     return finalPoly#confilter.GetOutput()
 
 
-def CreateVTK(path_to_data,path_to_save,x_thickness,y_thickness,slice_thickness,mode='labels'):
+def CreateVTK(observation_path,mode='labels'):
+    path_to_data = observation_path['projection_tif']     
+    path_to_save = observation_path[observation]['projection_vtk']
+    x_thickness  = float(observation_path[observation]['x_dim'])
+    y_thickness  = float(observation_path[observation]['y_dim'])
+    slice_thickness = float(observation_path[observation]['slice_thickness'])
     
     image = imread(path_to_data)
     
