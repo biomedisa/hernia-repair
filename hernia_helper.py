@@ -668,10 +668,34 @@ def get_hernia_length(data,mode):
     elif mode == "width":
         model = load_model(f'{config.path_names["neuralnet"]}\\hernien_detector_x.h5',)
         
-    prediction = model.predict(data, batch_size = 32,verbose = 0)
+    probabilities = model.predict(data, batch_size = 32,verbose = 0)
+    probabilities = np.ravel(probabilities)
+    length = probabilities.shape
 
-    hernia_interval = (prediction > 0.5).nonzero()[0]
-    hernia_length = hernia_interval[-1] - hernia_interval[0]
+    # create mask
+    probabilities[probabilities > 0.5] = 1
+    probabilities[probabilities <= 0.5] = 0
+
+    # remove outliers
+    for k in range(4,length-4):
+        if np.all(probabilities[k-1:k+2] == np.array([0,1,0])):
+            probabilities[k-1:k+2] = 0
+        elif np.all(probabilities[k-2:k+2] == np.array([0,1,1,0])):
+            probabilities[k-2:k+2] = 0
+        elif np.all(probabilities[k-2:k+3] == np.array([0,1,1,1,0])):
+            probabilities[k-2:k+3] = 0
+        elif np.all(probabilities[k-3:k+3] == np.array([0,1,1,1,1,0])):
+            probabilities[k-3:k+3] = 0
+        elif np.all(probabilities[k-3:k+4] == np.array([0,1,1,1,1,1,0])):
+            probabilities[k-3:k+4] = 0
+        elif np.all(probabilities[k-4:k+4] == np.array([0,1,1,1,1,1,1,0])):
+            probabilities[k-4:k+4] = 0
+        elif np.all(probabilities[k-4:k+5] == np.array([0,1,1,1,1,1,1,1,0])):
+            probabilities[k-4:k+5] = 0
+            
+    left = np.argmax(probabilities)
+    right = length - np.argmax(np.flip(probabilities))
+    hernia_length = left - right
 
     return hernia_length
 
