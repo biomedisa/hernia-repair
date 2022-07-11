@@ -693,8 +693,8 @@ def get_hernia_length(data,mode):
         elif np.all(probabilities[k-4:k+5] == np.array([0,1,1,1,1,1,1,1,0])):
             probabilities[k-4:k+5] = 0
             
-    left = np.argmax(probabilities)
-    right = length - np.argmax(np.flip(probabilities))
+    left = np.argmax(probabilities)[0]
+    right = length - np.argmax(np.flip(probabilities))[0]
     hernia_length = left - right
     print(hernia_length)
 
