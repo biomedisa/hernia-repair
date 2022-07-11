@@ -43,10 +43,10 @@ def MarchingCubes(image,scale,scale_min,scale_max):
 
 def CreateVTK(observation_path,mode='labels'):
     path_to_data = observation_path['projection_tif']     
-    path_to_save = observation_path[observation]['projection_vtk']
-    x_thickness  = float(observation_path[observation]['x_dim'])
-    y_thickness  = float(observation_path[observation]['y_dim'])
-    slice_thickness = float(observation_path[observation]['slice_thickness'])
+    path_to_save = observation_path['projection_vtk']
+    x_thickness  = float(observation_path['x_dim'])
+    y_thickness  = float(observation_path['y_dim'])
+    slice_thickness = float(observation_path['slice_thickness'])
     
     image = imread(path_to_data)
     
