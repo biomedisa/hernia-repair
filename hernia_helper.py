@@ -669,8 +669,10 @@ def get_hernia_length(data,mode):
         model = load_model(f'{config.path_names["neuralnet"]}\\hernien_detector_x.h5',)
         
     probabilities = model.predict(data, batch_size = 32,verbose = 0)
+    print(probabilities.shape,'first')
     probabilities = np.ravel(probabilities)
-    length = probabilities.shape
+    print(probabilities.shape,'second')
+    length = probabilities.shape[0]
 
     # create mask
     probabilities[probabilities > 0.5] = 1
