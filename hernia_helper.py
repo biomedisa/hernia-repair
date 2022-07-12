@@ -695,9 +695,7 @@ def get_hernia_length(data,mode):
             
     left = np.argmax(probabilities)
     right = length - np.argmax(np.flip(probabilities))
-    hernia_length = left - right
-    print(hernia_length)
-
+    hernia_length = right - left
     return hernia_length
 
 def resize_array(data):
@@ -754,8 +752,8 @@ def annotate_by_label(path_to_tif,x_res,y_res,z_res):
     return area, hernia_area
 
 def annotate_image(observation,observation_paths):
-    hernia_width_by_nn, hernia_height_by_nn,hernia_area_by_nn = annotate_by_neural_net(observation_paths['dcm_dir'],observation_paths['x_dim'],observation_paths['slice_thickness'])
-    instable_area_by_label, hernia_area_by_label = annotate_by_label(observation_paths['tif'],observation_paths['x_dim'],observation_paths['y_dim'],observation_paths['slice_thickness'])
+    hernia_width_by_nn, hernia_height_by_nn,hernia_area_by_nn = annotate_by_neural_net(observation_paths['dcm_dir'],float(observation_paths['x_dim']),float(observation_paths['slice_thickness']))
+    instable_area_by_label, hernia_area_by_label = annotate_by_label(observation_paths['tif'],float(observation_paths['x_dim']),float(observation_paths['y_dim']),float(observation_paths['slice_thickness']))
     
     #write hernia dimensions on the image
     to_annotate = Image.open(observation_paths['png'])
