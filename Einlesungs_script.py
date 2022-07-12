@@ -278,7 +278,7 @@ try:
             while line:
                 #get the starting time of the current iteration
                 single_case_start_time = datetime.now()
-                hernia_analysis(txt_file.readline()[1:-2],txt_file.readline()[1:-2],mode)
+                hernia_analysis(main_folder,txt_file.readline()[1:-2],txt_file.readline()[1:-2],mode)
                 #get the end time of the current itteration
                 single_case_end_time = datetime.now()
                 #log the used time for the current itteration
