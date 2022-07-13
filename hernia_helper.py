@@ -418,7 +418,9 @@ def threshold(img):
 
 def create_mask(path_to_dcm,path_to_labels,path_to_mask):
     data, header = load_mask_data(path_to_dcm)
+    data = np.pad(data,256)
     body_outline = threshold(data)
+    body_outline = body_outline[256:-256,256:-256,256:-256]
     muscle_mask = imread(path_to_labels)
     muscle_mask[muscle_mask == 7] = 0
     muscle_mask[muscle_mask != 0] = 2
@@ -513,6 +515,7 @@ def create_numpy_layer(path_to_data):
     vector_array = np.array(vector_array, dtype=float)
     data_array = np.sqrt(vector_array[:,:vector_array.shape[1]//2]**2 + vector_array[:,vector_array.shape[1]//2:]**2)
     data_array = ndimage.zoom(input=data_array, zoom=(512/data_array.shape[0],512/data_array.shape[1]), order=3)
+    data_array *= 512/data_array.shape[0]
     return data_array
 
 def create_translation_array(path_to_dir, number_of_slices, max_slice_id, path_to_save):
