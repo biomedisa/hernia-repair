@@ -418,9 +418,9 @@ def threshold(img):
 
 def create_mask(path_to_dcm,path_to_labels,path_to_mask):
     data, header = load_mask_data(path_to_dcm)
-    data = np.pad(data,256)
+    data = np.pad(data,((0,0),(256,256),(256,256)))
     body_outline = threshold(data)
-    body_outline = body_outline[256:-256,256:-256,256:-256]
+    body_outline = body_outline[:,256:-256,256:-256]
     muscle_mask = imread(path_to_labels)
     muscle_mask[muscle_mask == 7] = 0
     muscle_mask[muscle_mask != 0] = 2
