@@ -422,9 +422,10 @@ def create_mask(path_to_dcm,path_to_labels,path_to_mask):
     body_outline = threshold(data)
     body_outline = body_outline[:,256:-256,256:-256]
     muscle_mask  = imread(path_to_labels)
-    muscle_mask[muscle_mask == 7] = 0
+    #muscle_mask[muscle_mask == 7] = 0
     #muscle_mask[muscle_mask != 0] = 2
-    mask = np.maximum(body_outline,muscle_mask)
+    #mask = np.maximum(body_outline,muscle_mask)
+    mask = body_outline
     imwrite(path_to_mask,mask)
     return mask
 
