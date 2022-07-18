@@ -517,8 +517,9 @@ def create_numpy_layer(path_to_data):
     vector_array = [data_list[i].split(',') for i in range(len(data_list)-1)]
     vector_array = np.array(vector_array, dtype=float)
     data_array   = np.sqrt(vector_array[:,:vector_array.shape[1]//2]**2 + vector_array[:,vector_array.shape[1]//2:]**2)
-    data_array   = ndimage.zoom(input=data_array, zoom=(512/data_array.shape[0],512/data_array.shape[1]), order=3)
-    data_array  *= 512/data_array.shape[0]
+    scale_factor = 512/data_array.shape[0]
+    data_array   = ndimage.zoom(input=data_array, zoom=(scale_factor,scale_factor), order=3)
+    data_array  *= scale_factor
     return data_array
 
 def create_translation_array(path_to_dir, number_of_slices, max_slice_id, path_to_save, observation):
