@@ -95,13 +95,13 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
     logging.debug('Starting Samuels script.')
     #Execute Samuels script automaticaly and combine results
     if mode == "Single":
-        sam = run([f'{os.environ["userprofile"]}\\git\\hernia-repair\\Hernienauswertung_v0_13segm.exe',
+        sam = run([f'{os.environ["userprofile"]}\\git\\hernia-repair\\Hernienauswertung_v0_14.exe',
                         observation_path['Nativ']['mask'], 
                         observation_path['Valsalva']['mask']
                     ])
         logging.debug('Finished Samuels Script.')
     elif mode == "Multi":
-        sam = run([f'{os.environ["userprofile"]}\\git\\hernia-repair\\Hernienauswertung_v0_13segm_batch.exe',
+        sam = run([f'{os.environ["userprofile"]}\\git\\hernia-repair\\Hernienauswertung_v0_14_batch.exe',
                 observation_path['Nativ']['mask'], 
                 observation_path['Valsalva']['mask']
             ])
