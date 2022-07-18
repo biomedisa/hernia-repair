@@ -37,8 +37,9 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
 
     for observation in sorted(Observations):            
         #Create Paths to the mesh and the img
-        observation_path[observation]['tif'] = f'{first_level}\\final.{observation}.tif'
+        observation_path[observation]['tif']  = f'{first_level}\\final.{observation}.tif'
         observation_path[observation]['mask'] = f'{first_level}\\{observation}_mask.tif'
+        observation_path[observation]['translation_array'] = f'{first_level}\\{observation}_translation_array.tif'
         observation_path[observation]['projection_tif'] = f'{first_level}\\{observation}_projection.tif'        
         observation_path[observation]['vtk'] = f'{first_level}\\{observation}_for_paraview.vtk'
         observation_path[observation]['projection_vtk'] = f'{first_level}\\{observation}_projection.vtk'        
@@ -87,7 +88,8 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
         print(f'Moveing temporary files...')
         temp_path_to_tif = os.path.splitext(observation_path[observation]["dcm_dir"])[0]  
         shutil.move(f'{os.path.dirname(temp_path_to_tif)}\\final.{os.path.basename(temp_path_to_tif)}.tif',
-                        observation_path[observation]["tif"])
+                      observation_path[observation]["tif"]
+                   )
 
         #create masks for Samuel
         hernia_helper.create_mask(observation_path[observation]["dcm_dir"],observation_path[observation]["tif"],observation_path[observation]["mask"])
@@ -96,76 +98,84 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
     #Execute Samuels script automaticaly and combine results
     if mode == "Single":
         sam = run([f'{os.environ["userprofile"]}\\git\\hernia-repair\\Hernienauswertung_v0_14.exe',
-                        observation_path['Nativ']['mask'], 
-                        observation_path['Valsalva']['mask']
-                    ])
+                   observation_path['Nativ']['mask'], 
+                   observation_path['Valsalva']['mask']
+                  ])
         logging.debug('Finished Samuels Script.')
     elif mode == "Multi":
         sam = run([f'{os.environ["userprofile"]}\\git\\hernia-repair\\Hernienauswertung_v0_14_batch.exe',
-                observation_path['Nativ']['mask'], 
-                observation_path['Valsalva']['mask']
-            ])
+                   observation_path['Nativ']['mask'], 
+                   observation_path['Valsalva']['mask']
+                  ])
         logging.debug('Finished Samuels Script.')
   
     #Set the saving paths for the optained data
-    temp_paths = sorted(os.listdir(f'{os.environ["userprofile"]}\\git\\Temp')) 
-    temp_path_to_archiv = temp_paths[0]
+    temp_paths              = sorted(os.listdir(f'{os.environ["userprofile"]}\\git\\Temp')) 
+    temp_path_to_archiv     = temp_paths[0]
     temp_path_to_evaluation = temp_paths[1]
 
     #Set Time String for saving the data
-    day_string = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    day_string         = datetime.now().strftime("%Y-%m-%d_%H-%M")
     path_to_evaluation = f'{first_level}\\Auswertung_{day_string}'            
-    path_to_archiv = f'{first_level}\\Archiv_zur_Fehlerdiagnose_{day_string}'    
+    path_to_archiv     = f'{first_level}\\Archiv_zur_Fehlerdiagnose_{day_string}'    
 
     #Move the created directorys into the main directory
     shutil.move(temp_path_to_evaluation, path_to_evaluation)
     shutil.move(temp_path_to_archiv, path_to_archiv)   
     
-    #Create the translation array
-    path_to_translation_array = f'{path_to_archiv}\\translation_array.tif'
-    hernia_helper.create_translation_array(path_to_archiv, len(os.listdir(observation_path['Nativ']['dcm_dir'])),
-                            int(sorted(os.listdir(observation_path['Nativ']['dcm_dir']))[-1].lstrip('0').rstrip('.dcm')),
-                            path_to_translation_array)
+
     
     for observation in Observations:
         #Consol Output
         os.system('cls')
         print(f'Processing {observation}:\n') 
         print(f'Creating array of displacement...') 
-        logging.debug(f'Processing {observation}:\n Creating array of displayement...')
+        logging.debug(f'Processing {observation}:\n Creating array of displayement...')      
+      
+        #Create the translation array
+        hernia_helper.create_translation_array(path_to_archiv, 
+                                               len(os.listdir(observation_path[observation]['dcm_dir'])),
+                                               int(sorted(os.listdir(observation_path[observation]['dcm_dir']))[-1].lstrip('0').rstrip('.dcm')),
+                                               observation_path[observation]['translation_array'], 
+                                               observation
+                                               )
+      
         #Create the Translation Array and the translation projection tif
-        hernia_helper.merge_tifs(observation_path[observation]['tif'],path_to_translation_array,observation_path[observation]['projection_tif'])     
+        hernia_helper.merge_tifs(observation_path[observation]['tif'],
+                                 observation_path[observation]['translation_array'],
+                                 observation_path[observation]['projection_tif']
+                                 )     
    
         #Consol output
         print(f'Creating Meshes...')
         logging.debug(f'Processing {observation}:\n Creating Meshes...')
         #Create meshes, in vtk format for Paraview     
-          #Mesh of the prediction   
+            #Mesh of the prediction   
         create_mesh.CreateVTK(observation_path[observation], 'labels')
-          #Mesh of the translation projection
+            #Mesh of the translation projection
         create_mesh.CreateVTK(observation_path[observation], 'translation')
         
         #Consol Output
         print(f'Creating images...')
         logging.debug(f'Processing {observation}:\n Creating images...')
         #Create images using Paraview
-          #image of the neural network projection
+            #image of the neural network projection
         screenshot1 = run(["python",
-                        f'{os.environ["userprofile"]}\\git\\hernia-repair\\paraview_screenshot.py',
-                        observation_path[observation]['vtk'],
-                        observation_path[observation]['png'],
-                        "labels",
-                        "7",
-                        ])
+                           f'{os.environ["userprofile"]}\\git\\hernia-repair\\paraview_screenshot.py',
+                           observation_path[observation]['vtk'],
+                           observation_path[observation]['png'],
+                           "labels",
+                           "7",
+                          ])
         
-          #image of the translation projection
+            #image of the translation projection
         screenshot2 = run(["python",
-                        f'{os.environ["userprofile"]}\\git\\hernia-repair\\paraview_screenshot.py',
-                        observation_path[observation]['projection_vtk'],
-                        observation_path[observation]['projection_png'],
-                        "translation",
-                        str(np.amax(imread(observation_path[observation]['projection_tif']))),
-                        ])
+                           f'{os.environ["userprofile"]}\\git\\hernia-repair\\paraview_screenshot.py',
+                           observation_path[observation]['projection_vtk'],
+                           observation_path[observation]['projection_png'],
+                           "translation",
+                           str(np.amax(imread(observation_path[observation]['projection_tif']))),
+                           ])
         
         #Get the crossection image as the layer with the biggest offset between nativ and valsalva
         max_translation_layer = hernia_helper.creat_crosssection(f'{path_to_archiv}\\sliceID and sliceName maxDisplacement.txt',observation_path[observation])
@@ -173,17 +183,17 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
         #Preprocess and Annotate the Paraview labeled images
         print(f'Scaling images...')
         #Read the images
-        observation_img = plt.imread(observation_path[observation]['png'])
-        projection_img  = plt.imread(observation_path[observation]['projection_png'])
+        observation_img  = plt.imread(observation_path[observation]['png'])
+        projection_img   = plt.imread(observation_path[observation]['projection_png'])
         crosssection_img = plt.imread(observation_path[observation]['crosssection'])
         #Reshape to match size of sam_img and to fit annotation
         if observation == 'Nativ':
-            observation_img = np.pad(observation_img, ((50,0),(0,1),(0,0)), mode='constant',constant_values=1)
-            projection_img  = np.pad(projection_img, ((50,0),(0,1),(0,0)), mode='constant',constant_values=1)
+            observation_img  = np.pad(observation_img, ((50,0),(0,1),(0,0)), mode='constant',constant_values=1)
+            projection_img   = np.pad(projection_img, ((50,0),(0,1),(0,0)), mode='constant',constant_values=1)
             crosssection_img = np.pad(crosssection_img,((15,0),(39,40),(0,0)), mode='constant')
         elif observation == 'Valsalva':
-            observation_img = np.pad(observation_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1)
-            projection_img  = np.pad(projection_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1) 
+            observation_img  = np.pad(observation_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1)
+            projection_img   = np.pad(projection_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1) 
             crosssection_img = np.pad(crosssection_img,((15,0),(39,39),(0,0)), mode='constant')
         plt.imsave(observation_path[observation]['png'],observation_img)       
         plt.imsave(observation_path[observation]['projection_png'],projection_img)
@@ -200,17 +210,17 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
     print('Arranging Results...')
 
     #Load all images
-    sam_img = plt.imread(f'{path_to_evaluation}\\Verschiebung und Verzerrung.png')
-    nat_img = plt.imread(observation_path['Nativ']['png'])[:,:,:3]
-    nat_proj_img = plt.imread(observation_path['Nativ']['projection_png'])[:,:,:3]
-    val_img = plt.imread(observation_path['Valsalva']['png'])[:,:,:3]
-    val_proj_img = plt.imread(observation_path['Valsalva']['projection_png'])[:,:,:3]
-    nativ_crosssection = plt.imread(observation_path['Nativ']['crosssection'])[:,:,:3]
+    sam_img               = plt.imread(f'{path_to_evaluation}\\Verschiebung und Verzerrung.png')
+    nat_img               = plt.imread(observation_path['Nativ']['png'])[:,:,:3]
+    nat_proj_img          = plt.imread(observation_path['Nativ']['projection_png'])[:,:,:3]
+    val_img               = plt.imread(observation_path['Valsalva']['png'])[:,:,:3]
+    val_proj_img          = plt.imread(observation_path['Valsalva']['projection_png'])[:,:,:3]
+    nativ_crosssection    = plt.imread(observation_path['Nativ']['crosssection'])[:,:,:3]
     valsalva_crosssection = plt.imread(observation_path['Valsalva']['crosssection'])[:,:,:3]
     
     #Stack the image pairs
-    nat_and_val = np.hstack((nat_img,val_img))
-    double_proj = np.hstack((nat_proj_img,val_proj_img))
+    nat_and_val  = np.hstack((nat_img,val_img))
+    double_proj  = np.hstack((nat_proj_img,val_proj_img))
     double_cross = np.hstack((nativ_crosssection,valsalva_crosssection))
     #Stack result, paraview images and crosssections
     combined_img = np.vstack((sam_img,nat_and_val,double_proj,double_cross))
@@ -222,14 +232,16 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
     print('Moveing used Data')
 
     #Move used Data into the archiv folder
-    for file in (observation_path['Nativ']['png'],observation_path['Valsalva']['png'],
-                observation_path['Nativ']['tif'],observation_path['Valsalva']['tif'],
-                observation_path['Nativ']['vtk'],observation_path['Valsalva']['vtk'],
-                observation_path['Nativ']['crosssection'],observation_path['Valsalva']['crosssection'],
-                observation_path['Nativ']['projection_png'],observation_path['Valsalva']['projection_png'],
-                observation_path['Nativ']['projection_tif'],observation_path['Valsalva']['projection_tif'],
-                observation_path['Nativ']['projection_vtk'],observation_path['Valsalva']['projection_vtk']
-                ):
+    for file in (observation_path['Nativ']['png'],observation_path['Valsalva']['png'],               
+                 observation_path['Nativ']['tif'],observation_path['Valsalva']['tif'],
+                 observation_path['Nativ']['vtk'],observation_path['Valsalva']['vtk'],
+                 observation_path['Nativ']['mask'],observation_path['Valsalva']['mask']
+                 observation_path['Nativ']['crosssection'],observation_path['Valsalva']['crosssection'],
+                 observation_path['Nativ']['projection_png'],observation_path['Valsalva']['projection_png'],
+                 observation_path['Nativ']['projection_tif'],observation_path['Valsalva']['projection_tif'],
+                 observation_path['Nativ']['projection_vtk'],observation_path['Valsalva']['projection_vtk'],
+                 observation_path['Nativ']['translation_array'],observation_path['Valsalva']['translation_array'],
+                 ):
         shutil.move(file, path_to_archiv)
     
     if mode == "Single":
