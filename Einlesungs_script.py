@@ -235,7 +235,7 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
     for file in (observation_path['Nativ']['png'],observation_path['Valsalva']['png'],               
                  observation_path['Nativ']['tif'],observation_path['Valsalva']['tif'],
                  observation_path['Nativ']['vtk'],observation_path['Valsalva']['vtk'],
-                 observation_path['Nativ']['mask'],observation_path['Valsalva']['mask']
+                 observation_path['Nativ']['mask'],observation_path['Valsalva']['mask'],
                  observation_path['Nativ']['crosssection'],observation_path['Valsalva']['crosssection'],
                  observation_path['Nativ']['projection_png'],observation_path['Valsalva']['projection_png'],
                  observation_path['Nativ']['projection_tif'],observation_path['Valsalva']['projection_tif'],
