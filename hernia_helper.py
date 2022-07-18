@@ -518,7 +518,7 @@ def create_numpy_layer(path_to_data):
     data_array *= 512/data_array.shape[0]
     return data_array
 
-def create_translation_array(path_to_dir, number_of_slices, max_slice_id, path_to_save):
+def create_translation_array(path_to_dir, number_of_slices, max_slice_id, path_to_save, observation):
     '''
     Create the 3-dimensional translation array.
 
@@ -532,12 +532,17 @@ def create_translation_array(path_to_dir, number_of_slices, max_slice_id, path_t
         maximum slice id. If 0 is included this is different from number_of_slices
     path_to_save: string
         path to the saving location of the final array
+    observation: string
+        One of 'Nativ' or 'Valsalva'. Defining wich files will be used.
     '''
 
     Volume = np.zeros((number_of_slices,512,512),dtype=float)
     old_ind = number_of_slices
     for current_ind, slice_number in enumerate(range(max_slice_id+1-number_of_slices,max_slice_id + 1,1)):
-        current_path = f'{path_to_dir}\\Verschiebung_{str(slice_number).zfill(3)}.csv'
+        if observation == 'Nativ':
+            current_path = f'{path_to_dir}\\Verschiebung_{str(slice_number).zfill(3)}.csv'
+        else:
+            current_path = f'{path_to_dir}\\VerschiebungRueckProjektion_{str(slice_number).zfill(3)}.csv'
         if os.path.exists(current_path):
             Volume[current_ind,...] = create_numpy_layer(current_path) 
             distance = current_ind - old_ind
