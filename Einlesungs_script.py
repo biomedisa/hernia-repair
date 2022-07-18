@@ -141,7 +141,7 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
                                                )
       
         #Create the Translation Array and the translation projection tif
-        hernia_helper.merge_tifs(observation_path[observation]['tif'],
+        hernia_helper.merge_tifs(observation_path[observation]['mask'],
                                  observation_path[observation]['translation_array'],
                                  observation_path[observation]['projection_tif']
                                  )     
