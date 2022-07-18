@@ -421,10 +421,9 @@ def create_mask(path_to_dcm,path_to_labels,path_to_mask):
     data = np.pad(data,((0,0),(256,256),(256,256)))
     body_outline = threshold(data)
     body_outline = body_outline[:,256:-256,256:-256]
-    muscle_mask = imread(path_to_labels)
+    muscle_mask  = imread(path_to_labels)
     muscle_mask[muscle_mask == 7] = 0
-    muscle_mask[muscle_mask != 0] = 2
-
+    #muscle_mask[muscle_mask != 0] = 2
     mask = np.maximum(body_outline,muscle_mask)
     imwrite(path_to_mask,mask)
     return mask
@@ -456,14 +455,17 @@ def get_translation_dim(path_to_tif,slice_thickness, x_dim):
     if np.any(height_array):
         height = (np.flatnonzero(height_array)[-1] - np.flatnonzero(height_array)[0]) * float(slice_thickness) * 0.1
     else: height = 0
+        
     width_array = np.any(img >= 15, axis =(0,1))
     if np.any(width_array):
         width = (np.flatnonzero(width_array)[-1] - np.flatnonzero(width_array)[0]) * float(x_dim) * 0.1
     else: width = 0
+        
     area_array = np.any(img >= 15, axis=1)
     if area_array.size != 0:
         area = np.count_nonzero(area_array)* float(x_dim) * float(slice_thickness) * 0.01
     else: area = 0
+        
     return round(height,2), round(width,2), round(area,2)
             
             
@@ -508,14 +510,14 @@ def create_numpy_layer(path_to_data):
         the numpy array with the absolut values of the vectorfield
     '''
     
-    file = open(path_to_data,mode='r')
-    data_string = file.read()
-    data_list = data_string.split("\n")
+    file         = open(path_to_data,mode='r')
+    data_string  = file.read()
+    data_list    = data_string.split("\n")
     vector_array = [data_list[i].split(',') for i in range(len(data_list)-1)]
     vector_array = np.array(vector_array, dtype=float)
-    data_array = np.sqrt(vector_array[:,:vector_array.shape[1]//2]**2 + vector_array[:,vector_array.shape[1]//2:]**2)
-    data_array = ndimage.zoom(input=data_array, zoom=(512/data_array.shape[0],512/data_array.shape[1]), order=3)
-    data_array *= 512/data_array.shape[0]
+    data_array   = np.sqrt(vector_array[:,:vector_array.shape[1]//2]**2 + vector_array[:,vector_array.shape[1]//2:]**2)
+    data_array   = ndimage.zoom(input=data_array, zoom=(512/data_array.shape[0],512/data_array.shape[1]), order=3)
+    data_array  *= 512/data_array.shape[0]
     return data_array
 
 def create_translation_array(path_to_dir, number_of_slices, max_slice_id, path_to_save, observation):
@@ -564,7 +566,7 @@ def merge_tifs(path_to_label,path_to_translation_array,path_to_merged_tif):
     path_to_label: string
         path to the labeld tif
     path_to_trnaslation_array: string
-        path to the transwlation array
+        path to the translation array
     path_to_merged_tif: string
         path to the destination of the merged arrays
     '''
