@@ -190,8 +190,7 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
         observation_img  = np.pad(observation_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1)
         projection_img   = np.pad(projection_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1)
         crosssection_img = np.pad(crosssection_img,((64,64),(32,32),(0,0)), mode='constant')
-        #Save images for annotation
-        plt.imsave(f'{path_to_evaluation}\\Verschiebung und Verzerrung.png',sam_img)     
+        #Save images for annotation   
         plt.imsave(observation_path[observation]['png'],observation_img)       
         plt.imsave(observation_path[observation]['projection_png'],projection_img)
         plt.imsave(observation_path[observation]['crosssection'],crosssection_img)
