@@ -187,14 +187,11 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
         projection_img   = plt.imread(observation_path[observation]['projection_png'])
         crosssection_img = plt.imread(observation_path[observation]['crosssection'])
         #Reshape to match size of sam_img and to fit annotation
-        if observation == 'Nativ':
-            observation_img  = np.pad(observation_img, ((50,0),(0,1),(0,0)), mode='constant',constant_values=1)
-            projection_img   = np.pad(projection_img, ((50,0),(0,1),(0,0)), mode='constant',constant_values=1)
-            crosssection_img = np.pad(crosssection_img,((15,0),(39,40),(0,0)), mode='constant')
-        elif observation == 'Valsalva':
-            observation_img  = np.pad(observation_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1)
-            projection_img   = np.pad(projection_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1) 
-            crosssection_img = np.pad(crosssection_img,((15,0),(39,39),(0,0)), mode='constant')
+        observation_img  = np.pad(observation_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1)
+        projection_img   = np.pad(projection_img, ((50,0),(0,0),(0,0)), mode='constant',constant_values=1)
+        crosssection_img = np.pad(crosssection_img,((64,64),(32,32),(0,0)), mode='constant')
+        #Save images for annotation
+        plt.imsave(f'{path_to_evaluation}\\Verschiebung und Verzerrung.png',sam_img)     
         plt.imsave(observation_path[observation]['png'],observation_img)       
         plt.imsave(observation_path[observation]['projection_png'],projection_img)
         plt.imsave(observation_path[observation]['crosssection'],crosssection_img)
@@ -211,6 +208,7 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
 
     #Load all images
     sam_img               = plt.imread(f'{path_to_evaluation}\\Verschiebung und Verzerrung.png')
+    sam_img               = np.pad(sam_img,((0,99),(0,0),(0,0)), mode='constant',constant_values=1)
     nat_img               = plt.imread(observation_path['Nativ']['png'])[:,:,:3]
     nat_proj_img          = plt.imread(observation_path['Nativ']['projection_png'])[:,:,:3]
     val_img               = plt.imread(observation_path['Valsalva']['png'])[:,:,:3]
@@ -221,9 +219,11 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
     #Stack the image pairs
     nat_and_val  = np.hstack((nat_img,val_img))
     double_proj  = np.hstack((nat_proj_img,val_proj_img))
-    double_cross = np.hstack((nativ_crosssection,valsalva_crosssection))
+    double_cross = np.vstack((nativ_crosssection,valsalva_crosssection))
     #Stack result, paraview images and crosssections
-    combined_img = np.vstack((sam_img,nat_and_val,double_proj,double_cross))
+    second_part  = np.vstack((double_proj,nat_and_val))
+    third_part   = np.vstack((double_proj,double_cross)) 
+    combined_img = np.hstack((sam_img,second_part,third_part)) 
     #Save image in evaluation directory
     plt.imsave(f'{path_to_evaluation}\\Finale_Auswertung.png',combined_img)
 
