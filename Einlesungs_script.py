@@ -207,7 +207,7 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
 
     #Load all images
     sam_img               = plt.imread(f'{path_to_evaluation}\\Verschiebung und Verzerrung.png')
-    sam_img               = np.pad(sam_img,((0,99),(0,0),(0,0)), mode='constant',constant_values=1)
+    sam_img               = np.pad(sam_img,((49,50),(0,0),(0,0)), mode='constant',constant_values=1)
     nat_img               = plt.imread(observation_path['Nativ']['png'])[:,:,:3]
     nat_proj_img          = plt.imread(observation_path['Nativ']['projection_png'])[:,:,:3]
     val_img               = plt.imread(observation_path['Valsalva']['png'])[:,:,:3]
