@@ -560,33 +560,38 @@ def create_translation_array(path_to_dir, number_of_slices, max_slice_id, path_t
             Volume[old_ind + step,...] = (1 - step/distance)* Volume[old_ind,...] 
     imwrite(path_to_save,Volume)
              
-def merge_tifs(path_to_label,path_to_translation_array,path_to_merged_tif):
+def merge_tifs(path_to_mask,path_to_translation_array,path_to_merged_tif):
     '''
     Replaces labels with the translation information.
 
     Parameters
     ----------
-    path_to_label: string
-        path to the labeld tif
+    path_to_mask: string
+        path to the labeld tif array
     path_to_trnaslation_array: string
         path to the translation array
     path_to_merged_tif: string
         path to the destination of the merged arrays
     '''
     #Read both tif arrays
-    label_array = imread(path_to_label)
+    mask = imread(path_to_mask)
     translation_array = imread(path_to_translation_array)
     #set all labels to 1
-    label_array[label_array != 0] = 1
-    #were label !=0 set it overwrite it with the translation value but at least 1
-    label_array[label_array != 0] = np.maximum(translation_array[label_array !=0] , 1)
+    mask[mask != 0] = 1
+    #Compute the outline of the mask
+    dres = np.array(np.gradient(mask)).astype(np.float32)
+    mask_grad = np.abs(dres).sum(0)
+    Outline = np.zeros_like(mask)
+    Outline[np.logical_and(grad!=0, mask!=0)] = 1
+    #were label !=0 overwrite it with the translation value but at least 1
+    Outline[Outline!= 0] = np.maximum(translation_array[Outline!=0] , 1)
     #Treshold cutoff 60mm
-    label_array[label_array >60] = 60
-    #make the array intervalued for later use
-    label_array = np.rint(label_array)
-    label_array.astype(int)
+    Outline[Outline >60] = 60
+    #make the array int valued for later use
+    Outline = np.rint(Outline)
+    Outline.astype(int)
     #save the merged tif
-    imwrite(path_to_merged_tif,label_array)
+    imwrite(path_to_merged_tif,Outline)
 
 #########################################
 #helper functions for the CT-Crosssection
