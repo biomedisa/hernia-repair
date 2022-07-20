@@ -8,7 +8,7 @@ from vtk.util.numpy_support import numpy_to_vtk
 def MarchingCubes(image,scale,scale_min,scale_max):
 
     # marching cubes
-    mc = vtk.vtkDiscreteFlyingEdges3D()
+    mc = vtk.vtkDiscreteMarchingCubes()
     mc.SetInputData(image)
     mc.ComputeNormalsOn()
     mc.ComputeGradientsOn()
