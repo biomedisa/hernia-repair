@@ -216,13 +216,12 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
     valsalva_crosssection = plt.imread(observation_path['Valsalva']['crosssection'])[:,:,:3]
     
     #Stack the image pairs
-    nat_and_val  = np.hstack((nat_img,val_img))
-    double_proj  = np.hstack((nat_proj_img,val_proj_img))
+    nat_and_val  = np.vstack((nat_img,val_img))
+    double_proj  = np.vstack((nat_proj_img,val_proj_img))
     double_cross = np.vstack((nativ_crosssection,valsalva_crosssection))
     #Stack result, paraview images and crosssections
-    second_part  = np.vstack((double_proj,nat_and_val))
-    third_part   = np.vstack((double_proj,double_cross)) 
-    combined_img = np.hstack((sam_img,second_part,third_part)) 
+    second_part  = np.hstack((double_proj,nat_and_val))
+    combined_img = np.hstack((sam_img,second_part,double_cross)) 
     #Save image in evaluation directory
     plt.imsave(f'{path_to_evaluation}\\Finale_Auswertung.png',combined_img)
 
