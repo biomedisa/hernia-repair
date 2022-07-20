@@ -198,7 +198,7 @@ def hernia_analysis(main_folder, path_to_nativ=None, path_to_valsalva=None, mode
         #Annotate the images
         print('Annotating images...')
         hernia_helper.annotate_image(observation, observation_path[observation])
-        hernia_helper.annotate_translation_image(observation_path[observation])
+        hernia_helper.annotate_translation_image(observation, observation_path[observation])
         hernia_helper.annotate_crosssection(observation_path[observation],max_translation_layer)
     
     #Patching Images togther for presentation
