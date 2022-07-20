@@ -470,7 +470,7 @@ def get_translation_dim(path_to_tif,slice_thickness, x_dim):
     return round(height,2), round(width,2), round(area,2)
             
             
-def annotate_translation_image(observation_dict):
+def annotate_translation_image(observation,observation_dict):
     '''
     Annotate the translation projection image.
     Adding name and dimensions of relevant area.
@@ -486,7 +486,8 @@ def annotate_translation_image(observation_dict):
     draw = ImageDraw.Draw(img)
     font = ImageFont.truetype("arial.ttf",size=20)
     draw.text(xy=(img.width/2,0),
-            text= (f'Instabile Bauchwand (Verschiebung > 1.5cm)\n'
+            text= (f'{observation}\n'
+                   f'Instabile Bauchwand (Verschiebung > 1.5cm)\n'
                    f'Höhe: {height}cm,      Breite: {width}cm,      Fläche: {area}cm²'),
             fill=(0,0,0),
             anchor='ma',
