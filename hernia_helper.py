@@ -582,7 +582,7 @@ def merge_tifs(path_to_mask,path_to_translation_array,path_to_merged_tif):
     dres = np.array(np.gradient(mask)).astype(np.float32)
     mask_grad = np.abs(dres).sum(0)
     Outline = np.zeros_like(mask)
-    Outline[np.logical_and(grad!=0, mask!=0)] = 1
+    Outline[np.logical_and(mask_grad!=0, mask!=0)] = 1
     #were label !=0 overwrite it with the translation value but at least 1
     Outline[Outline!= 0] = np.maximum(translation_array[Outline!=0] , 1)
     #Treshold cutoff 60mm
