@@ -61,19 +61,21 @@ def update_neural_nets():
     
     '''
     
-    sources = ['https://biomedisa.org/media/img_hernie.h5',
-               'https://biomedisa.org/media/Hernien_detector_x.h5',
-               'https://biomedisa.org/media/Hernien_detector_z.h5']
+    sources      = ['https://biomedisa.org/media/img_hernie.h5',
+                    'https://biomedisa.org/media/Hernien_detector_x.h5',
+                    'https://biomedisa.org/media/Hernien_detector_z.h5'
+                   ]
 
     destinations = [f'{config.path_names["neuralnet"]}\\img_hernie.h5',
-                   f'{config.path_names["neuralnet"]}\\hernien_detector_x.h5',
-                   f'{config.path_names["neuralnet"]}\\hernien_detector_z.h5']
+                    f'{config.path_names["neuralnet"]}\\hernien_detector_x.h5',
+                    f'{config.path_names["neuralnet"]}\\hernien_detector_z.h5'
+                   ]
 
     for src, dst in zip(sources,destinations):
         update = False
         if os.path.exists(dst):
             # source
-            response = requests.head(src)
+            response   = requests.head(src)
             timestamp1 = response.headers.get('Last-Modified')
             timestamp1 = timestamp1.split(' ')
             del timestamp1[0]
