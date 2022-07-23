@@ -499,7 +499,8 @@ def annotate_translation_image(observation,observation_dict):
         
 def create_numpy_layer(path_to_data): 
     '''
-    Create an array out of a textfile containg the x and y values of a 2 diamensional vectorfield.
+    Create an array out of a textfile containg the x and y values of a 2 dimensional vectorfield.
+    The Array will contain the part of the length from each vector that points away from (x_max/2,y_max) 
 
     Parameter
     --------
@@ -525,7 +526,7 @@ def create_numpy_layer(path_to_data):
     x = np.arange(x_len)
     y = np.flip(np.arange(y_len))
     X, Y = np.meshgrid(x,y)
-    X = abs(X-x_len//2)
+    X = X-x_len//2
     Normalization = np.sqrt(X**2 + Y**2)
     
     #Compute the Component of the vector field pointing outward
