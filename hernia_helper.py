@@ -523,7 +523,7 @@ def create_numpy_layer(path_to_data):
     #Split it in its x components and y components
     x_len = vector_array.shape[1]//2
     y_len = vector_array.shape[0]
-    scale_factor = 512/data_array.shape[0]
+    scale_factor = 512/y_len
     #scale the components
     data_x = ndimage.zoom(input=vector_array[:,:x_len], zoom=(scale_factor,scale_factor), order=3)*scale_factor
     data_y = ndimage.zoom(input=vector_array[:,x_len:], zoom=(scale_factor,scale_factor), order=3)*scale_factor
