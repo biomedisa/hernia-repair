@@ -520,23 +520,26 @@ def create_numpy_layer(path_to_data):
     vector_array = [data_list[i].split(',') for i in range(len(data_list)-1)]
     vector_array = np.array(vector_array, dtype=float)
     
-    #Define the outwardpointing mask and normalize it
+    #Split it in its x components and y components
     x_len = vector_array.shape[1]//2
     y_len = vector_array.shape[0]
-    x = np.arange(x_len)
-    y = np.flip(np.arange(y_len))
+    scale_factor = 512/data_array.shape[0]
+    #scale the components
+    data_x = ndimage.zoom(input=vector_array[:,:x_len], zoom=(scale_factor,scale_factor), order=3)*scale_factor
+    data_y = ndimage.zoom(input=vector_array[:,x_len:], zoom=(scale_factor,scale_factor), order=3)*scale_factor
+    
+    #Define the outwardpointing mask and normalize it
+    x = np.arange(512) - 255.5
+    y = np.flip(np.arange(512))
     X, Y = np.meshgrid(x,y)
-    X = X-x_len//2
     Normalization = np.sqrt(X**2 + Y**2)
-    Normalization[Normalization == 0] = 1
-    Normalization = 1/Normalization
+    X = X/Normalization
+    Y = Y/Normalization
     
     #Compute the Component of the vector field pointing outward
-    data_array   = (vector_array[:,:x_len]*X + vector_array[:,x_len:]*Y)*Normalization
-    scale_factor = 512/data_array.shape[0]
-    data_array   = ndimage.zoom(input=data_array, zoom=(scale_factor,scale_factor), order=3)
+    data_array   = (data_x*X + data_y*Y)
     data_array[data_array < 0] = 0
-    data_array  *= scale_factor
+    
     return data_array
 
 def create_translation_array(path_to_dir, number_of_slices, max_slice_id, path_to_save, observation):
