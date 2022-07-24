@@ -528,14 +528,14 @@ def create_numpy_layer(path_to_data):
     X, Y = np.meshgrid(x,y)
     X = X-x_len//2
     Normalization = np.sqrt(X**2 + Y**2)
-    Normalization[Normalization = 0] = 1
+    Normalization[Normalization == 0] = 1
     Normalization = 1/Normalization
     
     #Compute the Component of the vector field pointing outward
     data_array   = (vector_array[:,:x_len]*X + vector_array[:,x_len:]*Y)*Normalization
     scale_factor = 512/data_array.shape[0]
     data_array   = ndimage.zoom(input=data_array, zoom=(scale_factor,scale_factor), order=3)
-    data_array[data_array <0] = 0
+    data_array[data_array < 0] = 0
     data_array  *= scale_factor
     return data_array
 
