@@ -526,7 +526,7 @@ def create_numpy_layer(path_to_data):
     scale_factor = 512/y_len
     #scale the components
     data_x = ndimage.zoom(input=vector_array[:,:x_len], zoom=(scale_factor,scale_factor), order=3)*scale_factor
-    data_y = ndimage.zoom(input=vector_array[:,x_len:], zoom=(scale_factor,scale_factor), order=3)*scale_factor
+    data_y = ndimage.zoom(input=vector_array[:,x_len:], zoom=(scale_factor,scale_factor), order=3)*scale_factor*(-1)
     
     #Define the outwardpointing mask and normalize it
     x = np.arange(512) - 255.5
