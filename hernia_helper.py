@@ -513,7 +513,7 @@ def create_numpy_layer(path_to_data):
         the numpy array with the absolut values of the vectorfield
     '''
     #Open the vectorfield file with format X_components|Y_components 
-    #Extract an array [X|Y] from the string 
+    #Extract an array [Y|X] from the string 
     file         = open(path_to_data,mode='r')
     data_string  = file.read()
     data_list    = data_string.split("\n")
@@ -525,8 +525,8 @@ def create_numpy_layer(path_to_data):
     y_len = vector_array.shape[0]
     scale_factor = 512/y_len
     #scale the components
-    data_x = ndimage.zoom(input=vector_array[:,:x_len], zoom=(scale_factor,scale_factor), order=3)*scale_factor
-    data_y = ndimage.zoom(input=vector_array[:,x_len:], zoom=(scale_factor,scale_factor), order=3)*scale_factor*(-1)
+    data_x = ndimage.zoom(input=vector_array[:,x_len:], zoom=(scale_factor,scale_factor), order=3)*scale_factor
+    data_y = ndimage.zoom(input=vector_array[:,:x_len], zoom=(scale_factor,scale_factor), order=3)*scale_factor*(-1)
     
     #Define the outwardpointing mask and normalize it
     x = np.arange(512) - 255.5
