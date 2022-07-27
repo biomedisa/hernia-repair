@@ -1,4 +1,4 @@
-git checkout test-env
+git checkout main
 git pull
 
 cd ..
