@@ -600,10 +600,15 @@ def merge_tifs(path_to_mask,path_to_translation_array,path_to_merged_tif):
     #set all labels to 1
     mask[mask != 0] = 1
     #Compute the outline of the mask
-    dres = np.array(np.gradient(mask)).astype(np.float32)
-    mask_grad = np.abs(dres).sum(0)
+    #Repeat to increase thickness of the
     Outline = np.zeros_like(mask)
-    Outline[np.logical_and(mask_grad!=0, mask!=0)] = 1
+    mask_copy = np.copy(mask)
+    for i in range(5):
+        dres = np.array(np.gradient(mask_copy)).astype(np.float32)
+        mask_grad = np.abs(dres).sum(0)
+        Outline[np.logical_and(mask_grad!=0, mask_copy!=0)] = 1
+        mask_copy = mask - Outline
+     
     #were label !=0 overwrite it with the translation value but at least 1
     Outline[Outline!= 0] = np.maximum(translation_array[Outline!=0] , 1)
     #Treshold cutoff 60mm
