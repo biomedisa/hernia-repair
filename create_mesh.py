@@ -41,15 +41,26 @@ def MarchingCubes(image,scale,scale_min,scale_max):
     return finalPoly#confilter.GetOutput()
 
 
-def CreateVTK(image,path_to_save,x_thickness,y_thickness,slice_thickness,mode='labels'):
+def CreateVTK(observation_path,mode='labels'):
+    if mode == 'labels':
+        path_to_data = observation_path['tif']     
+        path_to_save = observation_path['vtk']
+    else:
+        path_to_data = observation_path['projection_tif']     
+        path_to_save = observation_path['projection_vtk']
+    x_thickness  = float(observation_path['x_dim'])
+    y_thickness  = float(observation_path['y_dim'])
+    slice_thickness = float(observation_path['slice_thickness'])
     
-    if mode == 'distortion':
+    image = imread(path_to_data)
+    
+    if mode == 'translation':
         scale, scale_min, scale_max = int(np.amax(image)),1,int(np.amax(image))
     elif mode == 'labels':
         image[0,0,0] = 7
         scale, scale_min, scale_max = 7,1,7
         
-    else: raise ValueError('mode must be one of "labels", "distortion".')
+    else: raise ValueError('mode must be one of "labels", "translation".')
 
     #flip image
     image = np.flip(image, axis=(0))
@@ -72,16 +83,4 @@ def CreateVTK(image,path_to_save,x_thickness,y_thickness,slice_thickness,mode='l
     writer.SetInputData(poly)
     writer.SetFileName(path_to_save)
     writer.Write()
-
-if __name__ == "__main__":
-
-    # path to data
-    path_to_data = sys.argv[1]
-    path_to_save = sys.argv[2]
-
-    # load data
-    data = imread(path_to_data)
-
-    # create vtk file
-    CreateVTK(data, path_to_save,float(sys.argv[3]),float(sys.argv[4]),float(sys.argv[5]),sys.argv[6])
 
