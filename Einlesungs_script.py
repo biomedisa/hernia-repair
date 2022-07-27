@@ -310,7 +310,3 @@ except:
     #open the error txt file to write to
     logging.exception('Fehler bei der Ausführung!')
     raise
-    
-    
-    
-    
