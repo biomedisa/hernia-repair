@@ -12,17 +12,17 @@ if sys.platform == "win32":
     # Windows
     path_names = {
         'userprofile': os.environ["userprofile"],
-        'main': f'{os.environ["userprofile"]}\\Hernien_Analyse_Single',
-        'neuralnet': BASE_DIR+'/data/Netzwerke',
+        'main': f'{os.environ["userprofile"]}\\Hernia_Analysis_Results',
+        'neuralnet': BASE_DIR+'/data/neuralnet',
         'paraview' : f'{os.environ["userprofile"]}\\Paraview\\ParaView 5.10.1-Windows-Python3.9-msvc2017-AMD64',
-        'multipath': BASE_DIR+'/data/Pfade/Pfade.txt',
+        'multipath': BASE_DIR+'/data/Paths/Paths.txt',
     }
 else:
     # Linux
     path_names = {
         'userprofile': os.path.expanduser("~"),
-        'main': BASE_DIR+'/data/Hernien_Analyse_Single',
-        'neuralnet': BASE_DIR+'/data/Netzwerke',
+        'main': BASE_DIR+'/data/Hernia_Analysis_Results',
+        'neuralnet': BASE_DIR+'/data/neuralnet',
         'paraview' : '/opt/ParaView-5.9',
-        'multipath': BASE_DIR+'/data/Pfade/Pfade.txt',
+        'multipath': BASE_DIR+'/data/Paths/Paths.txt',
     }
