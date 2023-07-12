@@ -70,7 +70,7 @@ the batchfile `HEDI.bat`.
   When running the application the user will be asked by a popup window to select the dataset containing the Dicomdata of one patient.
   ![Alt Text](res/SelectDataset.png)
   
-  The data is then sorted and stored in the directory *%Userprofile%\Hernien_Analyse_Single\Patient_Name\Dicom_Data*<br />
+  The data is then sorted and stored in the directory *%Userprofile%\Hernia_Analysis_Results\Patient_Name\Dicom_Data*<br />
   Next the user will be asked by a popup window to select the directory within the above directory that contains the data at rest in axial direction.
    ![Alt Text](res/SelectRest.png)
   
@@ -81,7 +81,7 @@ the batchfile `HEDI.bat`.
    ![Alt Text](res/SelectThreshold.png)
   
   Deppending on your machine the application now runs for 4-20 min. <br />
-  All files are stored in the above mentioned directory *%Userprofile%\Hernien_Analyse_Single\Patient_Name* . <br />
+  All files are stored in the above mentioned directory *%Userprofile%\Hernia_Analysis_Results\Patient_Name* . <br />
   When finished the endresult is presented as an image.
   
 # License
