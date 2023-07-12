@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+# imports
 import numpy as np
 import vtk
 from tifffile import imread
@@ -23,8 +23,6 @@ def MarchingCubes(image,treshold):
     mc.GenerateValues(treshold,1,treshold)
     mc.Update()
 
-
-
     # To remain largest region
     #confilter = vtk.vtkPolyDataConnectivityFilter()
     #confilter.SetInputData(mc.GetOutput())
@@ -34,7 +32,6 @@ def MarchingCubes(image,treshold):
     # reduce poly data
     inputPoly = vtk.vtkPolyData()
     inputPoly.ShallowCopy(mc.GetOutput())
-
 
     # smooth surface
     smoothFilter = vtk.vtkSmoothPolyDataFilter()
@@ -50,44 +47,45 @@ def MarchingCubes(image,treshold):
     
     return finalPoly#confilter.GetOutput()
 
-def CreateVTK(observation_path,mode='labels'):
+def CreateVTK(observation_dict,mode='labels'):
     '''
     Creates a VTK file from a given tif multilayer image,
     useing the marchingcubes Algorithm.
     
     Parameters
     ----------
-    observation_path: string
-        pathstring to the tifffile to be converted
+    obseravtion_dict: dict of string
+        A patients dictionary containing the paths to either the rest or valsalva data
     mode: string
         one of labels, displacement or strain
     -------
-    Saves the VTK file under the same name as the tifffile
+    Creat a VTK mesh of either the muscel labels, the displacment of 
+    the torso between Rest and Valsalva or the strain of the displacment.
     '''
     
     
     if mode == 'labels':
-        path_to_data = observation_path['labels']     
-        path_to_save = observation_path['labels_vtk']
+        path_to_data = observation_dict['labels']     
+        path_to_save = observation_dict['labels_vtk']
         treshold = 7
 
     elif mode == 'displacement':
-        path_to_data = observation_path['mask']     
-        path_to_save = observation_path['displacement_vtk']
-        displacement_array = imread(observation_path['displacement_array'])
+        path_to_data = observation_dict['mask']     
+        path_to_save = observation_dict['displacement_vtk']
+        displacement_array = imread(observation_dict['displacement_array'])
         treshold = 1
 
     elif mode == 'strain':
-        path_to_data = observation_path['mask']     
-        path_to_save = observation_path['strain_vtk']
-        displacement_array = imread(observation_path['strain_array'])
+        path_to_data = observation_dict['mask']     
+        path_to_save = observation_dict['strain_vtk']
+        displacement_array = imread(observation_dict['strain_array'])
         treshold = 1
     
     else: raise ValueError('mode must be one of "labels", "displacement" or "strain".')
 
-    x_spacing  = float(observation_path['x_spacing'])
-    y_spacing  = float(observation_path['y_spacing'])
-    z_spacing = float(observation_path['z_spacing'])
+    x_spacing  = float(observation_dict['x_spacing'])
+    y_spacing  = float(observation_dict['y_spacing'])
+    z_spacing = float(observation_dict['z_spacing'])
 
     # load data
     image = imread(path_to_data)

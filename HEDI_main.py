@@ -17,7 +17,11 @@ import subprocess
 import matplotlib.pyplot as plt
 import numpy as np
 
-import config
+try:
+    import config as config
+except:
+    import config_base as config
+    
 import create_mesh
 import hernia_helper
 

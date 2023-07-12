@@ -1,6 +1,9 @@
 import sys
 
-import config
+try:
+    import config as config
+except:
+    import config_base as config
 
 if sys.platform == "win32":
     sys.path.insert(0,f'{config.path_names["paraview"]}\\bin\\Lib')

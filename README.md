@@ -26,8 +26,6 @@ cd git
 git clone https://github.com/biomedisa/biomedisa.git
 git clone https://github.com/biomedisa/hernia-repair.git 
 ``` 
-### __Configure the config file__
-Check all paths in the .config file and change them accordlingly to your setup.
 
 ## __Automatic Setup and Execution__
 This section explains how to setup and run HEDI 
@@ -39,19 +37,11 @@ Within the cloned repository lies the batchfile `Setup.bat`
 Running this file will automaticly create an enviornment 
 with all dependencies needed to run HEDI.
 
-After a successfull setup HEDI can be executed by running
-the batchfile `Daten-Auswertung.bat`.
-
-## __Manual Setup and Execution(Optional)__
+## __Manual Setup and Execution (optional)__
 Open Anaconda Prompt (e.g. Windows Search `Anaconda Prompt`)
 or activate conda within the cmd shell via: 
 ```
 call "%Userprofile%\anaconda3\Scripts\activate.bat"
-```
-Move to the git repository:
-```
-cd git
-cd hernia-repair
 ```
 Create and activate the conda environment:
 ```
@@ -66,10 +56,15 @@ conda activate biomedisa
 ```
 To Run the application use the command:
 ```
-python "%Userprofile%\git\hernia-repair\HEDI-main.py" Single
+python "%Userprofile%\git\hernia-repair\HEDI_main.py" Single
 ```
+### __Configure the config file__
 
+Check all paths in the `config_base.py` file, if any paths in this file need a name change also rename the file to `config.py`.
+Any further changes should then be restricted to the file named `config.py`.
 
+After a successfull setup HEDI can be executed by running
+the batchfile `HEDI.bat`.
 
 ### __How to use the application__
   When running the application the user will be asked by a popup window to select the dataset containing the Dicomdata of one patient.

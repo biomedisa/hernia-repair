@@ -1,3 +1,4 @@
+#imports
 import glob
 import logging
 import os
@@ -22,7 +23,10 @@ from skimage.measure import label, find_contours
 from tifffile import imread, imwrite
 from tqdm import tqdm
 
-import config
+try:
+    import config as config
+except:
+    import config_base as config
 
 ###############################################################################
 # Functions for startup, dataloading and assertion_check
@@ -186,23 +190,28 @@ def load_directorys(main_folder):
     return first_level
 
 
-def create_patient_directory_auto(path_to_dicom,main_folder):
+def create_patient_directory_auto(dcm_dir,main_folder):
     '''
     Creates the main directory of a single Patient when programm is run in
     multi/auto mode.
 
     Parameters
     ----------
-    path_to_dir: string
-        pathstring to a patients dicom data
+    dcm_dir: string
+        Path to the directory of the .dcm datset
     main_folder: string
-        pathstring to the programms main directory
+        Pathstring to the standard main directory
+
+    Returns
+    ----------
+    string
+        Pathstring to the patients directory
     '''
 
     # get the raw dcm files
-    files = os.listdir(path_to_dicom)
+    files = os.listdir(dcm_dir)
     # set patients directory 
-    ds = pydicom.filereader.dcmread(f'{path_to_dicom}/{files[1]}')
+    ds = pydicom.filereader.dcmread(f'{dcm_dir}/{files[1]}')
     PatientBirthDate = str(ds.PatientBirthDate)
     PatientName = str(ds.PatientName)
     PatientName = PatientName.replace('Ü','Ue')
@@ -228,17 +237,17 @@ def get_data_shape(dcm_dir):
 
     Parameter
     ---------
-    dcm_dir: 
-        path to a dicom folder
+    dcm_dir: string
+        Path to the directory of the .dcm datset
 
     Returns
     -------
-    z_sh: int
-        the shape in z-direction
-    y_sh: int
-        the shape in y-direction
-    x_sh: int
-        the shape in x-direction
+    z_sh: string
+        The shape in z-direction
+    y_sh: string
+        The shape in y-direction
+    x_sh: string
+        The shape in x-direction
     '''
 
     files = os.listdir(dcm_dir)
@@ -258,16 +267,16 @@ def get_pixel_spacing(dcm_dir):
     Parameter
     ---------
     dcm_dir: string
-        path to the directory of the dcm datset
+        Path to the directory of the .dcm dataset
 
     Returns
     -------
     z_res: string
-        the voxel length in z-direction
+        Voxel length in z-direction
     y_res: string
-        the voxel length in y-direction
+        Voxel length in y-direction
     x_res: string
-        the voxel length in x-direction
+        Voxel length in x-direction
     '''
 
     files = os.listdir(dcm_dir)
@@ -280,6 +289,23 @@ def get_pixel_spacing(dcm_dir):
 
 
 def get_centroid(path_to_mask):
+    '''
+    Returns the coordinates of the centroid from a 3-dimensional binary array
+
+    Parameters
+    ---------
+    path_to_mask: string
+        Path to the binary mask in tifffile format
+
+    Returns
+    -------
+    z: string
+        z-coordinate of the centroid
+    y: string
+        y-coordinate of the centroid
+    x: string
+        x-coordinate of the centroid
+    '''
 
     mask = imread(path_to_mask)
     z,y,x = ndimage.center_of_mass(mask)
@@ -287,26 +313,24 @@ def get_centroid(path_to_mask):
     return str(z), str(y), str(x)
 
 
-def compare_slice_amount(rest_dcm_dir, valsalva_dcm_dir,mode):
+def compare_slice_amount(rest_dcm_dir,valsalva_dcm_dir,mode):
     '''
     Compare the amount of slices between the rest and valsalva Dataset.
-    Prompts the user in case of a missmatch.
+    Prompts the user in case of a missmatch, when mode is Single.
 
     Parameters
     ----------
     rest_dcm_dir: string
-        Path to the directory containing the rest data
+        Path to the directory containing the .dcm data at rest
     valsalva_dcm_dir: string
-        Path to the directory containing the valsalva data
-
-    Returns
-    -------
-    True if missmatch is detected
+        Path to the directory containing the .dcm data during valsalva
+    mode: string
+        The operation mode of HEDI one of 'Single' or 'Multi'
 
     Raises
     ------
     ask_continue()
-        when the data has a missmatch
+        When the data has a missmatch
     '''
 
     rest_slice_amount = len(os.listdir(rest_dcm_dir))
@@ -325,10 +349,24 @@ def compare_slice_amount(rest_dcm_dir, valsalva_dcm_dir,mode):
 # Creation of the mask for displacement detection
 ###############################################################################
 
-def load_mask_data(path_to_data):
+def load_mask_data(dcm_dir):
+    '''
+    Retruns the pixel information stored in the .dcm files
+    
+    Parameters
+    ----------
+    dcm_dir: string
+        Path to the directory of the .dcm dataset
 
-    if os.path.isdir(path_to_data):
-        files = glob.glob(path_to_data+'/**/*.dcm', recursive=True)
+    Returns 
+        volume: nd.array
+            Pixel information of the .dcm dataset
+        header: list
+            Header information of the .dcm dataset
+    '''
+
+    if os.path.isdir(dcm_dir):
+        files = glob.glob(dcm_dir+'/**/*.dcm', recursive=True)
         for name in files:
             try:
                 ds = pydicom.filereader.dcmread(name)
@@ -477,19 +515,13 @@ def threshold(img):
 
 def create_mask(observation_dict):
     '''
-    Creates a mask of the abdominal area given the dicom data.
-    And labeld muskular regions.
-    Pixel inside are labeled 1. Pixels outside 0. Muscel pixels 
-    are labeld coresponding to their given label.
+    Creates a mask of the abdominal region given by the dicom data.
+    Pixels inside are labeled 1. Pixels outside 0.
 
     Parameters
     ----------
-    path_to_dcm: string
-        pathstring to the used dcm data
-    Path_to_mask: string
-        pathstring to the savelocation of the result
-    path_to_labels: string
-        pathstring to the used label interior muscel data
+    observation_dict: dict of string
+        A patients path dictionary for either the Rest or Valsalva data
         
     '''
 
@@ -529,9 +561,27 @@ def get_strain_tensor(Ux,Uy):
 
 
 def create_strain_layer(Ux, Uy):
+    '''
+    Create a layer of strain values corresponding to the displacment in direction 
+    X and Y.
+
+    Parameters
+    ----------
+        Ux: nd.array
+            Array of the displacement in direction X
+        Uy: nd.array
+            Array of the displacement in direction Y
+
+    Returns
+    ----------
+        strain_magnitude: nd.array
+            Array of the strain values, same shape as Ux
+
+    '''
     # calculate strain tensors
     E = get_strain_tensor(Ux,Uy)
 
+    # compute a scalar comparison Value from the strain tensor
     # E_vgl = sqrt(E_xx^2 + E_yy^2 - E_xx*E_yy + 3*(E_xy^2))
     strain_magnitude = np.sqrt(
         E[:,:,0,0]**2 +
@@ -585,18 +635,23 @@ def create_displacement_layer(displacement_field, mode, y_shape=512, x_shape=512
     Parameters
     ----------
     displacement_field: nd.array
-        array of shape [Y|X] containing the components of displacement
+        Array of shape [Y|X] containing the components of displacement
     mode: string
-        one of 'outward' or 'inward'
+        One of 'outward' or 'inward'
+    y_shape: int
+        Shape of the data in Y direction
+    x_shape: int
+        Shape of the data in X direction
     centroid: nd.array(2)
-        2-D coordinates of the centroid from the displaced mass 
+        2-D coordinates of the centroid from the displaced mask
 
     Returns
     --------
-    outward_displacement: nd.array
+    absolute_displacement: nd.array
+        Array of the displacement values of shape (y_shape,x_shape)
     '''
 
-    outward_displacement = np.sqrt(displacement_field[:,:,1]**2 + displacement_field[:,:,0]**2)
+    absolute_displacement = np.sqrt(displacement_field[:,:,1]**2 + displacement_field[:,:,0]**2)
 
     x = np.arange(x_shape) - centroid[1]
     y = np.arange(y_shape) - centroid[0]
@@ -608,22 +663,22 @@ def create_displacement_layer(displacement_field, mode, y_shape=512, x_shape=512
 
     # compute the Component of the vector field pointing away from the centroid
     if mode == 'outward':
-        outward_displacement[(displacement_field[:,:,1]*X + displacement_field[:,:,0]*Y) < 0] = 0
+        absolute_displacement[(displacement_field[:,:,1]*X + displacement_field[:,:,0]*Y) < 0] = 0
     elif mode == 'inward':
-        outward_displacement[(displacement_field[:,:,1]*X + displacement_field[:,:,0]*Y) > 0] = 0
+        absolute_displacement[(displacement_field[:,:,1]*X + displacement_field[:,:,0]*Y) > 0] = 0
 
-    return outward_displacement
+    return absolute_displacement
 
 
 def create_displacement_array(path_dict):
     '''
-    Create the 3-dimensional displacement and strain array.
-    And save it to the given path.
+    Create the 3-D displacement and strain arrays.
+    Saves them to the given paths.
 
     Parameters
     ----------
-    path_dict: dictonary
-        A Patients Path dictionary
+    path_dict: dict of dict of string
+        A patients path dictionary
     '''
     # load both masks
     rest = imread(path_dict['Rest']['mask'])
@@ -688,6 +743,24 @@ def create_displacement_array(path_dict):
 
 
 def get_displacement_dims(path_dict,threshold):
+    '''
+    Computes the length and width of the largest connected region
+    where the displacment is larger than threshold.
+
+    Parameters
+    ----------
+    path_dict: dict of dict of string
+        A patients path dictionary
+    threshold: float
+        Threshold value defining a displacment as to large
+
+    Returns
+    ----------
+    length: float
+        length of the largest displacment area 
+    width: float
+        width of the largest displacemnt area
+    '''
 
     # get the largest CC 
     mask = imread(path_dict['mask'])
@@ -711,13 +784,19 @@ def get_displacement_dims(path_dict,threshold):
 
 def annotate_displacement_image(observation,observation_dict,area,individual_threshold):
     '''
-    Annotate the displacement projection image.
+    Annotate the displacement image.
     Adding name and dimensions of relevant area.
 
     Parameter
     ---------
-    patient_dict: dictionary
-        The dictionary containg the information of the data set
+    observation: string
+        One of 'Rest' or 'Valsalva'
+    observation_dict: dict of string
+        A patients path dictionary for either the Rest or Valsalva data
+    area: float
+        Area of the displacment larger than threshold
+    individual_threshold: int
+        The patient specific threshold for the displacement. 
     '''
     img = Image.open(observation_dict['displacement_png'])
     length, width = get_displacement_dims(observation_dict,individual_threshold)
@@ -746,10 +825,9 @@ def annotate_strain_image(observation,observation_dict):
     Parameter
     ---------
     observation: string
-        on of 'Rest' or 'Valsalva'
-
-    observation_dict: dictionary
-        The dictionary containg the information of the data set
+        One of 'Rest' or 'Valsalva'
+    obseravtion_dict: dict of string
+        A patients dictionary containing the paths to either the rest or valsalva data
     '''
     # loaf the strain image
     img = Image.open(observation_dict['strain_png'])
@@ -768,21 +846,21 @@ def annotate_strain_image(observation,observation_dict):
     img.save(observation_dict['strain_png'],format='png')
 
 
-def plot_displacement(observation_paths,path_to_save):
+def plot_displacement(path_dict,path_to_save):
     font = {'family': 'serif', 'color':  'red'}
     # plot areas of displacement with respect to their magnitute
-    plt.plot(np.arange(10,len(observation_paths['Rest']['displacement_areas'])),
-            observation_paths['Rest']['displacement_areas'][10:],
+    plt.plot(np.arange(10,len(path_dict['Rest']['displacement_areas'])),
+            path_dict['Rest']['displacement_areas'][10:],
             color='blue', label='Rest')
-    plt.plot([15],observation_paths['Rest']['displacement_areas'][15],
+    plt.plot([15],path_dict['Rest']['displacement_areas'][15],
             marker='v', color='g',
-            label=f'{np.round(observation_paths["Rest"]["displacement_areas"][15])}cm²')
-    plt.plot(np.arange(10,len(observation_paths['Valsalva']['displacement_areas'])),
-            observation_paths['Valsalva']['displacement_areas'][10:],
+            label=f'{np.round(path_dict["Rest"]["displacement_areas"][15])}cm²')
+    plt.plot(np.arange(10,len(path_dict['Valsalva']['displacement_areas'])),
+            path_dict['Valsalva']['displacement_areas'][10:],
             color='red',label='Valsalva')
-    plt.plot([15],observation_paths['Valsalva']['displacement_areas'][15],
+    plt.plot([15],path_dict['Valsalva']['displacement_areas'][15],
             marker='^', color='orange',
-            label=f'{np.round(observation_paths["Valsalva"]["displacement_areas"][15])}cm²')
+            label=f'{np.round(path_dict["Valsalva"]["displacement_areas"][15])}cm²')
     plt.title('Work in Progress. NOT for Clinical Use!',fontdict=font)
     plt.ylabel('Defectarea in cm²')
     plt.xlabel('Magnitude of displacement in mm')
@@ -791,25 +869,25 @@ def plot_displacement(observation_paths,path_to_save):
     plt.close()
 
 
-def plot_displacement_lower(observation_paths,path_to_save):
+def plot_displacement_lower(path_dict,path_to_save):
     font = {'family': 'serif', 'color':  'red'}
 
-    total_area_rest = observation_paths['Rest']['displacement_areas'][0]
-    total_area_val = observation_paths['Valsalva']['displacement_areas'][0]
+    total_area_rest = path_dict['Rest']['displacement_areas'][0]
+    total_area_val = path_dict['Valsalva']['displacement_areas'][0]
 
     # plot areas of displacement with respect to their magnitute
-    plt.plot(np.arange(0, len(observation_paths['Rest']['displacement_areas'])),
-            total_area_rest - observation_paths['Rest']['displacement_areas'],
+    plt.plot(np.arange(0, len(path_dict['Rest']['displacement_areas'])),
+            total_area_rest - path_dict['Rest']['displacement_areas'],
             color='blue', label='Rest')
-    plt.plot([15],(total_area_rest - observation_paths['Rest']['displacement_areas'][15]),
+    plt.plot([15],(total_area_rest - path_dict['Rest']['displacement_areas'][15]),
             marker='v', color='g',
-            label=f'{np.round(total_area_rest - observation_paths["Rest"]["displacement_areas"][15])}cm²')
-    plt.plot(np.arange(0,len(observation_paths['Valsalva']['displacement_areas'])),
-            total_area_val - observation_paths['Valsalva']['displacement_areas'],
+            label=f'{np.round(total_area_rest - path_dict["Rest"]["displacement_areas"][15])}cm²')
+    plt.plot(np.arange(0,len(path_dict['Valsalva']['displacement_areas'])),
+            total_area_val - path_dict['Valsalva']['displacement_areas'],
             color='red',label='Valsalva')
-    plt.plot([15],(total_area_val - observation_paths['Valsalva']['displacement_areas'][15]),
+    plt.plot([15],(total_area_val - path_dict['Valsalva']['displacement_areas'][15]),
             marker='^', color='orange',
-            label=f'{np.round(total_area_val - observation_paths["Valsalva"]["displacement_areas"][15])}cm²')
+            label=f'{np.round(total_area_val - path_dict["Valsalva"]["displacement_areas"][15])}cm²')
     plt.title('Work in Progress. NOT for Clinical Use!',fontdict=font)
     plt.ylabel('Stable Area in cm²')
     plt.xlabel('Magnitude of displacement in mm')
@@ -818,17 +896,17 @@ def plot_displacement_lower(observation_paths,path_to_save):
     plt.close()
 
 
-def plot_displacement_difference(observation_paths,path_to_save):
+def plot_displacement_difference(path_dict,path_to_save):
     font = {'family': 'serif', 'color':  'red'}
 
-    total_area_rest = observation_paths['Rest']['displacement_areas'][0]
-    total_area_valsalva = observation_paths['Valsalva']['displacement_areas'][0]
+    total_area_rest = path_dict['Rest']['displacement_areas'][0]
+    total_area_valsalva = path_dict['Valsalva']['displacement_areas'][0]
     area_difference = total_area_valsalva - total_area_rest
 
 
     # plot areas of displacement with respect to their magnitute
-    plt.plot(np.arange(0, len(observation_paths['Rest']['displacement_areas'])),
-            area_difference + observation_paths['Rest']['displacement_areas'] - observation_paths['Valsalva']['displacement_areas'],
+    plt.plot(np.arange(0, len(path_dict['Rest']['displacement_areas'])),
+            area_difference + path_dict['Rest']['displacement_areas'] - path_dict['Valsalva']['displacement_areas'],
             color='blue')
 
     plt.title('Work in Progress. NOT for Clinical Use!',fontdict=font)
@@ -839,10 +917,10 @@ def plot_displacement_difference(observation_paths,path_to_save):
     plt.close()
 
 
-def plot_individual_threshold(observation_paths,path_to_save,threshold):
+def plot_individual_threshold(path_dict,path_to_save,threshold):
 
-    area_rest_unstable = np.copy(observation_paths['Rest']['displacement_areas'])
-    area_valsalva_unstable = np.copy(observation_paths['Valsalva']['displacement_areas'])
+    area_rest_unstable = np.copy(path_dict['Rest']['displacement_areas'])
+    area_valsalva_unstable = np.copy(path_dict['Valsalva']['displacement_areas'])
     area_rest_stable = np.copy(area_rest_unstable[0] - area_rest_unstable)
     area_valsalva_stable = np.copy(area_valsalva_unstable[0] - area_valsalva_unstable)
 
@@ -885,13 +963,13 @@ def create_crosssection(observation_dict):
 
     Parameters
     ----------
-    observation_dict: dict of string
-        dict with the Patients Path information
+    obseravtion_dict: dict of string
+        A patients dictionary containing the paths to either the rest or valsalva data
 
     Returns
     --------
     layer: int
-        slice id of the slice with max. displacement
+        Slice id of the slice with max. displacement
 
     '''
     # load the labels
@@ -937,8 +1015,10 @@ def annotate_crosssection(observation_dict,layer):
 
     Parameter
     ---------
-    observation_dict: dict of string
-        dict with the Patients Path information
+    obseravtion_dict: dict of string
+        A patients dictionary containing the paths to either the rest or valsalva data
+    layer: int 
+        Slice id of the slice with max. displacement
     '''
     img = Image.open(observation_dict['crosssection'])
     # annotate the image
@@ -961,6 +1041,34 @@ def annotate_crosssection(observation_dict,layer):
 ###############################################################################
 
 def get_label_sizes(path_to_tif,x_res,y_res,z_res):
+    '''
+    Computes the length, width, area and volume of the labeled hernia.
+    as well as the volume of the abdominal cavity.
+
+    Parameters
+    ----------
+        path_to_tif: string
+            Pathstring to the .tiff file containing the labels.
+        x_res: float
+            The real length represented by one pixel in X direction.
+        y_res: float
+            The real length represented by one pixel in Y direction.
+        z_res: float
+            The real length represented by one pixel in Z direction.
+    
+    Returns
+    ----------
+        hernia_width: float
+            Width of the Hernia Sac
+        hernia_length: float
+            Length of the Hernia Sac
+        hernia_area: float
+            Area of the Hernia Sac
+        hernia_volume: float
+            Volume of the Hernia Sac
+        abdomen_volume: float
+            Volume of the abdominal cavity
+    '''
     # load segmentation
     label_array = imread(path_to_tif)
     zsh, _, _ = label_array.shape
@@ -996,13 +1104,24 @@ def get_label_sizes(path_to_tif,x_res,y_res,z_res):
     return hernia_width, hernia_length, hernia_area, hernia_volume, abdomen_volume
 
 
-def annotate_label_image(observation,observation_paths):
+def annotate_label_image(observation,observation_dict):
+    '''
+    Annotate the image of the labels.
+    Adding names and dimensions of relevant areas and volumes.
+
+    Parameters
+    ----------
+    observation: string
+        One of 'Rest' or 'Valsalva'
+    obseravtion_dict: dict of string
+        A patients dictionary containing the paths to either the rest or valsalva data
+    '''
     hernia_width, hernia_length, hernia_area, hernia_volume, abdominal_volume = get_label_sizes(
-            observation_paths['labels'],float(observation_paths['x_spacing']),
-            float(observation_paths['y_spacing']),float(observation_paths['z_spacing']))
+            observation_dict['labels'],float(observation_dict['x_spacing']),
+            float(observation_dict['y_spacing']),float(observation_dict['z_spacing']))
 
     # write hernia dimensions on the image
-    to_annotate = Image.open(observation_paths['labels_png'])
+    to_annotate = Image.open(observation_dict['labels_png'])
     draw = ImageDraw.Draw(to_annotate)
     font = ImageFont.truetype("arial.ttf", size=18)
     draw.text(xy=(to_annotate.width/2,0),
@@ -1016,5 +1135,5 @@ def annotate_label_image(observation,observation_paths):
             align = 'center',
             font = font,
             )
-    to_annotate.save(observation_paths['labels_png'],format='png')
+    to_annotate.save(observation_dict['labels_png'],format='png')
 
