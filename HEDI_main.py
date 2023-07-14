@@ -91,22 +91,22 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
     # set Time String for saving the data
     day_string = datetime.now().strftime("%Y-%m-%d_%H-%M")
 
-    path_to_evaluation = f'{first_level}/Auswertung_{day_string}'
+    path_to_evaluation = f'{first_level}/Evaluation_{day_string}'
     os.mkdir(path_to_evaluation)
 
-    path_to_archiv     = f'{first_level}/Archiv_zur_Fehlerdiagnose_{day_string}'
-    os.mkdir(path_to_archiv)
+    path_to_archive    = f'{first_level}/Archive_for_Debugging_{day_string}'
+    os.mkdir(path_to_archive)
 
     for observation in sorted(Observations):
         # create Paths to the mesh and the img
-        observation_path[observation]['labels']  = f'{path_to_archiv}/{observation}_labels.tif'
-        observation_path[observation]['mask'] = f'{path_to_archiv}/{observation}_mask.tif'
-        observation_path[observation]['displacement_array'] = f'{path_to_archiv}/{observation}_displacement_array.tif'
-        observation_path[observation]['strain_array'] = f'{path_to_archiv}/{observation}_strain_array.tif' 
+        observation_path[observation]['labels']  = f'{path_to_archive}/{observation}_labels.tif'
+        observation_path[observation]['mask'] = f'{path_to_archive}/{observation}_mask.tif'
+        observation_path[observation]['displacement_array'] = f'{path_to_archive}/{observation}_displacement_array.tif'
+        observation_path[observation]['strain_array'] = f'{path_to_archive}/{observation}_strain_array.tif' 
 
-        observation_path[observation]['labels_vtk'] = f'{path_to_archiv}/{observation}_labels.vtk'
-        observation_path[observation]['displacement_vtk'] = f'{path_to_archiv}/{observation}_displacement.vtk'
-        observation_path[observation]['strain_vtk'] = f'{path_to_archiv}/{observation}_strain.vtk'
+        observation_path[observation]['labels_vtk'] = f'{path_to_archive}/{observation}_labels.vtk'
+        observation_path[observation]['displacement_vtk'] = f'{path_to_archive}/{observation}_displacement.vtk'
+        observation_path[observation]['strain_vtk'] = f'{path_to_archive}/{observation}_strain.vtk'
 
         observation_path[observation]['labels_png'] = f'{path_to_evaluation}/{observation}_labels.png'
         observation_path[observation]['displacement_png'] = f'{path_to_evaluation}/{observation}_displacement.png'
@@ -136,6 +136,21 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
 
     # test for same amount of slices
     hernia_helper.compare_slice_amount(observation_path['Rest']['dcm_dir'],observation_path['Valsalva']['dcm_dir'],mode)
+
+    Info_file = open(f'{path_to_archive}/Info.txt','w')
+    Info_file.writelines([  
+                    f'Info for Rest Data:\n',
+                    f'      Data used: \"{observation_path["Rest"]["dcm_dir"]}\"\n',
+                    f'      Data shape (x,y,z): ({observation_path["Rest"]["x_sh"]},{observation_path["Rest"]["y_sh"]},{observation_path["Rest"]["z_sh"]})\n',
+                    f'      Pixel spacing (x,y,z): ({observation_path["Rest"]["x_spacing"]},{observation_path["Rest"]["y_spacing"]},{observation_path["Rest"]["z_spacing"]})\n'
+                    f'Info for Valsalva Data:\n',
+                    f'      Data used: \"{observation_path["Valsalva"]["dcm_dir"]}\"\n',
+                    f'      Data shape (x,y,z): ({observation_path["Valsalva"]["x_sh"]},{observation_path["Valsalva"]["y_sh"]},{observation_path["Valsalva"]["z_sh"]})\n', 
+                    f'      Pixel spacing (x,y,z): ({observation_path["Valsalva"]["x_spacing"]},{observation_path["Valsalva"]["y_spacing"]},{observation_path["Valsalva"]["z_spacing"]})\n'
+                    f'Threshold: {threshold}mm\n'
+                        ])
+    Info_file.close()
+
 
     step_time = datetime.now()
     logger.info(f'{f" Time for Setup: {step_time - instance_start_time} ":_^{consol_width}}\n\n')
@@ -185,7 +200,7 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
 
 
     ###########################################################################
-    # Createing the Displacement Array using DIPY
+    # Creating the Displacement Array using DIPY
     ###########################################################################
     
     logger.info(f'{" Creating arrays of displacement and strain ":=^{consol_width}}\n')
@@ -230,8 +245,17 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
     
     logger.info(f'{" Creating images ":=^{consol_width}}\n')
 
+    #adjust the length of the threshold depending displacement lists to be the same for Rest and Valsalva
+    displacement_dif = len(observation_path['Valsalva']['displacement_areas']) - len(observation_path['Rest']['displacement_areas'])
+    if displacement_dif > 0:
+        observation_path['Rest']['displacement_areas'] = np.pad(observation_path['Rest']['displacement_areas'], (0,displacement_dif))
+    elif displacement_dif < 0:
+        observation_path['Valsalva']['displacement_areas'] = np.pad(observation_path['Valsalva']['displacement_areas'], (0,-displacement_dif))
+    
     # get patient-specific threshold for unstable abdominal wall
-    threshold = hernia_helper.plot_individual_threshold(observation_path,path_to_evaluation,threshold)
+    threshold = hernia_helper.plot_individual_threshold(observation_path,path_to_archive,threshold)
+
+
 
     for observation in Observations:
         logger.info(f'{f" Processing {observation} ":-^{consol_width}}')
@@ -299,16 +323,10 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
     # combine images for final result
     logger.info(f'{" Arranging Results ":=^{consol_width}}\n')
 
-    displacement_dif = len(observation_path['Valsalva']['displacement_areas']) - len(observation_path['Rest']['displacement_areas'])
-    if displacement_dif > 0:
-        observation_path['Rest']['displacement_areas'] = np.pad(observation_path['Rest']['displacement_areas'], (0,displacement_dif))
-    elif displacement_dif < 0:
-        observation_path['Valsalva']['displacement_areas'] = np.pad(observation_path['Valsalva']['displacement_areas'], (0,-displacement_dif))
-
     # plot areas of displacement with respect to their magnitute
-    hernia_helper.plot_displacement(observation_path, path_to_evaluation)
-    hernia_helper.plot_displacement_lower(observation_path, path_to_evaluation)
-    hernia_helper.plot_displacement_difference(observation_path, path_to_evaluation)
+    hernia_helper.plot_displacement(observation_path, path_to_archive)
+    hernia_helper.plot_displacement_lower(observation_path, path_to_archive)
+    hernia_helper.plot_displacement_difference(observation_path, path_to_archive)
 
     # load all images
     rest_label_img        = plt.imread(observation_path['Rest']['labels_png'])[:,:,:3]
@@ -344,11 +362,11 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
     combined_img = np.hstack((second_part,   double_crosssection)) #2
 
     # save image in evaluation directory
-    plt.imsave(f'{path_to_evaluation}/Finale_Auswertung.png',combined_img)
+    plt.imsave(f'{path_to_evaluation}/Combined_Results.png',combined_img)
 
     if mode == "Single":
         # show final result
-        open_file(f'{path_to_evaluation}/Finale_Auswertung.png')
+        open_file(f'{path_to_evaluation}/Combined_Results.png')
     ###########################################################################
 
 

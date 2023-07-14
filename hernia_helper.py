@@ -146,7 +146,7 @@ def load_directorys(main_folder):
 
             # define Directories to store results and Dicom Data
             first_level = f'{main_folder}/{PatientName}'
-            second_level = f'{first_level}/Dicom_Daten_{StudyDate}'
+            second_level = f'{first_level}/Dicom_Data_{StudyDate}'
             # check existence and create non existing directorys
             if not os.path.exists(first_level):
                 os.mkdir(first_level)
@@ -924,7 +924,9 @@ def plot_individual_threshold(path_dict,path_to_save,threshold):
     area_rest_stable = np.copy(area_rest_unstable[0] - area_rest_unstable)
     area_valsalva_stable = np.copy(area_valsalva_unstable[0] - area_valsalva_unstable)
 
+
     min_area = 20
+
     relative_threshold = np.ones_like(area_rest_unstable)
     for k in range(len(relative_threshold)):
         if area_rest_stable[k]>0 and area_valsalva_unstable[k]>0 and area_rest_unstable[k]>min_area:
