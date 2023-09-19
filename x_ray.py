@@ -1,4 +1,5 @@
-import sys
+import os, sys
+import re
 
 try:
     import config as config
@@ -10,7 +11,8 @@ if sys.platform == "win32":
     sys.path.insert(0,f'{config.path_names["paraview"]}\\bin\\Lib\\site-packages')
 else:
     sys.path.insert(0,f'{config.path_names["paraview"]}/lib')
-    sys.path.insert(0,f'{config.path_names["paraview"]}/lib/python{sys.version_info.major}.{sys.version_info.minor}/site-packages')
+    paraview_python_version = [f for f in os.listdir(f'{config.path_names["paraview"]}/lib') if re.match(r'python\d.\d*', f)][0]
+    sys.path.insert(0,f'{config.path_names["paraview"]}/lib/{paraview_python_version}/site-packages')
 
 #### import the simple module from the paraview
 from paraview.simple import *

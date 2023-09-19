@@ -992,6 +992,17 @@ def create_crosssection(observation_dict):
     # get corresponding slice of label data
     label_array = label_array[layer]
     label_array = np.pad(label_array, ((44,44),(5,5)), mode='constant',constant_values=0)
+    resolution = 600
+    if resolution != 600:
+        import cv2
+        img = cv2.resize(img, (resolution, resolution), interpolation=cv2.INTER_CUBIC)
+        label_a = np.zeros_like(img)
+        for k in np.unique(label_array):
+            tmp = np.zeros_like(label_array)
+            tmp[label_array==k]=1
+            tmp = cv2.resize(tmp, (resolution, resolution), interpolation=cv2.INTER_CUBIC)
+            label_a[tmp==1]=k
+        label_array = np.copy(label_a)
     label_color = ['black','darkblue','royalblue','lightsteelblue','beige','sandybrown',None,'red']
     # add the contours of every label over the img
     fig = plt.figure(frameon=False, figsize=(.87, 1))
@@ -1005,7 +1016,7 @@ def create_crosssection(observation_dict):
         for contour in contours:
             ax.plot(contour[:, 1], contour[:, 0], color= label_color[label_value], linewidth = .2,)
 
-    plt.savefig(observation_dict['crosssection'],dpi=600)
+    plt.savefig(observation_dict['crosssection'],dpi=resolution)
     plt.close()
     return layer
 

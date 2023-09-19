@@ -23,6 +23,6 @@ else:
         'userprofile': os.path.expanduser("~"),
         'main': BASE_DIR+'/data/Hernia_Analysis_Results',
         'neuralnet': BASE_DIR+'/data/neuralnet',
-        'paraview' : '/opt/ParaView-5.9',
+        'paraview' : '/opt/ParaView-5.10.1',
         'multipath': BASE_DIR+'/data/Paths/Paths.txt',
     }
