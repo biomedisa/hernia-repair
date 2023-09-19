@@ -814,7 +814,7 @@ def annotate_displacement_image(observation,observation_dict,area,individual_thr
             font=font,
             )
     # save the image
-    img.save(observation_dict['displacement_png'],format='png')
+    img.save(observation_dict['displacement_png'], format='png', dpi=(300,300))
 
 
 def annotate_strain_image(observation,observation_dict):
@@ -843,7 +843,7 @@ def annotate_strain_image(observation,observation_dict):
             font=font,
             )
     # save the image
-    img.save(observation_dict['strain_png'],format='png')
+    img.save(observation_dict['strain_png'],format='png', dpi=(300,300))
 
 
 def plot_displacement(path_dict,path_to_save):
@@ -865,7 +865,7 @@ def plot_displacement(path_dict,path_to_save):
     plt.ylabel('Defectarea in cm²')
     plt.xlabel('Magnitude of displacement in mm')
     plt.legend(title = 'Modus')
-    plt.savefig(f'{path_to_save}/DefectareaDiagramm.png')
+    plt.savefig(f'{path_to_save}/DefectareaDiagramm.png', dpi=300)
     plt.close()
 
 
@@ -892,7 +892,7 @@ def plot_displacement_lower(path_dict,path_to_save):
     plt.ylabel('Stable Area in cm²')
     plt.xlabel('Magnitude of displacement in mm')
     plt.legend(title = 'Modus')
-    plt.savefig(f'{path_to_save}/Area_lower_than_treshhold.png')
+    plt.savefig(f'{path_to_save}/Area_lower_than_treshhold.png', dpi=300)
     plt.close()
 
 
@@ -913,7 +913,7 @@ def plot_displacement_difference(path_dict,path_to_save):
     plt.ylabel('Area difference lower than treshhold in cm²')
     plt.xlabel('Magnitude of displacement in mm')
     # plt.legend(title = 'Modus')
-    plt.savefig(f'{path_to_save}/DefectAreaDifference.png')
+    plt.savefig(f'{path_to_save}/DefectAreaDifference.png', dpi=300)
     plt.close()
 
 
@@ -949,7 +949,7 @@ def plot_individual_threshold(path_dict,path_to_save,threshold):
     plt.ylabel('Instability ratio')
     plt.xlabel('Magnitude of translation in mm')
     plt.legend()
-    plt.savefig(f'{path_to_save}/RelativeThreshold.png')
+    plt.savefig(f'{path_to_save}/RelativeThreshold.png', dpi=300)
     plt.close()
 
     return threshold
@@ -987,8 +987,8 @@ def create_crosssection(observation_dict):
     layer_path = f'{observation_dict["dcm_dir"]}/{str(layer+1).zfill(6)}.dcm'
     # convert the dcm file into an 8bit rgb array and adjust the size to fit with other data
     ds = pydicom.filereader.dcmread(layer_path)
-    img = ds.pixel_array
-    img = np.pad(img, ((44,44),(5,5)), mode='constant',constant_values=0)
+    CT_img = ds.pixel_array
+    CT_img = np.pad(CT_img, ((44,44),(5,5)), mode='constant',constant_values=0)
     # get corresponding slice of label data
     label_array = label_array[layer]
     label_array = np.pad(label_array, ((44,44),(5,5)), mode='constant',constant_values=0)
@@ -1003,50 +1003,54 @@ def create_crosssection(observation_dict):
             tmp = cv2.resize(tmp, (resolution, resolution), interpolation=cv2.INTER_CUBIC)
             label_a[tmp==1]=k
         label_array = np.copy(label_a)
-    label_color = ['black','darkblue','royalblue','lightsteelblue','beige','sandybrown',None,'red']
+    label_color = ['black', 'darkblue', 'royalblue', 'lightsteelblue', 'beige', 'sandybrown', None, 'red']
     # add the contours of every label over the img
     fig = plt.figure(frameon=False, figsize=(.87, 1))
     ax = plt.Axes(fig, [0.,0.,1.,1.])
     ax.set_axis_off()
     fig.add_axes(ax)
-    ax.imshow(img, aspect='auto', cmap = plt.cm.gray)
+    ax.imshow(CT_img, aspect='auto', cmap = plt.cm.gray)
     for label_value in np.unique(label_array):
         label = label_array == label_value
         contours = find_contours(label)
         for contour in contours:
-            ax.plot(contour[:, 1], contour[:, 0], color= label_color[label_value], linewidth = .2,)
+            ax.plot(contour[:, 1], contour[:, 0], color=label_color[label_value], linewidth = .2,)
 
-    plt.savefig(observation_dict['crosssection'],dpi=resolution)
+    plt.savefig(observation_dict['crosssection'], dpi=resolution)
     plt.close()
     return layer
 
 
-def annotate_crosssection(observation_dict,layer):
+def annotate_crosssection(observation,observation_dict,layer):
     '''
     Annotate the ct_crosssection image.
     Adding name and dimensions of relevant area.
 
     Parameter
     ---------
+    observation: string
+        One of 'Rest' or 'Valsalva'
     obseravtion_dict: dict of string
         A patients dictionary containing the paths to either the rest or valsalva data
     layer: int 
         Slice id of the slice with max. displacement
     '''
-    img = Image.open(observation_dict['crosssection'])
+    to_annotate = Image.open(observation_dict['crosssection'])
     # annotate the image
-    draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype("arial.ttf",size=20)
-    draw.text(xy=(img.width/2,0),
-            text=f'Hernia sac largest at Y = {(int(observation_dict["z_sh"]) - layer)*float(observation_dict["z_spacing"])}mm \n'
-                 f'(slice {int(observation_dict["z_sh"]) - layer})',
+    draw = ImageDraw.Draw(to_annotate)
+    font = ImageFont.truetype("arial.ttf",size=18)
+    draw.text(xy=(to_annotate.width/2,0),
+            text=(f'{observation}\n'
+                  f'Hernia sac largest at Y = {(int(observation_dict["z_sh"]) - layer)*float(observation_dict["z_spacing"])}mm \n'
+                  f'(slice {int(observation_dict["z_sh"]) - layer})'
+                ),
             fill=(255,255,255),
             anchor='ma',
             align='center',
             font=font,
             )
     # save the crosssection
-    img.save(observation_dict['crosssection'],format='png')
+    to_annotate.save(observation_dict['crosssection'], format='png', dpi=(300,300))
 
 
 ###############################################################################
@@ -1148,5 +1152,5 @@ def annotate_label_image(observation,observation_dict):
             align = 'center',
             font = font,
             )
-    to_annotate.save(observation_dict['labels_png'],format='png')
+    to_annotate.save(observation_dict['labels_png'], format='png', dpi=(300,300))
 

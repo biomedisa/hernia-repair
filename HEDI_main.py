@@ -309,7 +309,7 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
         # annotate images
         hernia_helper.annotate_label_image(observation, observation_path[observation])
         hernia_helper.annotate_displacement_image(observation, observation_path[observation], observation_path[observation]['displacement_areas'][threshold], threshold)
-        hernia_helper.annotate_crosssection(observation_path[observation], max_displacement_layer)
+        hernia_helper.annotate_crosssection(observation, observation_path[observation], max_displacement_layer)
         hernia_helper.annotate_strain_image(observation, observation_path[observation])
 
         logger.info(f'{f" Time for {observation} annotations: {datetime.now() - step_time} ":_^{consol_width}}\n\n')
@@ -362,7 +362,7 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
     combined_img = np.hstack((second_part,   double_crosssection)) #2
 
     # save image in evaluation directory
-    plt.imsave(f'{path_to_evaluation}/Combined_Results.png',combined_img)
+    plt.imsave(f'{path_to_evaluation}/Combined_Results.png', combined_img, dpi=300)
 
     if mode == "Single":
         # show final result

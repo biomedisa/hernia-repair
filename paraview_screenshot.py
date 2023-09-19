@@ -69,6 +69,7 @@ def get_strain_colormap(renderView):
     ColorMap.NumberOfTableValues = 10
 
     ColorBar = GetScalarBar(ColorMap, renderView)
+    ColorBar.HorizontalTitle = 1
     ColorBar.LabelFontSize = 10
 
     
@@ -85,8 +86,8 @@ def get_label_colormap(renderView):
                                  '2', 'abd. rect. (l)', 
                                  '3', 'abd. obl. (r)', 
                                  '4', 'abd. obl. (l)', 
-                                 '5', 'abd. Cavity volume', 
-                                 '7', 'Hernia volume']
+                                 '5', 'abd. cavity volume', 
+                                 '7', 'hernia volume']
 
     ColorMap.IndexedColors    = [0.231, 0.298, 0.753, 
                                  0.435, 0.569, 0.953, 
@@ -213,6 +214,8 @@ if displacement_mesh != 'None':
     DisplacementDisplay.SetScalarBarVisibility(renderView1, True)
     # hide the scalar bar for this color map if no visible data is colored by it.
     DisplacementDisplay.RescaleTransferFunctionToDataRange(False,True)
+    # set color bar name
+    DisplacementColorBar.Title = 'Displacement'
     # get the material library
     materialLibrary1 = GetMaterialLibrary()
     # get the datagrid
@@ -258,6 +261,8 @@ if strain_mesh != 'None':
 
     # Show color bar/color legend
     StrainDisplay.SetScalarBarVisibility(renderView1, True)
+    # set color bar name
+    StrainColorBar.Title = 'Strain'
     # get the datagrid
     get_grid(renderView1,BodyBounds)
     # make a screenshot of the curent Data
