@@ -995,8 +995,8 @@ def create_crosssection(observation_dict):
     resolution = 600
     if resolution != 600:
         import cv2
-        img = cv2.resize(img, (resolution, resolution), interpolation=cv2.INTER_CUBIC)
-        label_a = np.zeros_like(img)
+        CT_img = cv2.resize(CT_img, (resolution, resolution), interpolation=cv2.INTER_CUBIC)
+        label_a = np.zeros_like(CT_img)
         for k in np.unique(label_array):
             tmp = np.zeros_like(label_array)
             tmp[label_array==k]=1
@@ -1143,7 +1143,7 @@ def annotate_label_image(observation,observation_dict):
     font = ImageFont.truetype("arial.ttf", size=18)
     draw.text(xy=(to_annotate.width/2,0),
             text= (f'{observation}\n'
-                   f'Hernia Width: {hernia_width}cm  |  Hernia Length: {hernia_length}cm  |  Hernia Area {hernia_area}cm²\n'
+                   f'Hernia Width: {hernia_width}cm  |  Hernia Length: {hernia_length}cm  |  Hernia Area: {hernia_area}cm²\n'
                    f'Hernia Volume: {hernia_volume}cm³  |  Abd. Cavity Volume: {abdominal_volume}cm³\n'
                    f'Loss of Domain: {round(hernia_volume/(hernia_volume+abdominal_volume),2)} (Sabbagh)  |  {round(hernia_volume/abdominal_volume,2)} (Tanaka)'
                    ),     
