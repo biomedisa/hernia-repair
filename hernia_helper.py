@@ -76,7 +76,7 @@ def update_neural_nets():
         update = False
         if os.path.exists(dst):
             # source
-            response = requests.head(src)
+            response = requests.head(src, verify=False)
             timestamp1 = response.headers.get('Last-Modified')
             timestamp1 = timestamp1.split(' ')
             del timestamp1[0]
