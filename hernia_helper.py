@@ -68,7 +68,7 @@ def update_neural_nets():
     Updates the neuralnetworks by checking if there are any updates on the server.
     '''
 
-    sources = ['https://biomedisa.org/media/img_hernie.h5']
+    sources = ['https://biomedisa.info/media/img_hernie.h5']
 
     destinations = [f'{config.path_names["neuralnet"]}/img_hernie.h5']
 
