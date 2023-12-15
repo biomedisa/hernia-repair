@@ -9,6 +9,7 @@ import tkinter as tk
 import urllib.request
 from datetime import datetime
 from tkinter.filedialog import askdirectory
+from tkinter.simpledialog import askstring
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -131,8 +132,13 @@ def load_directorys(main_folder):
     for file in files:
         if os.path.isfile(file):
             ds = pydicom.filereader.dcmread(file)
-            PatientBirthDate = str(ds.PatientBirthDate)
-            PatientName = str(ds.PatientName)
+            #PatientBirthDate = str(ds.PatientBirthDate)
+            if 'PatientName' in ds:
+                PatientName = str(ds.PatientName)
+            else:
+                day_string = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                PatientName = f'Patient_{day_string}'
+                PatientName = askstring(title='Anonymous dataset', prompt='Enter Patient Name:', initialvalue=PatientName)
             PatientName = PatientName.replace('Ü','Ue')
             PatientName = PatientName.replace('Ä','Ae')
             PatientName = PatientName.replace('Ö','Oe') 
@@ -142,7 +148,7 @@ def load_directorys(main_folder):
             PatientName = PatientName.replace('ß','ss')
 
             StudyDate = str(ds.StudyDate)
-            StudyDescription = str(ds.StudyDescription)
+            #StudyDescription = str(ds.StudyDescription)
 
             # define Directories to store results and Dicom Data
             first_level = f'{main_folder}/{PatientName}'
@@ -212,8 +218,13 @@ def create_patient_directory_auto(dcm_dir,main_folder):
     files = os.listdir(dcm_dir)
     # set patients directory 
     ds = pydicom.filereader.dcmread(f'{dcm_dir}/{files[1]}')
-    PatientBirthDate = str(ds.PatientBirthDate)
-    PatientName = str(ds.PatientName)
+    #PatientBirthDate = str(ds.PatientBirthDate)
+    if 'PatientName' in ds:
+        PatientName = str(ds.PatientName)
+    else:
+        day_string = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        PatientName = f'Patient_{day_string}'
+        PatientName = askstring(title='Anonymous dataset', prompt='Enter Patient Name:', initialvalue=PatientName)
     PatientName = PatientName.replace('Ü','Ue')
     PatientName = PatientName.replace('Ä','Ae')
     PatientName = PatientName.replace('Ö','Oe') 
