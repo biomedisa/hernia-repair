@@ -47,7 +47,7 @@ def MarchingCubes(image,treshold):
     
     return finalPoly#confilter.GetOutput()
 
-def CreateVTK(observation_dict,mode='labels'):
+def CreateVTK(observation_dict,mode='labels',image=None,displacement_array=None):
     '''
     Creates a VTK file from a given tif multilayer image,
     useing the marchingcubes Algorithm.
@@ -65,22 +65,24 @@ def CreateVTK(observation_dict,mode='labels'):
     
     
     if mode == 'labels':
-        path_to_data = observation_dict['labels']     
+        path_to_data = observation_dict['labels']
         path_to_save = observation_dict['labels_vtk']
         treshold = 7
 
     elif mode == 'displacement':
-        path_to_data = observation_dict['mask']     
+        if image is None:
+            path_to_data = observation_dict['mask']
         path_to_save = observation_dict['displacement_vtk']
-        displacement_array = imread(observation_dict['displacement_array'])
+        if displacement_array is None:
+            displacement_array = imread(observation_dict['displacement_array'])
         treshold = 1
 
     elif mode == 'strain':
-        path_to_data = observation_dict['mask']     
+        path_to_data = observation_dict['mask']
         path_to_save = observation_dict['strain_vtk']
         displacement_array = imread(observation_dict['strain_array'])
         treshold = 1
-    
+
     else: raise ValueError('mode must be one of "labels", "displacement" or "strain".')
 
     x_spacing  = float(observation_dict['x_spacing'])
@@ -88,7 +90,8 @@ def CreateVTK(observation_dict,mode='labels'):
     z_spacing = float(observation_dict['z_spacing'])
 
     # load data
-    image = imread(path_to_data)
+    if image is None:
+        image = imread(path_to_data)
 
     # reduce image size to displacement array
     if mode in ['displacement','strain']:
@@ -131,7 +134,7 @@ def CreateVTK(observation_dict,mode='labels'):
         array.SetNumberOfComponents(1) # this is 3 for a vector
         array.SetNumberOfTuples(cells.GetNumberOfCells())
         nCells, nCols = numpy_cells.shape 
-        tmp = np.empty((nCells,3,3))        
+        tmp = np.empty((nCells,3,3))
         if mode == 'displacement':
             # get maximum displacement
             max_displacement = int(np.amax(displacement_array))
@@ -172,3 +175,4 @@ def CreateVTK(observation_dict,mode='labels'):
 
     if mode == 'displacement':
         return np.round(surface*0.01,2)
+
