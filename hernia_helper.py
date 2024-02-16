@@ -775,6 +775,7 @@ def create_displacement_array(path_dict,dim=3):
 
     elif dim==2:
         # initilazie the arrays
+        outward_field = np.zeros((num_slices,y_shape,x_shape,2),dtype=float)
         outward_inward = np.zeros((num_slices,y_shape,x_shape,2),dtype=float)
         outward_inward_strain = np.zeros((num_slices,y_shape,x_shape,2),dtype=float)
         # initialize the step size as 1cm per evaluation
@@ -789,7 +790,11 @@ def create_displacement_array(path_dict,dim=3):
                 inward[...,0] *= y_spacing
                 inward[...,1] *= x_spacing
 
-                # Get the centroid of the mask
+                # displacement field
+                outward_field[layer,...,0] = outward[...,0]
+                outward_field[layer,...,1] = outward[...,1]
+
+                # get the centroid of the mask
                 rest_centroid = ndimage.center_of_mass(rest[layer])
                 valsalva_centroid = ndimage.center_of_mass(valsalva[layer])
 
@@ -799,10 +804,13 @@ def create_displacement_array(path_dict,dim=3):
                 outward_inward_strain[layer,:,:,0] = create_strain_layer(outward[:,:,1],outward[:,:,0])
                 outward_inward_strain[layer,:,:,1] = create_strain_layer(inward[:,:,1],inward[:,:,0])
 
+            # interpolate between layers
             if layer>=step_size:
                 for step in range(1, step_size, 1):
                     outward_inward[layer-step_size + step,...] = (1 - step/step_size)* outward_inward[layer-step_size,...] + (step/step_size)* outward_inward[layer,...]
                     outward_inward_strain[layer-step_size + step,...] = (1 - step/step_size)* outward_inward_strain[layer-step_size,...] + (step/step_size)* outward_inward_strain[layer,...]
+                    outward_field[layer-step_size + step,...,0] = (1 - step/step_size)* outward_field[layer-step_size,...,0] + (step/step_size)* outward_field[layer,...,0]
+                    outward_field[layer-step_size + step,...,1] = (1 - step/step_size)* outward_field[layer-step_size,...,1] + (step/step_size)* outward_field[layer,...,1]
 
         if layer < num_slices-1 and np.any(valsalva[num_slices-1]) and np.any(rest[num_slices-1]):
             outward_last, inward_last = symmetric_registration(valsalva[num_slices-1],rest[num_slices-1],dim=2)
@@ -811,17 +819,26 @@ def create_displacement_array(path_dict,dim=3):
             inward_last[...,0] *= y_spacing
             inward_last[...,1] *= x_spacing
 
+            # displacement field
+            outward_field[-1,...,0] = outward_last[...,0]
+            outward_field[-1,...,1] = outward_last[...,1]
+
             # get the centroid of the mask
             rest_centroid = ndimage.center_of_mass(rest[num_slices-1])
             valsalva_centroid = ndimage.center_of_mass(valsalva[num_slices-1])
+
+            # create the displacement and strain values for this layer
             outward_inward[-1,:,:,0] = create_displacement_layer(outward_last,'outward',y_shape,x_shape,rest_centroid,)
             outward_inward[-1,:,:,1] = create_displacement_layer(inward_last,'inward',y_shape,x_shape,valsalva_centroid)
             outward_inward_strain[-1,:,:,0] = create_strain_layer(outward_last[:,:,1],outward_last[:,:,0]) 
             outward_inward_strain[-1,:,:,1] = create_strain_layer(inward_last[:,:,1],inward_last[:,:,0])
 
+        # interpolate between layers
         for step in range(1,num_slices-layer,1):
             outward_inward[layer+step,...] = (1 - step/(num_slices-layer))*outward_inward[layer,...] + (step/(num_slices-layer))*outward_inward[-1,...]
             outward_inward_strain[layer+step,...] = (1 - step/(num_slices-layer))*outward_inward_strain[layer,...] + (step/(num_slices-layer))*outward_inward_strain[-1,...]
+            outward_field[layer+step,...,0] = (1 - step/(num_slices-layer))*outward_field[layer,...,0] + (step/(num_slices-layer))*outward_field[-1,...,0]
+            outward_field[layer+step,...,1] = (1 - step/(num_slices-layer))*outward_field[layer,...,1] + (step/(num_slices-layer))*outward_field[-1,...,1]
 
     # set negativ/imward displacement to 0
     #outward_inward[outward_inward < 0] = 0
