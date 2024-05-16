@@ -5,7 +5,7 @@ from tifffile import imread
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 
-def MarchingCubes(image,treshold):
+def MarchingCubes(image,threshold):
     '''
     Applies the marchingCubes algorithm to the data
     to optain a mesh of the data.
@@ -13,14 +13,14 @@ def MarchingCubes(image,treshold):
     Parameters
     ----------
     image: vtk image data
-    treshold: The amount of contour levels
+    threshold: The amount of contour levels
     '''
 
     mc = vtk.vtkDiscreteMarchingCubes()
     mc.SetInputData(image)
     mc.ComputeNormalsOn()
     mc.ComputeGradientsOn()
-    mc.GenerateValues(treshold,1,treshold)
+    mc.GenerateValues(threshold,1,threshold)
     mc.Update()
 
     # To remain largest region
@@ -47,7 +47,9 @@ def MarchingCubes(image,treshold):
     
     return finalPoly#confilter.GetOutput()
 
-def CreateVTK(observation_dict,mode='labels'):
+
+def CreateVTK(observation_dict=None,mode='labels',image=None,displacement_array=None,path_to_save=None,
+    z_spacing=None, y_spacing=None, x_spacing=None):
     '''
     Creates a VTK file from a given tif multilayer image,
     useing the marchingcubes Algorithm.
@@ -62,33 +64,45 @@ def CreateVTK(observation_dict,mode='labels'):
     Creat a VTK mesh of either the muscel labels, the displacment of 
     the torso between Rest and Valsalva or the strain of the displacment.
     '''
-    
-    
+
     if mode == 'labels':
-        path_to_data = observation_dict['labels']     
-        path_to_save = observation_dict['labels_vtk']
-        treshold = 7
+        if image is None:
+            path_to_data = observation_dict['labels']
+        if path_to_save is None:
+            path_to_save = observation_dict['labels_vtk']
+        threshold = 7
 
     elif mode == 'displacement':
-        path_to_data = observation_dict['mask']     
-        path_to_save = observation_dict['displacement_vtk']
-        displacement_array = imread(observation_dict['displacement_array'])
-        treshold = 1
+        if image is None:
+            path_to_data = observation_dict['mask']
+        if displacement_array is None:
+            displacement_array = imread(observation_dict['displacement_array'])
+        if path_to_save is None:
+            path_to_save = observation_dict['displacement_vtk']
+        threshold = 1
 
     elif mode == 'strain':
-        path_to_data = observation_dict['mask']     
-        path_to_save = observation_dict['strain_vtk']
-        displacement_array = imread(observation_dict['strain_array'])
-        treshold = 1
-    
-    else: raise ValueError('mode must be one of "labels", "displacement" or "strain".')
+        if image is None:
+            path_to_data = observation_dict['mask']
+        if displacement_array is None:
+            displacement_array = imread(observation_dict['strain_array'])
+        if path_to_save is None:
+            path_to_save = observation_dict['strain_vtk']
+        threshold = 1
 
-    x_spacing  = float(observation_dict['x_spacing'])
-    y_spacing  = float(observation_dict['y_spacing'])
-    z_spacing = float(observation_dict['z_spacing'])
+    else:
+        raise ValueError('mode must be one of "labels", "displacement" or "strain".')
+
+    if x_spacing is None:
+        x_spacing  = float(observation_dict['x_spacing'])
+    if y_spacing is None:
+        y_spacing  = float(observation_dict['y_spacing'])
+    if z_spacing is None:
+        z_spacing = float(observation_dict['z_spacing'])
 
     # load data
-    image = imread(path_to_data)
+    if image is None:
+        image = imread(path_to_data)
 
     # reduce image size to displacement array
     if mode in ['displacement','strain']:
@@ -111,7 +125,7 @@ def CreateVTK(observation_dict,mode='labels'):
     imageData.GetPointData().SetScalars(sc)
 
     # get poly data
-    poly = MarchingCubes(imageData,treshold)
+    poly = MarchingCubes(imageData,threshold)
 
     if mode in ['displacement','strain']:
 
@@ -130,8 +144,8 @@ def CreateVTK(observation_dict,mode='labels'):
         array = vtk.vtkFloatArray()
         array.SetNumberOfComponents(1) # this is 3 for a vector
         array.SetNumberOfTuples(cells.GetNumberOfCells())
-        nCells, nCols = numpy_cells.shape 
-        tmp = np.empty((nCells,3,3))        
+        nCells, nCols = numpy_cells.shape
+        tmp = np.empty((nCells,3,3))
         if mode == 'displacement':
             # get maximum displacement
             max_displacement = int(np.amax(displacement_array))
@@ -147,10 +161,10 @@ def CreateVTK(observation_dict,mode='labels'):
             centroid[1] /= y_spacing
             centroid[2] /= z_spacing
             centroid = np.round(centroid).astype(int)
-            trans_val = displacement_array[min(centroid[2],zsh),centroid[1],centroid[0]]
+            trans_val = displacement_array[min(centroid[2],zsh-1),centroid[1],centroid[0]]
             array.SetValue(k, trans_val)
             if mode == 'displacement':
-                # compute the surface areas depending on the magnitute 
+                # compute the surface areas depending on the magnitute
                 A = tmp[k,0]
                 B = tmp[k,1]
                 C = tmp[k,2]
@@ -163,7 +177,7 @@ def CreateVTK(observation_dict,mode='labels'):
             array.SetName("displacement")
         elif mode == 'strain':
             array.SetName("strain")
-    
+
     # save data with vtk
     writer = vtk.vtkPolyDataWriter()
     writer.SetInputData(poly)
@@ -172,3 +186,4 @@ def CreateVTK(observation_dict,mode='labels'):
 
     if mode == 'displacement':
         return np.round(surface*0.01,2)
+
