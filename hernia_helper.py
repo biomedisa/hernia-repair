@@ -10,7 +10,6 @@ import urllib.request
 from datetime import datetime
 from tkinter.filedialog import askdirectory
 from tkinter.simpledialog import askstring
-from biomedisa.features.biomedisa_helper import img_resize
 import matplotlib.pyplot as plt
 import numpy as np
 import pydicom
@@ -35,10 +34,10 @@ except:
 
 def ask_continue(mode):
     '''
-    Asks the user if he wishes to continue the execution in case of 
+    Asks the user if he wishes to continue the execution in case of
     problems with the data.
 
-    Requires user input: 
+    Requires user input:
 
     y for yes 
     n for no
@@ -101,18 +100,18 @@ def update_neural_nets():
         #print(t1>t2, difference, difference.days)
 
         if update or not os.path.exists(dst):
-            with urllib.request.urlopen(src,context=ssl._create_unverified_context()) as response,open(dst,'wb') as out_file: 
+            with urllib.request.urlopen(src,context=ssl._create_unverified_context()) as response,open(dst,'wb') as out_file:
                 shutil.copyfileobj(response,out_file)
 
 
 def load_directorys(main_folder):
-    ''' 
-    Asks the user to select a Dicom Dataset and builds the required 
+    '''
+    Asks the user to select a Dicom Dataset and builds the required
     directory structur by extracting the information from the Dataset.
 
     Parameter
     ---------
-    main_folder: string 
+    main_folder: string
         Pathstring to the standard main directory
 
     Returns
@@ -141,7 +140,7 @@ def load_directorys(main_folder):
                 PatientName = askstring(title='Anonymous dataset', prompt='Enter Patient Name:', initialvalue=PatientName)
             PatientName = PatientName.replace('Ü','Ue')
             PatientName = PatientName.replace('Ä','Ae')
-            PatientName = PatientName.replace('Ö','Oe') 
+            PatientName = PatientName.replace('Ö','Oe')
             PatientName = PatientName.replace('ü','ue')
             PatientName = PatientName.replace('ä','ae')
             PatientName = PatientName.replace('ö','oe')
@@ -216,7 +215,7 @@ def create_patient_directory_auto(dcm_dir,main_folder):
 
     # get the raw dcm files
     files = os.listdir(dcm_dir)
-    # set patients directory 
+    # set patients directory
     ds = pydicom.filereader.dcmread(f'{dcm_dir}/{files[1]}')
     #PatientBirthDate = str(ds.PatientBirthDate)
     if 'PatientName' in ds:
@@ -367,13 +366,13 @@ def compare_slice_amount(rest_dcm_dir,valsalva_dcm_dir,mode):
 def load_mask_data(dcm_dir):
     '''
     Retruns the pixel information stored in the .dcm files
-    
+
     Parameters
     ----------
     dcm_dir: string
         Path to the directory of the .dcm dataset
 
-    Returns 
+    Returns
         volume: nd.array
             Pixel information of the .dcm dataset
         header: list
@@ -620,7 +619,7 @@ def get_strain_tensor(Ux,Uy):
 
 def create_strain_layer(Ux, Uy):
     '''
-    Create a layer of strain values corresponding to the displacment in direction 
+    Create a layer of strain values corresponding to the displacment in direction
     X and Y.
 
     Parameters
@@ -767,6 +766,7 @@ def create_displacement_array(path_dict=None, dim=3, rest=None, valsalva=None,
     # registration
     if dim==3:
         # resize data
+        from biomedisa.features.biomedisa_helper import img_resize
         zsh = int(num_slices * z_spacing / scaling)
         ysh = int(y_shape * y_spacing / scaling)
         xsh = int(x_shape * x_spacing / scaling)
@@ -1236,7 +1236,7 @@ def get_label_sizes(path_to_tif,x_res,y_res,z_res):
             The real length represented by one pixel in Y direction.
         z_res: float
             The real length represented by one pixel in Z direction.
-    
+
     Returns
     ----------
         hernia_width: float
