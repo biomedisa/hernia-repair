@@ -9,11 +9,10 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import logging
 import shutil
 from datetime import datetime
-from subprocess import DEVNULL, PIPE, STDOUT, run, Popen
+from subprocess import DEVNULL, PIPE, Popen
 from tkinter.filedialog import askdirectory
 from tkinter.simpledialog import askinteger
 import subprocess
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -54,14 +53,9 @@ def config_logger(name='Timer'):
     logger.addHandler(f_handler)
     return logger
 
-def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode='Single', threshold=15):
+def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode='Single', threshold=15, dimensions=3):
 
-    if sys.platform == "win32":
-        python = 'python'
-    else:
-        python = 'python3'
-
-    # set the timer 
+    # set the timer
     instance_start_time = datetime.now()
 
     # starting data loading
@@ -75,7 +69,7 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
     if path_to_rest != None:
         first_level = hernia_helper.create_patient_directory_auto(path_to_rest,main_folder)
         # create and get the patients working directory
-        observation_path['Rest']['dcm_dir'] = path_to_rest 
+        observation_path['Rest']['dcm_dir'] = path_to_rest
         observation_path['Valsalva']['dcm_dir'] = path_to_valsalva
 
     else:
@@ -84,8 +78,12 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
         for observation in sorted(Observations):
             observation_path[observation]['dcm_dir'] = askdirectory(initialdir = first_level, title=f'Select {observation} Directory')
         threshold = askinteger(title='Instability threshold', prompt='Change threshold manually:', initialvalue=15)
+        dimensions = askinteger(title='Registration in 2D/3D', prompt='Change dimensions:', initialvalue=3)
 
     # console output
+    if dimensions not in [2,3]:
+        dimensions = 3
+        logger.info('Warning: Invalid dimension input. Using 3D instead.')
     logger.info(f'{f"Using Data from: {first_level}":^{consol_width}}')
 
     # set Time String for saving the data
@@ -102,7 +100,7 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
         observation_path[observation]['labels']  = f'{path_to_archive}/{observation}_labels.tif'
         observation_path[observation]['mask'] = f'{path_to_archive}/{observation}_mask.tif'
         observation_path[observation]['displacement_array'] = f'{path_to_archive}/{observation}_displacement_array.tif'
-        observation_path[observation]['strain_array'] = f'{path_to_archive}/{observation}_strain_array.tif' 
+        observation_path[observation]['strain_array'] = f'{path_to_archive}/{observation}_strain_array.tif'
 
         observation_path[observation]['labels_vtk'] = f'{path_to_archive}/{observation}_labels.vtk'
         observation_path[observation]['displacement_vtk'] = f'{path_to_archive}/{observation}_displacement.vtk'
@@ -145,7 +143,7 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
                     f'      Pixel spacing (x,y,z): ({observation_path["Rest"]["x_spacing"]},{observation_path["Rest"]["y_spacing"]},{observation_path["Rest"]["z_spacing"]})\n'
                     f'Info for Valsalva Data:\n',
                     f'      Data used: \"{observation_path["Valsalva"]["dcm_dir"]}\"\n',
-                    f'      Data shape (x,y,z): ({observation_path["Valsalva"]["x_sh"]},{observation_path["Valsalva"]["y_sh"]},{observation_path["Valsalva"]["z_sh"]})\n', 
+                    f'      Data shape (x,y,z): ({observation_path["Valsalva"]["x_sh"]},{observation_path["Valsalva"]["y_sh"]},{observation_path["Valsalva"]["z_sh"]})\n',
                     f'      Pixel spacing (x,y,z): ({observation_path["Valsalva"]["x_spacing"]},{observation_path["Valsalva"]["y_spacing"]},{observation_path["Valsalva"]["z_spacing"]})\n'
                     f'Threshold: {threshold}mm\n'
                         ])
@@ -159,7 +157,9 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
     ###########################################################################
     # Computing Labels with Biomedisa
     ###########################################################################
-    
+    # update biomedisa
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-U", "biomedisa"])
+
     logger.info(f'{" Computing Labels ":=^{consol_width}}\n')
 
     # create the biomedisa labels and the mask for the registration for rest and valsalva
@@ -167,8 +167,7 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
         logger.info(f'{f" Processing {observation} ":-^{consol_width}}')
 
         # create the segmentation proposal, in form of a tif
-        net = Popen([python,
-                    f'{config.path_names["userprofile"]}/git/biomedisa/demo/biomedisa_deeplearning.py',
+        net = Popen([sys.executable, "-m", "biomedisa.deeplearning",
                     observation_path[observation]["dcm_dir"],
                     f'{config.path_names["neuralnet"]}/img_hernie.h5', "-p", "-bs", "6"],
                     stdin=DEVNULL, stderr=PIPE, stdout=PIPE)
@@ -205,7 +204,7 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
     
     logger.info(f'{" Creating arrays of displacement and strain ":=^{consol_width}}\n')
 
-    hernia_helper.create_displacement_array(observation_path)
+    hernia_helper.create_displacement_array(observation_path,dim=dimensions)
 
     logger.info(f'{f" Time for registration: {datetime.now() - step_time} ":_^{consol_width}}\n\n')
     step_time = datetime.now()
@@ -251,12 +250,9 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
         observation_path['Rest']['displacement_areas'] = np.pad(observation_path['Rest']['displacement_areas'], (0,displacement_dif))
     elif displacement_dif < 0:
         observation_path['Valsalva']['displacement_areas'] = np.pad(observation_path['Valsalva']['displacement_areas'], (0,-displacement_dif))
-    
+
     # get patient-specific threshold for unstable abdominal wall
     threshold = hernia_helper.plot_individual_threshold(observation_path,path_to_archive,threshold)
-
-
-
     for observation in Observations:
         logger.info(f'{f" Processing {observation} ":-^{consol_width}}')
 
@@ -266,26 +262,24 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
 
         # create images using Paraview
             # image of the neural network projection
-        screenshot1 = Popen([python,
+        screenshot1 = Popen([sys.executable,
                             f'{config.BASE_DIR}/paraview_screenshot.py',
                             observation_path[observation]['displacement_vtk'],
                             observation_path[observation]['strain_vtk'],
                             observation_path[observation]['labels_vtk'],
                             f'{path_to_evaluation}/{observation}',
                             str(threshold)],
-                            
                             stdin=DEVNULL, stderr=PIPE, stdout=PIPE)
         _,screenshot1_error = screenshot1.communicate()
         logger.debug(f'{screenshot1_error}')
 
             # image of the combination of labels and displacement projection
-        screenshot2 = Popen([python,
+        screenshot2 = Popen([sys.executable,
                             f'{config.BASE_DIR}/x_ray.py',
                             observation_path[observation]['displacement_vtk'],
                             observation_path[observation]['labels_vtk'],
                             f'{path_to_evaluation}/{observation}_x_ray.png',
                             str(threshold)],
-
                             stdin=DEVNULL, stderr=PIPE, stdout=PIPE)
         _,screenshot2_error = screenshot2.communicate()
         logger.debug(f'{screenshot2_error}')
@@ -373,7 +367,7 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
 
 
 ###############################################################################
-#Main Loop 
+#Main Loop
 ###############################################################################
 
 # try loop in case of error
@@ -420,18 +414,22 @@ try:
         if not os.path.exists(main_folder):
             os.mkdir(main_folder)
 
-        # default threshold
+        # default parameters
         threshold = 15
+        dimensions = 3
 
         if mode == "Single":
-            hernia_analysis(main_folder=main_folder,mode=mode,threshold=threshold)
+            hernia_analysis(main_folder=main_folder,mode=mode,threshold=threshold,dimensions=dimensions)
 
         elif mode == "CMD":
             path_to_rest=sys.argv[2]
             path_to_valsalva=sys.argv[3]
-            if len(sys.argv)==5:
-                threshold=int(sys.argv[4])
-            hernia_analysis(main_folder,path_to_rest,path_to_valsalva,"Single",threshold)
+            if '-t' in sys.argv:
+                threshold=int(sys.argv[sys.argv.index('-t')+1])
+            if '-d' in sys.argv:
+                dimensions=int(sys.argv[sys.argv.index('-d')+1])
+            hernia_analysis(main_folder,path_to_rest,path_to_valsalva,"Single",
+                threshold=threshold,dimensions=dimensions)
 
         elif mode == "Multi":
             # user defined threshold
@@ -462,7 +460,7 @@ try:
                 path_to_valsalva = txt_file.readline()[1:-2]
                 if os.path.exists(path_to_rest) and os.path.exists(path_to_valsalva):
                     try:
-                        hernia_analysis(main_folder,path_to_rest,path_to_valsalva,mode,threshold)
+                        hernia_analysis(main_folder,path_to_rest,path_to_valsalva,mode,threshold,dimensions=dimensions)
                     except Exception as e:
                         logger.info(f'Error: {e}\n\n')
                 else:
@@ -486,7 +484,7 @@ try:
         logger.info(f'Execution time: {total_end_time - total_start_time}\n\n')
 
 # catch the error and log it to a temp file
-except: 
+except:
     # open the error txt file to write to
     logger.exception('Fehler bei der Ausführung!')
 

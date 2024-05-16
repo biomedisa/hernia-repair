@@ -9,7 +9,8 @@ import tkinter as tk
 import urllib.request
 from datetime import datetime
 from tkinter.filedialog import askdirectory
-
+from tkinter.simpledialog import askstring
+from biomedisa.features.biomedisa_helper import img_resize
 import matplotlib.pyplot as plt
 import numpy as np
 import pydicom
@@ -68,7 +69,7 @@ def update_neural_nets():
     Updates the neuralnetworks by checking if there are any updates on the server.
     '''
 
-    sources = ['https://biomedisa.org/media/img_hernie.h5']
+    sources = ['https://biomedisa.info/media/img_hernie.h5']
 
     destinations = [f'{config.path_names["neuralnet"]}/img_hernie.h5']
 
@@ -131,8 +132,13 @@ def load_directorys(main_folder):
     for file in files:
         if os.path.isfile(file):
             ds = pydicom.filereader.dcmread(file)
-            PatientBirthDate = str(ds.PatientBirthDate)
-            PatientName = str(ds.PatientName)
+            #PatientBirthDate = str(ds.PatientBirthDate)
+            if 'PatientName' in ds:
+                PatientName = str(ds.PatientName)
+            else:
+                day_string = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                PatientName = f'Patient_{day_string}'
+                PatientName = askstring(title='Anonymous dataset', prompt='Enter Patient Name:', initialvalue=PatientName)
             PatientName = PatientName.replace('Ü','Ue')
             PatientName = PatientName.replace('Ä','Ae')
             PatientName = PatientName.replace('Ö','Oe') 
@@ -142,7 +148,7 @@ def load_directorys(main_folder):
             PatientName = PatientName.replace('ß','ss')
 
             StudyDate = str(ds.StudyDate)
-            StudyDescription = str(ds.StudyDescription)
+            #StudyDescription = str(ds.StudyDescription)
 
             # define Directories to store results and Dicom Data
             first_level = f'{main_folder}/{PatientName}'
@@ -212,8 +218,13 @@ def create_patient_directory_auto(dcm_dir,main_folder):
     files = os.listdir(dcm_dir)
     # set patients directory 
     ds = pydicom.filereader.dcmread(f'{dcm_dir}/{files[1]}')
-    PatientBirthDate = str(ds.PatientBirthDate)
-    PatientName = str(ds.PatientName)
+    #PatientBirthDate = str(ds.PatientBirthDate)
+    if 'PatientName' in ds:
+        PatientName = str(ds.PatientName)
+    else:
+        day_string = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        PatientName = f'Patient_{day_string}'
+        PatientName = askstring(title='Anonymous dataset', prompt='Enter Patient Name:', initialvalue=PatientName)
     PatientName = PatientName.replace('Ü','Ue')
     PatientName = PatientName.replace('Ä','Ae')
     PatientName = PatientName.replace('Ö','Oe') 
@@ -279,10 +290,14 @@ def get_pixel_spacing(dcm_dir):
         Voxel length in x-direction
     '''
 
-    files = os.listdir(dcm_dir)
+    files = sorted(os.listdir(dcm_dir))
     # load a .dcm file of the datset and extract voxel side lengths
     ds = pydicom.filereader.dcmread(f'{dcm_dir}/{files[1]}')
-    z_res = ds.SliceThickness
+    if 'SliceLocation' in ds:
+        ds2 = pydicom.filereader.dcmread(f'{dcm_dir}/{files[2]}')
+        z_res = abs(ds.SliceLocation - ds2.SliceLocation)
+    else:
+        z_res = ds.SliceThickness
     y_res, x_res = ds.PixelSpacing
 
     return str(z_res), str(y_res), str(x_res)
@@ -389,7 +404,7 @@ def load_mask_data(dcm_dir):
             header[ds.InstanceNumber-MinInstanceNumber] = ds
     else:
         volume, header = None, None
-    return volume, header  
+    return volume, header
 
 
 def reduce_blocksize(data):
@@ -500,20 +515,7 @@ def fill(image, threshold=0.9):
     return image_i
 
 
-def threshold(img):
-    # Image -> Adjust -> Threshold (-224 HU, -100==fat, 0==water, -1024==air)
-    a = np.zeros_like(img)
-    a[img>-224] = 1
-    a[0] = 1
-    a[-1] = 1
-    a = fill(a, 0.9)
-    a[0] = 0
-    a[-1] = 0
-    a = clean(a, 0.9)
-    return a
-
-
-def create_mask(observation_dict=None, data=None, app=True):
+def create_mask(observation_dict=None, data=None, threshold=-224):
     '''
     Creates a mask of the abdominal region given by the dicom data.
     Pixels inside are labeled 1. Pixels outside 0.
@@ -531,22 +533,74 @@ def create_mask(observation_dict=None, data=None, app=True):
         #adjust the data to the hounsfield range
         rescale_intercept = header[0].RescaleIntercept
         rescale_slope = header[0].RescaleSlope
-        data = rescale_slope*data + rescale_intercept 
-    #print(data.shape, np.amin(data), np.amax(data))
+        data = rescale_slope*data + rescale_intercept
+
     #pad data with a blackpixels
     data = np.pad(data,((1,1),(256,256),(256,256)),constant_values=-1024)
-    body_outline = threshold(data)
+
+    # Image -> Adjust -> Threshold (-224 HU, -100==fat, 0==water, -1024==air)
+    body_outline = np.zeros_like(data)
+    body_outline[data>threshold] = 1
+    body_outline[0] = 1
+    body_outline[-1] = 1
+    body_outline = fill(body_outline, 0.9)
+    body_outline[0] = 0
+    body_outline[-1] = 0
+    body_outline = clean(body_outline, 0.9)
+
     #remove the padded area
     mask = body_outline[1:-1,256:-256,256:-256]
-    if app:
-        #save the mask
+
+    #save the mask
+    if observation_dict is not None:
         imwrite(observation_dict['mask'],mask,compression='zlib')
-    else:
-        return mask
+    return mask
 
 ###############################################################################
 # Creation of the displacement and strain arrays
 ###############################################################################
+
+def create_strain(Ux,Uy,Uz):
+    Uxz, Uxy, Uxx = np.gradient(Ux)
+    Uyz, Uyy, Uyx = np.gradient(Uy)
+    Uzz, Uzy, Uzx = np.gradient(Uz)
+    E_xx = Uxx
+    E_yy = Uyy
+    E_zz = Uzz
+    E_xy = 0.5*(Uxy + Uyx)
+    E_yz = 0.5*(Uyz + Uzy)
+    E_xz = 0.5*(Uxz + Uzx)
+    strain = np.sqrt(0.5*((E_xx - E_yy)**2 + (E_yy - E_zz)**2 + (E_zz - E_xx)**2 + 6*(E_xy**2 + E_yz**2 + E_xz**2)))
+    return strain
+
+
+def create_strain_green_lagrange(Ux,Uy,Uz):
+    # displacement gradient tensor
+    Uxz, Uxy, Uxx = np.gradient(Ux)
+    Uyz, Uyy, Uyx = np.gradient(Uy)
+    Uzz, Uzy, Uzx = np.gradient(Uz)
+    # green-lagrange strain tensor
+    E = np.zeros(Ux.shape + (3,3))
+    E[:,:,:,0,0] = Uxx**2 + 2*Uxx + Uyx**2 + Uzx**2
+    E[:,:,:,0,1] = Uxx*Uxy + Uxy + Uyy*Uyx + Uyx + Uzy*Uyx
+    E[:,:,:,0,2] = Uxx*Uxz + Uxz + Uyx*Uyz + Uzx*Uzz + Uzx
+    E[:,:,:,1,0] = Uxx*Uxy + Uxy + Uyx*Uyy + Uyx + Uzx*Uzy
+    E[:,:,:,1,1] = Uxy**2 + Uyy**2 + 2*Uyy + Uyz**2
+    E[:,:,:,1,2] = Uxz*Uxy + Uyz*Uyy + Uyz + Uzz*Uzy + Uzy
+    E[:,:,:,2,0] = Uxx*Uxz + Uxz + Uyx*Uyz + Uzx*Uzz + Uzx
+    E[:,:,:,2,1] = Uxy*Uxz + Uyy*Uyz + Uyz + Uzy*Uzz + Uzy
+    E[:,:,:,2,2] = Uxz**2 + Uyz**2 + Uzz**2 + 2*Uzz
+    E *= 0.5
+    # calculate maximum principal strain
+    zsh, ysh, xsh = Ux.shape
+    strain = np.zeros_like(Ux)
+    for k in range(zsh):
+        for l in range(ysh):
+            for m in range(xsh):
+                eigenvalues, _ = np.linalg.eig(E[k,l,m])
+                strain[k,l,m] = np.max(eigenvalues)
+    return strain
+
 
 def get_strain_tensor(Ux,Uy):
     # initialize output matrix
@@ -596,7 +650,7 @@ def create_strain_layer(Ux, Uy):
     return strain_magnitude
 
 
-def symmetric_registration(static,moving):
+def symmetric_registration(static,moving,dim=3):
     '''
     Create the displacement from moving to static and back,
     using symmetric diffemomorphic registration.
@@ -616,10 +670,13 @@ def symmetric_registration(static,moving):
     '''
 
     # initialize the symmetric diffeomoprphic registration
-    metric = SSDMetric(dim = 2, smooth = 6, inner_iter = 10 )
-    #metric = CCMetric(dim = 2,  sigma_diff = 2, radius= 4 )
-
-    sdr = SymmetricDiffeomorphicRegistration(metric, level_iters=[64, 32, 16])
+    if dim==2:
+        metric = SSDMetric(dim = dim, smooth = 6, inner_iter = 10 )
+        #metric = CCMetric(dim = 2,  sigma_diff = 2, radius= 4 )
+        sdr = SymmetricDiffeomorphicRegistration(metric, level_iters=[64, 32, 16])
+    elif dim==3:
+        metric = SSDMetric(dim)
+        sdr = SymmetricDiffeomorphicRegistration(metric, level_iters=[200, 100, 50, 25], inv_iter=50)
 
     mapping = sdr.optimize(static,moving)
     if mapping.is_inverse:
@@ -666,15 +723,16 @@ def create_displacement_layer(displacement_field, mode, y_shape=512, x_shape=512
     Y = Y/Normalization
 
     # compute the Component of the vector field pointing away from the centroid
-    if mode == 'outward':
+    '''if mode == 'outward':
         absolute_displacement[(displacement_field[:,:,1]*X + displacement_field[:,:,0]*Y) < 0] = 0
     elif mode == 'inward':
-        absolute_displacement[(displacement_field[:,:,1]*X + displacement_field[:,:,0]*Y) > 0] = 0
+        absolute_displacement[(displacement_field[:,:,1]*X + displacement_field[:,:,0]*Y) > 0] = 0'''
 
     return absolute_displacement
 
 
-def create_displacement_array(path_dict=None, rest=None, valsalva=None, step_size=None):
+def create_displacement_array(path_dict=None, dim=3, rest=None, valsalva=None,
+        z_spacing=None, y_spacing=None, x_spacing=None, scaling=3):
     '''
     Create the 3-D displacement and strain arrays.
     Saves them to the given paths.
@@ -684,84 +742,169 @@ def create_displacement_array(path_dict=None, rest=None, valsalva=None, step_siz
     path_dict: dict of dict of string
         A patients path dictionary
     '''
+
+    # initialize results dictionary
+    results = {}
+
     # load both masks
     if rest is None:
         rest = imread(path_dict['Rest']['mask'])
     if valsalva is None:
         valsalva = imread(path_dict['Valsalva']['mask'])
+
     # get shapes of the masks
     num_slices, y_shape, x_shape = rest.shape
     num_slices = min(num_slices, valsalva.shape[0])
-    # initilazie the arrays
-    outward_inward = np.zeros((num_slices,y_shape,x_shape,2),dtype=float)
-    outward_inward_strain = np.zeros((num_slices,y_shape,x_shape,2),dtype=float)
-    # initialize the step size as 1cm per evaluation
-    if step_size is None:
-        step_size = int(10 // float(path_dict['Rest']['z_spacing']))
-    # forward and backward field
-    forward_field = np.zeros((num_slices,y_shape,x_shape,2),dtype=float)
-    backward_field = np.zeros((num_slices,y_shape,x_shape,2),dtype=float)
 
-    # loop over one layer every cm
-    for layer in tqdm(range(0,num_slices,step_size)):
-        if np.any(valsalva[layer]) and np.any(rest[layer]):
-            outward, inward = symmetric_registration(valsalva[layer],rest[layer])
-            forward_field[layer] = outward
-            backward_field[layer] = inward
+    # get voxel size
+    if z_spacing is None:
+        z_spacing = float(path_dict['Rest']['z_spacing'])
+    if y_spacing is None:
+        y_spacing = float(path_dict['Rest']['y_spacing'])
+    if x_spacing is None:
+        x_spacing = float(path_dict['Rest']['x_spacing'])
 
-            # Get the centroid of the mask
-            rest_centroid = ndimage.center_of_mass(rest[layer])
-            valsalva_centroid = ndimage.center_of_mass(valsalva[layer])
+    # registration
+    if dim==3:
+        # resize data
+        zsh = int(num_slices * z_spacing / scaling)
+        ysh = int(y_shape * y_spacing / scaling)
+        xsh = int(x_shape * x_spacing / scaling)
+        rest = img_resize(rest, zsh, ysh, xsh, labels=True)
+        valsalva = img_resize(valsalva, zsh, ysh, xsh, labels=True)
+
+        # add buffer
+        rest = np.pad(rest,((10,10),(10,10),(10,10)),constant_values=0)
+        valsalva = np.pad(valsalva,((10,10),(10,10),(10,10)),constant_values=0)
+
+        # start registration
+        outward_field, inward_field = symmetric_registration(valsalva,rest,dim=3)
+
+        # remove buffer
+        outward_field = np.copy(outward_field[10:-10,10:-10,10:-10])
+        inward_field = np.copy(inward_field[10:-10,10:-10,10:-10])
+
+        # resize to original size
+        outward_field = img_resize(outward_field, num_slices, y_shape, x_shape)
+        inward_field = img_resize(inward_field, num_slices, y_shape, x_shape)
+
+        # calculate absolute displacement
+        outward_inward = np.zeros((num_slices,y_shape,x_shape,2),dtype=float)
+        z_fac = num_slices / zsh
+        y_fac = y_shape / ysh
+        x_fac = x_shape / xsh
+        outward_field[...,0] *= z_fac * z_spacing
+        outward_field[...,1] *= y_fac * y_spacing
+        outward_field[...,2] *= x_fac * x_spacing
+        inward_field[...,0] *= z_fac * z_spacing
+        inward_field[...,1] *= y_fac * y_spacing
+        inward_field[...,2] *= x_fac * x_spacing
+        outward_inward[...,0] = np.sqrt(outward_field[...,2]**2 + outward_field[...,1]**2 + outward_field[...,0]**2)
+        outward_inward[...,1] = np.sqrt(inward_field[...,2]**2 + inward_field[...,1]**2 + inward_field[...,0]**2)
+
+        # calculate strain
+        outward_inward_strain = np.zeros((num_slices,y_shape,x_shape,2),dtype=float)
+        outward_inward_strain[...,0] = create_strain(outward_field[...,2],outward_field[...,1],outward_field[...,0])
+        outward_inward_strain[...,1] = create_strain(inward_field[...,2],inward_field[...,1],inward_field[...,0])
+
+    elif dim==2:
+        # initialize the arrays
+        outward_field = np.zeros((num_slices,y_shape,x_shape,2),dtype=float)
+        inward_field = np.zeros((num_slices,y_shape,x_shape,2),dtype=float)
+        outward_inward = np.zeros((num_slices,y_shape,x_shape,2),dtype=float)
+        outward_inward_strain = np.zeros((num_slices,y_shape,x_shape,2),dtype=float)
+
+        # initialize the step size as 1cm per evaluation
+        step_size = int(10 // z_spacing)
+
+        # loop over one layer every cm
+        for layer in tqdm(range(0,num_slices,step_size)):
+            if np.any(valsalva[layer]) and np.any(rest[layer]):
+                outward, inward = symmetric_registration(valsalva[layer],rest[layer],dim=2)
+                outward[...,0] *= y_spacing
+                outward[...,1] *= x_spacing
+                inward[...,0] *= y_spacing
+                inward[...,1] *= x_spacing
+
+                # displacement field
+                outward_field[layer] = outward
+                inward_field[layer] = inward
+
+                # get the centroid of the mask
+                rest_centroid = ndimage.center_of_mass(rest[layer])
+                valsalva_centroid = ndimage.center_of_mass(valsalva[layer])
+
+                # create the displacement and strain values for this layer
+                outward_inward[layer,:,:,0] = create_displacement_layer(outward,'outward',y_shape,x_shape,rest_centroid)
+                outward_inward[layer,:,:,1] = create_displacement_layer(inward,'inward',y_shape,x_shape,valsalva_centroid)
+                outward_inward_strain[layer,:,:,0] = create_strain_layer(outward[:,:,1],outward[:,:,0])
+                outward_inward_strain[layer,:,:,1] = create_strain_layer(inward[:,:,1],inward[:,:,0])
+
+            # interpolate between layers
+            if layer>=step_size:
+                for step in range(1, step_size, 1):
+                    outward_inward[layer-step_size + step,...] = (1 - step/step_size)* outward_inward[layer-step_size,...] + (step/step_size)* outward_inward[layer,...]
+                    outward_inward_strain[layer-step_size + step,...] = (1 - step/step_size)* outward_inward_strain[layer-step_size,...] + (step/step_size)* outward_inward_strain[layer,...]
+                    outward_field[layer-step_size + step] = (1 - step/step_size)* outward_field[layer-step_size] + (step/step_size)* outward_field[layer]
+                    inward_field[layer-step_size + step] = (1 - step/step_size)* inward_field[layer-step_size] + (step/step_size)* inward_field[layer]
+
+        if layer < num_slices-1 and np.any(valsalva[num_slices-1]) and np.any(rest[num_slices-1]):
+            outward_last, inward_last = symmetric_registration(valsalva[num_slices-1],rest[num_slices-1],dim=2)
+            outward_last[...,0] *= y_spacing
+            outward_last[...,1] *= x_spacing
+            inward_last[...,0] *= y_spacing
+            inward_last[...,1] *= x_spacing
+
+            # displacement field
+            outward_field[-1] = outward_last
+            inward_field[-1] = inward_last
+
+            # get the centroid of the mask
+            rest_centroid = ndimage.center_of_mass(rest[num_slices-1])
+            valsalva_centroid = ndimage.center_of_mass(valsalva[num_slices-1])
 
             # create the displacement and strain values for this layer
-            outward_inward[layer,:,:,0] = create_displacement_layer(outward,'outward',y_shape,x_shape,rest_centroid)
-            outward_inward[layer,:,:,1] = create_displacement_layer(inward,'inward',y_shape,x_shape,valsalva_centroid)
-            outward_inward_strain[layer,:,:,0] = create_strain_layer(outward[:,:,1],outward[:,:,0])
-            outward_inward_strain[layer,:,:,1] = create_strain_layer(inward[:,:,1],inward[:,:,0])
+            outward_inward[-1,:,:,0] = create_displacement_layer(outward_last,'outward',y_shape,x_shape,rest_centroid)
+            outward_inward[-1,:,:,1] = create_displacement_layer(inward_last,'inward',y_shape,x_shape,valsalva_centroid)
+            outward_inward_strain[-1,:,:,0] = create_strain_layer(outward_last[:,:,1],outward_last[:,:,0])
+            outward_inward_strain[-1,:,:,1] = create_strain_layer(inward_last[:,:,1],inward_last[:,:,0])
 
-        if layer>=step_size:
-            for step in range(1, step_size, 1):
-                outward_inward[layer-step_size + step,...] = (1 - step/step_size)* outward_inward[layer-step_size,...] + (step/step_size)* outward_inward[layer,...]
-                outward_inward_strain[layer-step_size + step,...] = (1 - step/step_size)* outward_inward_strain[layer-step_size,...] + (step/step_size)* outward_inward_strain[layer,...]
-                forward_field[layer-step_size + step,...] = (1 - step/step_size)* forward_field[layer-step_size,...] + (step/step_size)* forward_field[layer,...]
-                backward_field[layer-step_size + step,...] = (1 - step/step_size)* backward_field[layer-step_size,...] + (step/step_size)* backward_field[layer,...]
-
-    if layer < num_slices-1 and np.any(valsalva[num_slices-1]) and np.any(rest[num_slices-1]):
-        outward_last, inward_last = symmetric_registration(valsalva[num_slices-1],rest[num_slices-1])
-        forward_field[num_slices-1] = outward
-        backward_field[num_slices-1] = inward
-
-        # get the centroid of the mask
-        rest_centroid = ndimage.center_of_mass(rest[num_slices-1])
-        valsalva_centroid = ndimage.center_of_mass(valsalva[num_slices-1])
-        outward_inward[-1,:,:,0] = create_displacement_layer(outward_last,'outward',y_shape,x_shape,rest_centroid,)
-        outward_inward[-1,:,:,1] = create_displacement_layer(inward_last,'inward',y_shape,x_shape,valsalva_centroid)
-        outward_inward_strain[-1,:,:,0] = create_strain_layer(outward_last[:,:,1],outward_last[:,:,0]) 
-        outward_inward_strain[-1,:,:,1] = create_strain_layer(inward_last[:,:,1],inward_last[:,:,0])
-
-    for step in range(1,num_slices-layer,1):
-        outward_inward[layer+step,...] = (1 - step/(num_slices-layer))*outward_inward[layer,...] + (step/(num_slices-layer))*outward_inward[-1,...]
-        outward_inward_strain[layer+step,...] = (1 - step/(num_slices-layer))*outward_inward_strain[layer,...] + (step/(num_slices-layer))*outward_inward_strain[-1,...]
-        forward_field[layer+step,...] = (1 - step/(num_slices-layer))*forward_field[layer,...] + (step/(num_slices-layer))*forward_field[-1,...]
-        backward_field[layer+step,...] = (1 - step/(num_slices-layer))*backward_field[layer,...] + (step/(num_slices-layer))*backward_field[-1,...]
+        # interpolate between layers
+        for step in range(1,num_slices-layer,1):
+            outward_inward[layer+step,...] = (1 - step/(num_slices-layer))*outward_inward[layer,...] + (step/(num_slices-layer))*outward_inward[-1,...]
+            outward_inward_strain[layer+step,...] = (1 - step/(num_slices-layer))*outward_inward_strain[layer,...] + (step/(num_slices-layer))*outward_inward_strain[-1,...]
+            outward_field[layer+step] = (1 - step/(num_slices-layer))*outward_field[layer] + (step/(num_slices-layer))*outward_field[-1]
+            inward_field[layer+step] = (1 - step/(num_slices-layer))*inward_field[layer] + (step/(num_slices-layer))*inward_field[-1]
 
     # set negativ/imward displacement to 0
-    outward_inward[outward_inward < 0] = 0
-    # remove strain outliers
-    strain_threshold = np.quantile(outward_inward_strain, 0.95)
-    outward_inward_strain[outward_inward_strain > strain_threshold] = strain_threshold
+    #outward_inward[outward_inward < 0] = 0
 
-    #outward_inward_strain[...,0] = ndimage.gaussian_filter(outward_inward_strain[...,0],6)
-    #outward_inward_strain[...,1] = ndimage.gaussian_filter(outward_inward_strain[...,1],6)
-    
+    # remove strain outliers
+    if dim==2:
+        strain_threshold = np.quantile(outward_inward_strain, 0.95)
+        outward_inward_strain[outward_inward_strain > strain_threshold] = strain_threshold
+
+    # smooth strain field
+    elif dim==3:
+        outward_inward_strain[...,0] = ndimage.gaussian_filter(outward_inward_strain[...,0],6)
+        outward_inward_strain[...,1] = ndimage.gaussian_filter(outward_inward_strain[...,1],6)
+
     # save to a given location
-    if path_dict:
+    if path_dict is not None:
         imwrite(path_dict['Rest']['displacement_array'],outward_inward[...,0],compression='zlib')
         imwrite(path_dict['Valsalva']['displacement_array'],outward_inward[...,1],compression='zlib')
         imwrite(path_dict['Rest']['strain_array'],outward_inward_strain[...,0],compression='zlib')
         imwrite(path_dict['Valsalva']['strain_array'],outward_inward_strain[...,1],compression='zlib')
-    else:
-        return forward_field, backward_field
+
+    # results
+    results['outward_field'] = outward_field
+    results['inward_field'] = inward_field
+    results['outward_displacement'] = outward_inward[...,0]
+    results['inward_displacement'] = outward_inward[...,1]
+    results['outward_strain'] = outward_inward_strain[...,0]
+    results['inward_strain'] = outward_inward_strain[...,1]
+    return results
+
 
 def get_displacement_dims(path_dict,threshold):
     '''
