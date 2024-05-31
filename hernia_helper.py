@@ -406,114 +406,6 @@ def load_mask_data(dcm_dir):
     return volume, header
 
 
-def reduce_blocksize(data):
-    zsh, ysh, xsh = data.shape
-    argmin_z, argmax_z, argmin_y, argmax_y, argmin_x, argmax_x = zsh, 0, ysh, 0, xsh, 0
-    for k in range(zsh):
-        y, x = np.nonzero(data[k])
-        if x.any():
-            argmin_x = min(argmin_x, np.amin(x))
-            argmax_x = max(argmax_x, np.amax(x))
-            argmin_y = min(argmin_y, np.amin(y))
-            argmax_y = max(argmax_y, np.amax(y))
-            argmin_z = min(argmin_z, k)
-            argmax_z = max(argmax_z, k)
-    argmin_x = max(argmin_x - 1, 0)
-    argmax_x = min(argmax_x + 1, xsh-1) + 1
-    argmin_y = max(argmin_y - 1, 0)
-    argmax_y = min(argmax_y + 1, ysh-1) + 1
-    argmin_z = max(argmin_z - 1, 0)
-    argmax_z = min(argmax_z + 1, zsh-1) + 1
-    data = np.copy(data[argmin_z:argmax_z, argmin_y:argmax_y, argmin_x:argmax_x])
-    return data, argmin_z, argmax_z, argmin_y, argmax_y, argmin_x, argmax_x
-
-
-def clean(image, threshold=0.9):
-    image_i = np.copy(image)
-    allLabels = np.unique(image_i)
-    mask = np.empty_like(image_i)
-    s = [[[0,0,0], [0,1,0], [0,0,0]], [[0,1,0], [1,1,1], [0,1,0]], [[0,0,0], [0,1,0], [0,0,0]]]
-    for k in allLabels[1:]:
-
-        # get mask
-        label = image_i==k
-        mask.fill(0)
-        mask[label] = 1
-
-        # reduce size
-        reduced, argmin_z, argmax_z, argmin_y, argmax_y, argmin_x, argmax_x = reduce_blocksize(mask)
-
-        # get clusters
-        labeled_array, _ = ndimage.label(reduced, structure=s)
-        size = np.bincount(labeled_array.ravel())
-
-        # get reference size
-        biggest_label = np.argmax(size[1:]) + 1
-        label_size = size[biggest_label]
-
-        # preserve large segments
-        reduced.fill(0)
-        for l, m in enumerate(size[1:]):
-            if m > threshold * label_size:
-                reduced[labeled_array==l+1] = 1
-
-        # get original size
-        mask.fill(0)
-        mask[argmin_z:argmax_z, argmin_y:argmax_y, argmin_x:argmax_x] = reduced
-
-        # write cleaned label to array
-        image_i[label] = 0
-        image_i[mask==1] = k
-
-    return image_i
-
-
-def fill(image, threshold=0.9):
-    image_i = np.copy(image)
-    allLabels = np.unique(image_i)
-    mask = np.empty_like(image_i)
-    s = [[[0,0,0], [0,1,0], [0,0,0]], [[0,1,0], [1,1,1], [0,1,0]], [[0,0,0], [0,1,0], [0,0,0]]]
-    for k in allLabels[1:]:
-
-        # get mask
-        label = image_i==k
-        mask.fill(0)
-        mask[label] = 1
-
-        # reduce size
-        reduced, argmin_z, argmax_z, argmin_y, argmax_y, argmin_x, argmax_x = reduce_blocksize(mask)
-
-        # reference size
-        label_size = np.sum(reduced)
-
-        # invert
-        reduced = 1 - reduced # background and holes of object
-
-        # get clusters
-        labeled_array, _ = ndimage.label(reduced, structure=s)
-        size = np.bincount(labeled_array.ravel())
-        biggest_label = np.argmax(size)
-
-        # get label with all holes filled
-        reduced.fill(1)
-        reduced[labeled_array==biggest_label] = 0
-
-        # preserve large holes
-        for l, m in enumerate(size[1:]):
-            if m > threshold * label_size and l+1 != biggest_label:
-                reduced[labeled_array==l+1] = 0
-
-        # get original size
-        mask.fill(0)
-        mask[argmin_z:argmax_z, argmin_y:argmax_y, argmin_x:argmax_x] = reduced
-
-        # write filled label to array
-        image_i[label] = 0
-        image_i[mask==1] = k
-
-    return image_i
-
-
 def create_mask(observation_dict=None, data=None, threshold=-224):
     '''
     Creates a mask of the abdominal region given by the dicom data.
@@ -538,6 +430,7 @@ def create_mask(observation_dict=None, data=None, threshold=-224):
     data = np.pad(data,((1,1),(256,256),(256,256)),constant_values=-1024)
 
     # Image -> Adjust -> Threshold (-224 HU, -100==fat, 0==water, -1024==air)
+    from biomedisa.features.remove_outlier import fill, clean
     body_outline = np.zeros_like(data)
     body_outline[data>threshold] = 1
     body_outline[0] = 1
