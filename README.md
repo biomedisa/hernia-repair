@@ -16,14 +16,13 @@ Download and install the correct Nvidia driver [NVIDIA](https://www.nvidia.com/D
 Choose *Windows Driver Type:* Standard  
 Choose *Recommended/Beta:* Studio Driver
 
-### __Clone Biomedisa git repos__
+### __Clone HEDI repository__
 The repository should be in the directory: *%Userprofile%\git*
 
 Open the cmd consol and enter:
 ```
 mkdir git
 cd git
-git clone https://github.com/biomedisa/biomedisa.git
 git clone https://github.com/biomedisa/hernia-repair.git 
 ``` 
 
@@ -33,7 +32,7 @@ automatically with the included batch files.
 Experienced users can also enter the commands manually
 as explained in the next section.
 
-Within the cloned repository lies the batchfile `Setup.bat`
+Within the cloned repository lies the batchfile `setup.bat`
 Running this file will automaticly create an enviornment 
 with all dependencies needed to run HEDI.
 
