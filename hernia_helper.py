@@ -573,34 +573,6 @@ def create_strain(Ux,Uy,Uz):
     return strain
 
 
-def create_strain_green_lagrange(Ux,Uy,Uz):
-    # displacement gradient tensor
-    Uxz, Uxy, Uxx = np.gradient(Ux)
-    Uyz, Uyy, Uyx = np.gradient(Uy)
-    Uzz, Uzy, Uzx = np.gradient(Uz)
-    # green-lagrange strain tensor
-    E = np.zeros(Ux.shape + (3,3))
-    E[:,:,:,0,0] = Uxx**2 + 2*Uxx + Uyx**2 + Uzx**2
-    E[:,:,:,0,1] = Uxx*Uxy + Uxy + Uyy*Uyx + Uyx + Uzy*Uyx
-    E[:,:,:,0,2] = Uxx*Uxz + Uxz + Uyx*Uyz + Uzx*Uzz + Uzx
-    E[:,:,:,1,0] = Uxx*Uxy + Uxy + Uyx*Uyy + Uyx + Uzx*Uzy
-    E[:,:,:,1,1] = Uxy**2 + Uyy**2 + 2*Uyy + Uyz**2
-    E[:,:,:,1,2] = Uxz*Uxy + Uyz*Uyy + Uyz + Uzz*Uzy + Uzy
-    E[:,:,:,2,0] = Uxx*Uxz + Uxz + Uyx*Uyz + Uzx*Uzz + Uzx
-    E[:,:,:,2,1] = Uxy*Uxz + Uyy*Uyz + Uyz + Uzy*Uzz + Uzy
-    E[:,:,:,2,2] = Uxz**2 + Uyz**2 + Uzz**2 + 2*Uzz
-    E *= 0.5
-    # calculate maximum principal strain
-    zsh, ysh, xsh = Ux.shape
-    strain = np.zeros_like(Ux)
-    for k in range(zsh):
-        for l in range(ysh):
-            for m in range(xsh):
-                eigenvalues, _ = np.linalg.eig(E[k,l,m])
-                strain[k,l,m] = np.max(eigenvalues)
-    return strain
-
-
 def get_strain_tensor(Ux,Uy):
     # initialize output matrix
     E = np.zeros([Ux.shape[0],Ux.shape[1],2,2])
@@ -612,7 +584,6 @@ def get_strain_tensor(Ux,Uy):
     E[:,:,0,1] = Uxy + Uyx - Uxx*Uxy - Uyx*Uyy
     E[:,:,1,0] = Uxy + Uyx - Uxy*Uxx - Uyy*Uyx
     E[:,:,1,1] = 2*Uyy - (Uxy**2 + Uyy**2)
-
     E = 0.5*E
     return E
 
@@ -876,18 +847,10 @@ def create_displacement_array(path_dict=None, dim=3, rest=None, valsalva=None,
             outward_field[layer+step] = (1 - step/(num_slices-layer))*outward_field[layer] + (step/(num_slices-layer))*outward_field[-1]
             inward_field[layer+step] = (1 - step/(num_slices-layer))*inward_field[layer] + (step/(num_slices-layer))*inward_field[-1]
 
-    # set negativ/imward displacement to 0
-    #outward_inward[outward_inward < 0] = 0
-
     # remove strain outliers
     if dim==2:
         strain_threshold = np.quantile(outward_inward_strain, 0.95)
         outward_inward_strain[outward_inward_strain > strain_threshold] = strain_threshold
-
-    # smooth strain field
-    elif dim==3:
-        outward_inward_strain[...,0] = ndimage.gaussian_filter(outward_inward_strain[...,0],6)
-        outward_inward_strain[...,1] = ndimage.gaussian_filter(outward_inward_strain[...,1],6)
 
     # save to a given location
     if path_dict is not None:

@@ -5,6 +5,26 @@ from tifffile import imread
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 
+def green_lagrange_strain(Ux,Uy,Uz):
+    # displacement gradient tensor
+    Uxz, Uxy, Uxx = np.gradient(Ux)
+    Uyz, Uyy, Uyx = np.gradient(Uy)
+    Uzz, Uzy, Uzx = np.gradient(Uz)
+    # green-lagrange strain tensor
+    E = np.zeros(Ux.shape + (3,3))
+    E[:,:,:,0,0] = Uxx**2 + 2*Uxx + Uyx**2 + Uzx**2
+    E[:,:,:,0,1] = Uxx*Uxy + Uxy + Uyy*Uyx + Uyx + Uzy*Uyx
+    E[:,:,:,0,2] = Uxx*Uxz + Uxz + Uyx*Uyz + Uzx*Uzz + Uzx
+    E[:,:,:,1,0] = Uxx*Uxy + Uxy + Uyx*Uyy + Uyx + Uzx*Uzy
+    E[:,:,:,1,1] = Uxy**2 + Uyy**2 + 2*Uyy + Uyz**2
+    E[:,:,:,1,2] = Uxz*Uxy + Uyz*Uyy + Uyz + Uzz*Uzy + Uzy
+    E[:,:,:,2,0] = Uxx*Uxz + Uxz + Uyx*Uyz + Uzx*Uzz + Uzx
+    E[:,:,:,2,1] = Uxy*Uxz + Uyy*Uyz + Uyz + Uzy*Uzz + Uzy
+    E[:,:,:,2,2] = Uxz**2 + Uyz**2 + Uzz**2 + 2*Uzz
+    E *= 0.5
+    return E
+
+
 def MarchingCubes(image,threshold):
     '''
     Applies the marchingCubes algorithm to the data
@@ -49,7 +69,7 @@ def MarchingCubes(image,threshold):
 
 
 def CreateVTK(observation_dict=None,mode='labels',image=None,displacement_array=None,path_to_save=None,
-    z_spacing=None, y_spacing=None, x_spacing=None):
+    z_spacing=None, y_spacing=None, x_spacing=None, results=None, observation='Rest', dim=3, vonMises=False):
     '''
     Creates a VTK file from a given tif multilayer image,
     useing the marchingcubes Algorithm.
@@ -109,24 +129,28 @@ def CreateVTK(observation_dict=None,mode='labels',image=None,displacement_array=
         image = np.copy(image[:displacement_array.shape[0]])
 
     # get image dims
-    zsh,ysh,xsh=image.shape
+    zsh,ysh,xsh = image.shape
 
     # flip image
     image = np.flip(image, axis=(0))
     if mode in ['displacement','strain']:
         displacement_array = np.flip(displacement_array, axis=(0))
+    if mode=='strain' and dim==3 and vonMises==False:
+        outward_field = np.flip(results['outward_field'], axis=(0))
+        inward_field = np.flip(results['inward_field'], axis=(0))
     # numpy to vtk
     sc = numpy_to_vtk(num_array=image.ravel(), deep=True, array_type=vtk.VTK_UNSIGNED_CHAR)
     imageData = vtk.vtkImageData()
     imageData.SetOrigin(0, 0, 0)
     imageData.SetSpacing(x_spacing, y_spacing, z_spacing)
-    #imageData.SetDimensions(zsh, ysh, xsh)
+    #imageData.SetDimensions(xsh, ysh, zsh)
     imageData.SetExtent(0,xsh-1,0,ysh-1,0,zsh-1)
     imageData.GetPointData().SetScalars(sc)
 
     # get poly data
     poly = MarchingCubes(imageData,threshold)
 
+    # plot data on surface
     if mode in ['displacement','strain']:
 
         # get points
@@ -150,18 +174,37 @@ def CreateVTK(observation_dict=None,mode='labels',image=None,displacement_array=
             # get maximum displacement
             max_displacement = int(np.amax(displacement_array))
             surface = np.zeros(max(16,max_displacement+1))
+        elif mode=='strain' and dim==3 and vonMises==False:
+            strain_tensor = green_lagrange_strain(outward_field[...,2],outward_field[...,1],-outward_field[...,0])
         for k in range(nCells):
+            # calculate centroid of cell
             centroid = np.zeros(3)
             for l in range(1,4):
                 id = numpy_cells[k,l]
                 tmp[k,l-1] = numpy_points[id]   # x,y,z
                 centroid += numpy_points[id]
             centroid /= 3
+            # rescale from physical/real position to voxel indices
             centroid[0] /= x_spacing
             centroid[1] /= y_spacing
             centroid[2] /= z_spacing
+            # find corresponding location of forward strain
+            if mode=='strain' and dim==3 and vonMises==False and observation=='Valsalva':
+                tmp_centroid = np.round(centroid).astype(int)
+                z_index = max(min(tmp_centroid[2],zsh-1),0)
+                y_index = max(min(tmp_centroid[1],ysh-1),0)
+                x_index = max(min(tmp_centroid[0],xsh-1),0)
+                centroid[2] = centroid[2] - inward_field[z_index,y_index,x_index,0] / z_spacing
+                centroid[1] = centroid[1] + inward_field[z_index,y_index,x_index,1] / y_spacing
+                centroid[0] = centroid[0] + inward_field[z_index,y_index,x_index,2] / x_spacing
             centroid = np.round(centroid).astype(int)
-            trans_val = displacement_array[min(centroid[2],zsh-1),centroid[1],centroid[0]]
+            z_index = max(min(centroid[2],zsh-1),0)
+            y_index = max(min(centroid[1],ysh-1),0)
+            x_index = max(min(centroid[0],xsh-1),0)
+            if mode=='strain' and dim==3 and vonMises==False:
+                trans_val = np.max(np.linalg.eig(strain_tensor[z_index,y_index,x_index])[0]).real
+            else:
+                trans_val = displacement_array[z_index,y_index,x_index]
             array.SetValue(k, trans_val)
             if mode == 'displacement':
                 # compute the surface areas depending on the magnitute

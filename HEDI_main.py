@@ -204,7 +204,7 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
     
     logger.info(f'{" Creating arrays of displacement and strain ":=^{consol_width}}\n')
 
-    hernia_helper.create_displacement_array(observation_path,dim=dimensions)
+    results = hernia_helper.create_displacement_array(observation_path,dim=dimensions)
 
     logger.info(f'{f" Time for registration: {datetime.now() - step_time} ":_^{consol_width}}\n\n')
     step_time = datetime.now()
@@ -233,7 +233,7 @@ def hernia_analysis(main_folder, path_to_rest=None, path_to_valsalva=None, mode=
         step_time = datetime.now()
 
             # mesh of the strain 
-        create_mesh.CreateVTK(observation_path[observation], 'strain')
+        create_mesh.CreateVTK(observation_path[observation], 'strain', results=results, observation=observation, dim=dimensions)
 
         logger.info(f'{f" Time for {observation} strain mesh: {datetime.now() - step_time} ":_^{consol_width}}\n\n')
         step_time = datetime.now()
