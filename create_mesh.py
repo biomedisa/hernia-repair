@@ -3,9 +3,14 @@ import numpy as np
 import vtk
 from tifffile import imread
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
+from scipy import ndimage
 
 
 def green_lagrange_strain(Ux,Uy,Uz):
+    # smooth displacement field
+    Ux = ndimage.gaussian_filter(Ux,sigma=2)
+    Uy = ndimage.gaussian_filter(Uy,sigma=2)
+    Uz = ndimage.gaussian_filter(Uz,sigma=2)
     # displacement gradient tensor
     Uxz, Uxy, Uxx = np.gradient(Ux)
     Uyz, Uyy, Uyx = np.gradient(Uy)
