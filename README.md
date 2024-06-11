@@ -1,4 +1,4 @@
-<img src="res/hedi_logo.svg" alt="hedi" width="223" height="236">
+<img src="res/hedi_logo.svg" alt="hedi" width="223" height="236">  
 -----------
 - [Install Dependencies](#install-dependencies)
 - [Setup HEDI](#setup-hedi)
