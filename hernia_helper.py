@@ -5,7 +5,6 @@ import os
 import shutil
 import ssl
 import time
-import tkinter as tk
 import urllib.request
 from datetime import datetime
 from tkinter.filedialog import askdirectory
@@ -124,10 +123,7 @@ def load_directorys(main_folder, path_to_dir=None):
 
     # ask the user for the Path to the Data via Tkinterface
     if not path_to_dir:
-        root = tk.Tk()
-        root.withdraw()
         path_to_dir = askdirectory(title='Select Dataset')
-        root.destroy()
 
     # get the raw dcm files
     files = glob.glob(path_to_dir + '/**/*', recursive=True)
@@ -142,10 +138,7 @@ def load_directorys(main_folder, path_to_dir=None):
             else:
                 day_string = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 PatientName = f'Patient_{day_string}'
-                root = tk.Tk()
-                root.withdraw()
                 PatientName = askstring(title='Anonymous dataset', prompt='Enter Patient Name:', initialvalue=PatientName)
-                root.destroy()
             PatientName = PatientName.replace('Ü','Ue')
             PatientName = PatientName.replace('Ä','Ae')
             PatientName = PatientName.replace('Ö','Oe')
@@ -230,10 +223,7 @@ def create_patient_directory_auto(dcm_dir,main_folder):
     else:
         day_string = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         PatientName = f'Patient_{day_string}'
-        root = tk.Tk()
-        root.withdraw()
         PatientName = askstring(title='Anonymous dataset', prompt='Enter Patient Name:', initialvalue=PatientName)
-        root.destroy()
     PatientName = PatientName.replace('Ü','Ue')
     PatientName = PatientName.replace('Ä','Ae')
     PatientName = PatientName.replace('Ö','Oe') 

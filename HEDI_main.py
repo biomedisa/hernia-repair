@@ -439,12 +439,11 @@ if __name__ == "__main__":
                         help='Spcifies amount of data saved, 0=none, 1=results, 2=all')
     parser.add_argument('-f','--force', action='store_true', default=False,
                         help='Force registration. Ignore differences in dimensions and voxel spacing')
-    parser.add_argument('-u','--update', action='store_true', default=False,
-                        help='Update HEDI and Biomedisa backbone')
     args = parser.parse_args()
 
     # define Logger for debugging
     args.logger = config_logger()
+    tk.Tk().withdraw()
 
     # console
     print(f'{" H E D I ":=^{consol_width}}')
@@ -462,10 +461,8 @@ if __name__ == "__main__":
         update_neural_network()
 
     # update HEDI and Biomedisa
-    if not (args.rest and args.valsalva):
-        update = mb.askquestion(title='Update', message='Update HEDI?')
-        args.update = True if update=='yes' else False
-    if args.update:
+    update = mb.askquestion(title='Update', message='Update HEDI?')
+    if update=='yes':
         # update neural network
         args.logger.info(f'{" Updating neural network ":-^{consol_width}}')
         update_neural_network()
@@ -482,18 +479,14 @@ if __name__ == "__main__":
             if not os.path.exists(main_folder):
                 os.mkdir(main_folder)
             first_level = hernia_helper.load_directorys(main_folder=main_folder, path_to_dir=args.dicom_data)
-            root = tk.Tk()
-            root.withdraw()
             args.rest = askdirectory(initialdir=first_level, title=f'Select Rest Directory')
             args.valsalva = askdirectory(initialdir=first_level, title=f'Select Valsalva Directory')
             args.threshold = askinteger(title='Instability threshold', prompt='Threshold:', initialvalue=15)
-            root.destroy()
 
         # get time to measure execution time
         total_start_time = datetime.now()
 
         # hernia analysis
-        del args.update
         del args.dicom_data
         hernia_analysis(**vars(args))
         args.logger.info(f'Execution time: {timedelta(total_start_time)}\n\n')
