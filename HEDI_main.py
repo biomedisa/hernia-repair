@@ -87,7 +87,7 @@ def hernia_analysis(rest=None, valsalva=None, threshold=15,
     force: boolean
         Force registration. Ignore differences in dimensions and voxel spacing
     save_level: int
-        Spcifies amount of data saved, 0=none, 1=results, 2=all
+        Spcifies amount of data saved, 1=results, 2=all
     displacement_field: string
         Location of displacement field. Skips registration if specified
     scaling: int
@@ -404,11 +404,7 @@ def hernia_analysis(rest=None, valsalva=None, threshold=15,
     plt.imsave(path_to_result, combined_img, dpi=300)
 
     # show final result
-    if save_level==0:
-        shutil.move(path_to_result, f'{first_level}_{day_string}.png')
-        path_to_result = f'{first_level}_{day_string}.png'
-        shutil.rmtree(first_level)
-    elif save_level==1:
+    if save_level==1:
         shutil.rmtree(path_to_archive)
     open_file(path_to_result)
 
@@ -436,7 +432,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--scaling', type=int, default=3,
                         help='Scaling factor to reduce calculation time during registration')
     parser.add_argument('-sl', '--save_level', type=int, default=1,
-                        help='Spcifies amount of data saved, 0=none, 1=results, 2=all')
+                        help='Spcifies amount of data saved, 1=results, 2=all')
     parser.add_argument('-f','--force', action='store_true', default=False,
                         help='Force registration. Ignore differences in dimensions and voxel spacing')
     args = parser.parse_args()
