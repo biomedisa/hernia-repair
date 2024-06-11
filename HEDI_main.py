@@ -10,6 +10,7 @@ import logging
 import shutil
 from datetime import datetime
 from subprocess import DEVNULL, PIPE, Popen
+import tkinter as tk
 from tkinter.filedialog import askdirectory
 from tkinter.simpledialog import askinteger
 from tkinter import messagebox as mb
@@ -481,9 +482,12 @@ if __name__ == "__main__":
             if not os.path.exists(main_folder):
                 os.mkdir(main_folder)
             first_level = hernia_helper.load_directorys(main_folder=main_folder, path_to_dir=args.dicom_data)
+            root = tk.Tk()
+            root.withdraw()
             args.rest = askdirectory(initialdir=first_level, title=f'Select Rest Directory')
             args.valsalva = askdirectory(initialdir=first_level, title=f'Select Valsalva Directory')
             args.threshold = askinteger(title='Instability threshold', prompt='Threshold:', initialvalue=15)
+            root.destroy()
 
         # get time to measure execution time
         total_start_time = datetime.now()
