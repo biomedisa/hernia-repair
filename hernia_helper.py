@@ -32,7 +32,7 @@ except:
 # Functions for startup, dataloading and assertion_check
 ###############################################################################
 
-def ask_continue(mode):
+def ask_continue(force):
     '''
     Asks the user if he wishes to continue the execution in case of
     problems with the data.
@@ -47,7 +47,7 @@ def ask_continue(mode):
     True if the user wants to continue
     '''
 
-    if mode == "Multi":
+    if force:
         return True
 
     print(f'{"Do You want to continue [y] or close the application [n]?":^120}')
@@ -60,7 +60,7 @@ def ask_continue(mode):
         exit()
     else: 
         print(f'{"Please enter only [y] or [n]!":^120}')
-        ask_continue(mode)
+        ask_continue(force)
 
 
 def update_neural_nets():
@@ -104,7 +104,7 @@ def update_neural_nets():
                 shutil.copyfileobj(response,out_file)
 
 
-def load_directorys(main_folder):
+def load_directorys(main_folder, path_to_dir=None):
     '''
     Asks the user to select a Dicom Dataset and builds the required
     directory structur by extracting the information from the Dataset.
@@ -113,6 +113,8 @@ def load_directorys(main_folder):
     ---------
     main_folder: string
         Pathstring to the standard main directory
+    path_to_dir: string
+        Location of dicom data
 
     Returns
     -------
@@ -121,8 +123,9 @@ def load_directorys(main_folder):
     '''
 
     # ask the user for the Path to the Data via Tkinterface
-    tk.Tk().withdraw()
-    path_to_dir = askdirectory(title='Select Dataset')
+    if not path_to_dir:
+        tk.Tk().withdraw()
+        path_to_dir = askdirectory(title='Select Dataset')
 
     # get the raw dcm files
     files = glob.glob(path_to_dir + '/**/*', recursive=True)
@@ -197,8 +200,7 @@ def load_directorys(main_folder):
 
 def create_patient_directory_auto(dcm_dir,main_folder):
     '''
-    Creates the main directory of a single Patient when programm is run in
-    multi/auto mode.
+    Creates the main directory of a single Patient.
 
     Parameters
     ----------
@@ -299,7 +301,7 @@ def get_pixel_spacing(dcm_dir):
         z_res = ds.SliceThickness
     y_res, x_res = ds.PixelSpacing
 
-    return str(z_res), str(y_res), str(x_res)
+    return float(z_res), float(y_res), float(x_res)
 
 
 def get_centroid(path_to_mask):
@@ -327,10 +329,10 @@ def get_centroid(path_to_mask):
     return str(z), str(y), str(x)
 
 
-def compare_slice_amount(rest_dcm_dir,valsalva_dcm_dir,mode):
+def compare_slice_amount(rest_dcm_dir,valsalva_dcm_dir,force):
     '''
     Compare the amount of slices between the rest and valsalva Dataset.
-    Prompts the user in case of a missmatch, when mode is Single.
+    Prompts the user in case of a missmatch.
 
     Parameters
     ----------
@@ -338,8 +340,6 @@ def compare_slice_amount(rest_dcm_dir,valsalva_dcm_dir,mode):
         Path to the directory containing the .dcm data at rest
     valsalva_dcm_dir: string
         Path to the directory containing the .dcm data during valsalva
-    mode: string
-        The operation mode of HEDI one of 'Single' or 'Multi'
 
     Raises
     ------
@@ -352,11 +352,11 @@ def compare_slice_amount(rest_dcm_dir,valsalva_dcm_dir,mode):
     if rest_slice_amount > valsalva_slice_amount:
         print(f'There are {rest_slice_amount - valsalva_slice_amount} more rest than valsalva({valsalva_slice_amount}) scans! \n This will impact the result. \n\n')
         logging.warning(f'There are {rest_slice_amount - valsalva_slice_amount} more rest than valsalva({valsalva_slice_amount}) scans! \n This will impact the result. \n\n')
-        return ask_continue(mode)
+        return ask_continue(force)
     elif rest_slice_amount < valsalva_slice_amount:
         print(f'There are {valsalva_slice_amount - rest_slice_amount} more valsalva than rest({rest_slice_amount}) scans! \n This will impact the result. \n\n')
         logging.warning(f'There are {valsalva_slice_amount - rest_slice_amount} more valsalva than rest({rest_slice_amount}) scans! \n\n')
-        return ask_continue(mode)
+        return ask_continue(force)
 
 
 ###############################################################################
@@ -406,25 +406,16 @@ def load_mask_data(dcm_dir):
     return volume, header
 
 
-def create_mask(observation_dict=None, data=None, threshold=-224):
+def create_mask(data=None, header=None, threshold=-224):
     '''
     Creates a mask of the abdominal region given by the dicom data.
     Pixels inside are labeled 1. Pixels outside 0.
-
-    Parameters
-    ----------
-    observation_dict: dict of string
-        A patients path dictionary for either the Rest or Valsalva data
-        
     '''
 
-    #load the dicom data
-    if data is None:
-        data, header = load_mask_data(observation_dict['dcm_dir'])
-        #adjust the data to the hounsfield range
-        rescale_intercept = header[0].RescaleIntercept
-        rescale_slope = header[0].RescaleSlope
-        data = rescale_slope*data + rescale_intercept
+    #adjust the data to the hounsfield range
+    rescale_intercept = header[0].RescaleIntercept
+    rescale_slope = header[0].RescaleSlope
+    data = rescale_slope*data + rescale_intercept
 
     #pad data with a blackpixels
     data = np.pad(data,((1,1),(256,256),(256,256)),constant_values=-1024)
@@ -443,9 +434,6 @@ def create_mask(observation_dict=None, data=None, threshold=-224):
     #remove the padded area
     mask = body_outline[1:-1,256:-256,256:-256]
 
-    #save the mask
-    if observation_dict is not None:
-        imwrite(observation_dict['mask'],mask,compression='zlib')
     return mask
 
 ###############################################################################
@@ -594,8 +582,9 @@ def create_displacement_layer(displacement_field, mode, y_shape=512, x_shape=512
     return absolute_displacement
 
 
-def create_displacement_array(path_dict=None, dim=3, rest=None, valsalva=None,
-        z_spacing=None, y_spacing=None, x_spacing=None, scaling=3):
+def create_displacement_array(rest=None, valsalva=None,
+        z_spacing=None, y_spacing=None, x_spacing=None,
+        scaling=3):
     '''
     Create the 3-D displacement and strain arrays.
     Saves them to the given paths.
@@ -606,170 +595,55 @@ def create_displacement_array(path_dict=None, dim=3, rest=None, valsalva=None,
         A patients path dictionary
     '''
 
-    # initialize results dictionary
-    results = {}
-
-    # load both masks
-    if rest is None:
-        rest = imread(path_dict['Rest']['mask'])
-    if valsalva is None:
-        valsalva = imread(path_dict['Valsalva']['mask'])
-
     # get shapes of the masks
     num_slices, y_shape, x_shape = rest.shape
     num_slices = min(num_slices, valsalva.shape[0])
 
-    # get voxel size
-    if z_spacing is None:
-        z_spacing = float(path_dict['Rest']['z_spacing'])
-    if y_spacing is None:
-        y_spacing = float(path_dict['Rest']['y_spacing'])
-    if x_spacing is None:
-        x_spacing = float(path_dict['Rest']['x_spacing'])
+    # resize data
+    from biomedisa.features.biomedisa_helper import img_resize
+    zsh = int(num_slices * z_spacing / scaling)
+    ysh = int(y_shape * y_spacing / scaling)
+    xsh = int(x_shape * x_spacing / scaling)
+    rest = img_resize(rest, zsh, ysh, xsh, labels=True)
+    valsalva = img_resize(valsalva, zsh, ysh, xsh, labels=True)
 
-    # registration
-    if dim==3:
-        # resize data
-        from biomedisa.features.biomedisa_helper import img_resize
-        zsh = int(num_slices * z_spacing / scaling)
-        ysh = int(y_shape * y_spacing / scaling)
-        xsh = int(x_shape * x_spacing / scaling)
-        rest = img_resize(rest, zsh, ysh, xsh, labels=True)
-        valsalva = img_resize(valsalva, zsh, ysh, xsh, labels=True)
+    # add buffer
+    rest = np.pad(rest,((10,10),(10,10),(10,10)),constant_values=0)
+    valsalva = np.pad(valsalva,((10,10),(10,10),(10,10)),constant_values=0)
 
-        # add buffer
-        rest = np.pad(rest,((10,10),(10,10),(10,10)),constant_values=0)
-        valsalva = np.pad(valsalva,((10,10),(10,10),(10,10)),constant_values=0)
+    # start registration
+    outward_field, inward_field = symmetric_registration(valsalva, rest)
 
-        # start registration
-        outward_field, inward_field = symmetric_registration(valsalva,rest,dim=3)
+    # remove buffer
+    outward_field = np.copy(outward_field[10:-10,10:-10,10:-10])
+    inward_field = np.copy(inward_field[10:-10,10:-10,10:-10])
 
-        # remove buffer
-        outward_field = np.copy(outward_field[10:-10,10:-10,10:-10])
-        inward_field = np.copy(inward_field[10:-10,10:-10,10:-10])
+    # resize to original size
+    outward_field = img_resize(outward_field, num_slices, y_shape, x_shape)
+    inward_field = img_resize(inward_field, num_slices, y_shape, x_shape)
 
-        # resize to original size
-        outward_field = img_resize(outward_field, num_slices, y_shape, x_shape)
-        inward_field = img_resize(inward_field, num_slices, y_shape, x_shape)
+    # calculate absolute displacement
+    z_fac = num_slices / zsh
+    y_fac = y_shape / ysh
+    x_fac = x_shape / xsh
+    outward_field[...,0] *= z_fac * z_spacing
+    outward_field[...,1] *= y_fac * y_spacing
+    outward_field[...,2] *= x_fac * x_spacing
+    inward_field[...,0] *= z_fac * z_spacing
+    inward_field[...,1] *= y_fac * y_spacing
+    inward_field[...,2] *= x_fac * x_spacing
 
-        # calculate absolute displacement
-        outward_inward = np.zeros((num_slices,y_shape,x_shape,2),dtype=float)
-        z_fac = num_slices / zsh
-        y_fac = y_shape / ysh
-        x_fac = x_shape / xsh
-        outward_field[...,0] *= z_fac * z_spacing
-        outward_field[...,1] *= y_fac * y_spacing
-        outward_field[...,2] *= x_fac * x_spacing
-        inward_field[...,0] *= z_fac * z_spacing
-        inward_field[...,1] *= y_fac * y_spacing
-        inward_field[...,2] *= x_fac * x_spacing
-        outward_inward[...,0] = np.sqrt(outward_field[...,2]**2 + outward_field[...,1]**2 + outward_field[...,0]**2)
-        outward_inward[...,1] = np.sqrt(inward_field[...,2]**2 + inward_field[...,1]**2 + inward_field[...,0]**2)
-
-        # calculate strain
-        outward_inward_strain = np.zeros((num_slices,y_shape,x_shape,2),dtype=float)
-        outward_inward_strain[...,0] = create_strain(outward_field[...,2],outward_field[...,1],outward_field[...,0])
-        outward_inward_strain[...,1] = create_strain(inward_field[...,2],inward_field[...,1],inward_field[...,0])
-
-    elif dim==2:
-        # initialize the arrays
-        outward_field = np.zeros((num_slices,y_shape,x_shape,2),dtype=float)
-        inward_field = np.zeros((num_slices,y_shape,x_shape,2),dtype=float)
-        outward_inward = np.zeros((num_slices,y_shape,x_shape,2),dtype=float)
-        outward_inward_strain = np.zeros((num_slices,y_shape,x_shape,2),dtype=float)
-
-        # initialize the step size as 1cm per evaluation
-        step_size = int(10 // z_spacing)
-
-        # loop over one layer every cm
-        for layer in tqdm(range(0,num_slices,step_size)):
-            if np.any(valsalva[layer]) and np.any(rest[layer]):
-                outward, inward = symmetric_registration(valsalva[layer],rest[layer],dim=2)
-                outward[...,0] *= y_spacing
-                outward[...,1] *= x_spacing
-                inward[...,0] *= y_spacing
-                inward[...,1] *= x_spacing
-
-                # displacement field
-                outward_field[layer] = outward
-                inward_field[layer] = inward
-
-                # get the centroid of the mask
-                rest_centroid = ndimage.center_of_mass(rest[layer])
-                valsalva_centroid = ndimage.center_of_mass(valsalva[layer])
-
-                # create the displacement and strain values for this layer
-                outward_inward[layer,:,:,0] = create_displacement_layer(outward,'outward',y_shape,x_shape,rest_centroid)
-                outward_inward[layer,:,:,1] = create_displacement_layer(inward,'inward',y_shape,x_shape,valsalva_centroid)
-                outward_inward_strain[layer,:,:,0] = create_strain_layer(outward[:,:,1],outward[:,:,0])
-                outward_inward_strain[layer,:,:,1] = create_strain_layer(inward[:,:,1],inward[:,:,0])
-
-            # interpolate between layers
-            if layer>=step_size:
-                for step in range(1, step_size, 1):
-                    outward_inward[layer-step_size + step,...] = (1 - step/step_size)* outward_inward[layer-step_size,...] + (step/step_size)* outward_inward[layer,...]
-                    outward_inward_strain[layer-step_size + step,...] = (1 - step/step_size)* outward_inward_strain[layer-step_size,...] + (step/step_size)* outward_inward_strain[layer,...]
-                    outward_field[layer-step_size + step] = (1 - step/step_size)* outward_field[layer-step_size] + (step/step_size)* outward_field[layer]
-                    inward_field[layer-step_size + step] = (1 - step/step_size)* inward_field[layer-step_size] + (step/step_size)* inward_field[layer]
-
-        if layer < num_slices-1 and np.any(valsalva[num_slices-1]) and np.any(rest[num_slices-1]):
-            outward_last, inward_last = symmetric_registration(valsalva[num_slices-1],rest[num_slices-1],dim=2)
-            outward_last[...,0] *= y_spacing
-            outward_last[...,1] *= x_spacing
-            inward_last[...,0] *= y_spacing
-            inward_last[...,1] *= x_spacing
-
-            # displacement field
-            outward_field[-1] = outward_last
-            inward_field[-1] = inward_last
-
-            # get the centroid of the mask
-            rest_centroid = ndimage.center_of_mass(rest[num_slices-1])
-            valsalva_centroid = ndimage.center_of_mass(valsalva[num_slices-1])
-
-            # create the displacement and strain values for this layer
-            outward_inward[-1,:,:,0] = create_displacement_layer(outward_last,'outward',y_shape,x_shape,rest_centroid)
-            outward_inward[-1,:,:,1] = create_displacement_layer(inward_last,'inward',y_shape,x_shape,valsalva_centroid)
-            outward_inward_strain[-1,:,:,0] = create_strain_layer(outward_last[:,:,1],outward_last[:,:,0])
-            outward_inward_strain[-1,:,:,1] = create_strain_layer(inward_last[:,:,1],inward_last[:,:,0])
-
-        # interpolate between layers
-        for step in range(1,num_slices-layer,1):
-            outward_inward[layer+step,...] = (1 - step/(num_slices-layer))*outward_inward[layer,...] + (step/(num_slices-layer))*outward_inward[-1,...]
-            outward_inward_strain[layer+step,...] = (1 - step/(num_slices-layer))*outward_inward_strain[layer,...] + (step/(num_slices-layer))*outward_inward_strain[-1,...]
-            outward_field[layer+step] = (1 - step/(num_slices-layer))*outward_field[layer] + (step/(num_slices-layer))*outward_field[-1]
-            inward_field[layer+step] = (1 - step/(num_slices-layer))*inward_field[layer] + (step/(num_slices-layer))*inward_field[-1]
-
-    # remove strain outliers
-    if dim==2:
-        strain_threshold = np.quantile(outward_inward_strain, 0.95)
-        outward_inward_strain[outward_inward_strain > strain_threshold] = strain_threshold
-
-    # save to a given location
-    if path_dict is not None:
-        imwrite(path_dict['Rest']['displacement_array'],outward_inward[...,0],compression='zlib')
-        imwrite(path_dict['Valsalva']['displacement_array'],outward_inward[...,1],compression='zlib')
-        imwrite(path_dict['Rest']['strain_array'],outward_inward_strain[...,0],compression='zlib')
-        imwrite(path_dict['Valsalva']['strain_array'],outward_inward_strain[...,1],compression='zlib')
-
-    # results
-    results['outward_field'] = outward_field
-    results['inward_field'] = inward_field
-    results['outward_displacement'] = outward_inward[...,0]
-    results['inward_displacement'] = outward_inward[...,1]
-    results['outward_strain'] = outward_inward_strain[...,0]
-    results['inward_strain'] = outward_inward_strain[...,1]
-    return results
+    return np.array([outward_field, inward_field])
 
 
-def get_displacement_dims(path_dict,threshold):
+def get_displacement_dims(observation_dict, observation_paths, threshold):
     '''
     Computes the length and width of the largest connected region
     where the displacment is larger than threshold.
 
     Parameters
     ----------
-    path_dict: dict of dict of string
+    observation_paths: dict of dict of string
         A patients path dictionary
     threshold: float
         Threshold value defining a displacment as to large
@@ -783,8 +657,8 @@ def get_displacement_dims(path_dict,threshold):
     '''
 
     # get the largest CC 
-    mask = imread(path_dict['mask'])
-    displacement = imread(path_dict['displacement_array'])
+    mask = observation_dict['mask']
+    displacement = observation_dict['displacement_array']
     mask = np.copy(mask[:displacement.shape[0]])
     displacement = displacement >= threshold
     displacement[mask==0] = 0
@@ -793,16 +667,15 @@ def get_displacement_dims(path_dict,threshold):
     if (components.max() != 0): 
         largestCC = components == np.argmax(np.bincount(components.flat)[1:])+1
         projection = largestCC.sum(axis=1)
-        length = round(np.amax(np.count_nonzero(projection, axis=0))*float(path_dict['z_spacing'])*0.1)
-        width  = round(np.amax(np.count_nonzero(projection, axis=1))*float(path_dict['x_spacing'])*0.1)
+        length = round(np.amax(np.count_nonzero(projection, axis=0))*float(observation_paths['z_spacing'])*0.1)
+        width  = round(np.amax(np.count_nonzero(projection, axis=1))*float(observation_paths['x_spacing'])*0.1)
     else:
         length = 0
         width  = 0
-        
     return length, width
 
 
-def annotate_displacement_image(observation,observation_dict,area,individual_threshold):
+def annotate_displacement_image(observation, observation_dict, observation_paths, threshold):
     '''
     Annotate the displacement image.
     Adding name and dimensions of relevant area.
@@ -811,21 +684,22 @@ def annotate_displacement_image(observation,observation_dict,area,individual_thr
     ---------
     observation: string
         One of 'Rest' or 'Valsalva'
-    observation_dict: dict of string
+    observation_paths: dict of string
         A patients path dictionary for either the Rest or Valsalva data
     area: float
         Area of the displacment larger than threshold
-    individual_threshold: int
-        The patient specific threshold for the displacement. 
+    threshold: int
+        The patient specific threshold for the displacement.
     '''
-    img = Image.open(observation_dict['displacement_png'])
-    length, width = get_displacement_dims(observation_dict,individual_threshold)
+    img = Image.open(observation_paths['displacement_png'])
+    length, width = get_displacement_dims(observation_dict, observation_paths, threshold)
     # annotate the image
+    area = observation_paths['displacement_areas'][threshold]
     draw = ImageDraw.Draw(img)
     font = ImageFont.truetype("arial.ttf",size=20)
     draw.text(xy=(img.width/2,0),
             text= (f'{observation}\n'
-                   f'Unstable Abdominal Wall (Displacement > {individual_threshold}mm)\n'
+                   f'Unstable Abdominal Wall (Displacement > {threshold}mm)\n'
                    f'Width: {width}cm  |  Length: {length}cm  |  Area: {round(area)}cm²'
                    ),
             fill=(0,0,0),
@@ -834,7 +708,7 @@ def annotate_displacement_image(observation,observation_dict,area,individual_thr
             font=font,
             )
     # save the image
-    img.save(observation_dict['displacement_png'], format='png', dpi=(300,300))
+    img.save(observation_paths['displacement_png'], format='png', dpi=(300,300))
 
 
 def annotate_strain_image(observation,observation_dict):
@@ -917,12 +791,11 @@ def plot_displacement_lower(path_dict,path_to_save):
 
 
 def plot_displacement_difference(path_dict,path_to_save):
-    font = {'family': 'serif', 'color':  'red'}
+    font = {'family': 'serif', 'color': 'red'}
 
     total_area_rest = path_dict['Rest']['displacement_areas'][0]
     total_area_valsalva = path_dict['Valsalva']['displacement_areas'][0]
     area_difference = total_area_valsalva - total_area_rest
-
 
     # plot areas of displacement with respect to their magnitute
     plt.plot(np.arange(0, len(path_dict['Rest']['displacement_areas'])),
@@ -944,9 +817,7 @@ def plot_individual_threshold(path_dict,path_to_save,threshold):
     area_rest_stable = np.copy(area_rest_unstable[0] - area_rest_unstable)
     area_valsalva_stable = np.copy(area_valsalva_unstable[0] - area_valsalva_unstable)
 
-
     min_area = 20
-
     relative_threshold = np.ones_like(area_rest_unstable)
     for k in range(len(relative_threshold)):
         if area_rest_stable[k]>0 and area_valsalva_unstable[k]>0 and area_rest_unstable[k]>min_area:
@@ -979,7 +850,7 @@ def plot_individual_threshold(path_dict,path_to_save,threshold):
 # Helper functions for the CT-Crosssection
 ###############################################################################
 
-def create_crosssection(observation_dict):
+def create_crosssection(path_to_cross, image_array, label_array, displacement_array):
     '''
     Create a png of the CT slice with the largest displacement.
 
@@ -995,19 +866,20 @@ def create_crosssection(observation_dict):
 
     '''
     # load the labels
-    label_array = imread(observation_dict['labels'])
+    #label_array = imread(observation_dict['labels'])
     # load the displacement array
-    displacement_array = imread(observation_dict['displacement_array'])
+    #displacement_array = imread(observation_dict['displacement_array'])
     # get the layer of the largest hernia sac or displacment
     if np.any(label_array==7):
         layer = np.argmax(np.sum(label_array==7,axis=(1,2)))
     else:
         layer = np.argmax(np.amax(displacement_array,axis=(1,2)))
     # get the dcm file containg that layer (they start at 1)
-    layer_path = f'{observation_dict["dcm_dir"]}/{str(layer+1).zfill(6)}.dcm'
+    #layer_path = f'{observation_dict["dcm_dir"]}/{str(layer+1).zfill(6)}.dcm'
     # convert the dcm file into an 8bit rgb array and adjust the size to fit with other data
-    ds = pydicom.filereader.dcmread(layer_path)
-    CT_img = ds.pixel_array
+    #ds = pydicom.filereader.dcmread(layer_path)
+    #CT_img = ds.pixel_array
+    CT_img = image_array[layer]
     CT_img = np.pad(CT_img, ((44,44),(5,5)), mode='constant',constant_values=0)
     # get corresponding slice of label data
     label_array = label_array[layer]
@@ -1036,7 +908,7 @@ def create_crosssection(observation_dict):
         for contour in contours:
             ax.plot(contour[:, 1], contour[:, 0], color=label_color[label_value], linewidth = .2,)
 
-    plt.savefig(observation_dict['crosssection'], dpi=resolution)
+    plt.savefig(path_to_cross, dpi=resolution)
     plt.close()
     return layer
 
@@ -1077,7 +949,7 @@ def annotate_crosssection(observation,observation_dict,layer):
 # Anotation of the label image
 ###############################################################################
 
-def get_label_sizes(path_to_tif,x_res,y_res,z_res):
+def get_label_sizes(label_array,x_res,y_res,z_res):
     '''
     Computes the length, width, area and volume of the labeled hernia.
     as well as the volume of the abdominal cavity.
@@ -1107,7 +979,6 @@ def get_label_sizes(path_to_tif,x_res,y_res,z_res):
             Volume of the abdominal cavity
     '''
     # load segmentation
-    label_array = imread(path_to_tif)
     zsh, _, _ = label_array.shape
 
     hernia_only = label_array==7
@@ -1137,11 +1008,10 @@ def get_label_sizes(path_to_tif,x_res,y_res,z_res):
         hernia_width  = 0
         hernia_length = 0
 
-
     return hernia_width, hernia_length, hernia_area, hernia_volume, abdomen_volume
 
 
-def annotate_label_image(observation,observation_dict):
+def annotate_label_image(observation, observation_dict, observation_paths):
     '''
     Annotate the image of the labels.
     Adding names and dimensions of relevant areas and volumes.
@@ -1154,11 +1024,11 @@ def annotate_label_image(observation,observation_dict):
         A patients dictionary containing the paths to either the rest or valsalva data
     '''
     hernia_width, hernia_length, hernia_area, hernia_volume, abdominal_volume = get_label_sizes(
-            observation_dict['labels'],float(observation_dict['x_spacing']),
-            float(observation_dict['y_spacing']),float(observation_dict['z_spacing']))
+            observation_dict['labels'],float(observation_paths['x_spacing']),
+            float(observation_paths['y_spacing']),float(observation_paths['z_spacing']))
 
     # write hernia dimensions on the image
-    to_annotate = Image.open(observation_dict['labels_png'])
+    to_annotate = Image.open(observation_paths['labels_png'])
     draw = ImageDraw.Draw(to_annotate)
     font = ImageFont.truetype("arial.ttf", size=18)
     draw.text(xy=(to_annotate.width/2,0),
@@ -1166,11 +1036,11 @@ def annotate_label_image(observation,observation_dict):
                    f'Hernia Width: {hernia_width}cm  |  Hernia Length: {hernia_length}cm  |  Hernia Area: {hernia_area}cm²\n'
                    f'Hernia Volume: {hernia_volume}cm³  |  Abd. Cavity Volume: {abdominal_volume}cm³\n'
                    f'Loss of Domain: {round(hernia_volume/(hernia_volume+abdominal_volume),2)} (Sabbagh)  |  {round(hernia_volume/abdominal_volume,2)} (Tanaka)'
-                   ),     
+                   ),
             fill=(0,0,0),
             anchor='ma',
             align = 'center',
             font = font,
             )
-    to_annotate.save(observation_dict['labels_png'], format='png', dpi=(300,300))
+    to_annotate.save(observation_paths['labels_png'], format='png', dpi=(300,300))
 

@@ -73,8 +73,10 @@ def MarchingCubes(image,threshold):
     return finalPoly#confilter.GetOutput()
 
 
-def CreateVTK(observation_dict=None,mode='labels',image=None,displacement_array=None,path_to_save=None,
-    z_spacing=None, y_spacing=None, x_spacing=None, results=None, observation='Rest', dim=3, vonMises=False):
+def CreateVTK(path_to_save=None, mode='labels', image=None,
+    displacement_array=None, outward_field=None, inward_field=None,
+    z_spacing=None, y_spacing=None, x_spacing=None,
+    observation='Rest'):
     '''
     Creates a VTK file from a given tif multilayer image,
     useing the marchingcubes Algorithm.
@@ -90,59 +92,22 @@ def CreateVTK(observation_dict=None,mode='labels',image=None,displacement_array=
     the torso between Rest and Valsalva or the strain of the displacment.
     '''
 
-    if mode == 'labels':
-        if image is None:
-            path_to_data = observation_dict['labels']
-        if path_to_save is None:
-            path_to_save = observation_dict['labels_vtk']
-        threshold = 7
-
-    elif mode == 'displacement':
-        if image is None:
-            path_to_data = observation_dict['mask']
-        if displacement_array is None:
-            displacement_array = imread(observation_dict['displacement_array'])
-        if path_to_save is None:
-            path_to_save = observation_dict['displacement_vtk']
-        threshold = 1
-
-    elif mode == 'strain':
-        if image is None:
-            path_to_data = observation_dict['mask']
-        if displacement_array is None:
-            displacement_array = imread(observation_dict['strain_array'])
-        if path_to_save is None:
-            path_to_save = observation_dict['strain_vtk']
-        threshold = 1
-
-    else:
-        raise ValueError('mode must be one of "labels", "displacement" or "strain".')
-
-    if x_spacing is None:
-        x_spacing  = float(observation_dict['x_spacing'])
-    if y_spacing is None:
-        y_spacing  = float(observation_dict['y_spacing'])
-    if z_spacing is None:
-        z_spacing = float(observation_dict['z_spacing'])
-
-    # load data
-    if image is None:
-        image = imread(path_to_data)
-
     # reduce image size to displacement array
-    if mode in ['displacement','strain']:
+    if mode=='displacement':
         image = np.copy(image[:displacement_array.shape[0]])
+    elif mode=='strain':
+        image = np.copy(image[:outward_field.shape[0]])
 
     # get image dims
-    zsh,ysh,xsh = image.shape
+    zsh, ysh, xsh = image.shape
 
     # flip image
     image = np.flip(image, axis=(0))
-    if mode in ['displacement','strain']:
+    if mode=='displacement':
         displacement_array = np.flip(displacement_array, axis=(0))
-    if mode=='strain' and dim==3 and vonMises==False:
-        outward_field = np.flip(results['outward_field'], axis=(0))
-        inward_field = np.flip(results['inward_field'], axis=(0))
+    elif mode=='strain':
+        outward_field = np.flip(outward_field, axis=(0))
+        inward_field = np.flip(inward_field, axis=(0))
     # numpy to vtk
     sc = numpy_to_vtk(num_array=image.ravel(), deep=True, array_type=vtk.VTK_UNSIGNED_CHAR)
     imageData = vtk.vtkImageData()
@@ -153,6 +118,7 @@ def CreateVTK(observation_dict=None,mode='labels',image=None,displacement_array=
     imageData.GetPointData().SetScalars(sc)
 
     # get poly data
+    threshold=7 if mode=='labels' else 1
     poly = MarchingCubes(imageData,threshold)
 
     # plot data on surface
@@ -179,7 +145,7 @@ def CreateVTK(observation_dict=None,mode='labels',image=None,displacement_array=
             # get maximum displacement
             max_displacement = int(np.amax(displacement_array))
             surface = np.zeros(max(16,max_displacement+1))
-        elif mode=='strain' and dim==3 and vonMises==False:
+        elif mode=='strain':
             strain_tensor = green_lagrange_strain(outward_field[...,2],outward_field[...,1],-outward_field[...,0])
         for k in range(nCells):
             # calculate centroid of cell
@@ -194,7 +160,7 @@ def CreateVTK(observation_dict=None,mode='labels',image=None,displacement_array=
             centroid[1] /= y_spacing
             centroid[2] /= z_spacing
             # find corresponding location of forward strain
-            if mode=='strain' and dim==3 and vonMises==False and observation=='Valsalva':
+            if mode=='strain' and observation=='Valsalva':
                 tmp_centroid = np.round(centroid).astype(int)
                 z_index = max(min(tmp_centroid[2],zsh-1),0)
                 y_index = max(min(tmp_centroid[1],ysh-1),0)
@@ -206,9 +172,9 @@ def CreateVTK(observation_dict=None,mode='labels',image=None,displacement_array=
             z_index = max(min(centroid[2],zsh-1),0)
             y_index = max(min(centroid[1],ysh-1),0)
             x_index = max(min(centroid[0],xsh-1),0)
-            if mode=='strain' and dim==3 and vonMises==False:
+            if mode=='strain':
                 trans_val = np.max(np.linalg.eig(strain_tensor[z_index,y_index,x_index])[0]).real
-            else:
+            elif mode=='displacement':
                 trans_val = displacement_array[z_index,y_index,x_index]
             array.SetValue(k, trans_val)
             if mode == 'displacement':
