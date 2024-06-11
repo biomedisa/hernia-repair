@@ -1,4 +1,4 @@
-[![hedi](res/hedi_logo.svg)]
+![hedi](res/hedi_logo.svg)
 -----------
 - [Install Dependencies](#install-dependencies)
 - [Setup HEDI](#setup-hedi)
