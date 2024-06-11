@@ -21,7 +21,7 @@ git clone https://github.com/biomedisa/hernia-repair.git
 
 #### __Install Anaconda3__
 Download and install [Anaconda3](https://www.anaconda.com/products/individual#windows).  
-**Important Note!!!**: Anaconda must be installed within the `%Userprofile%` directory (typically `C:\Users\%USERNAME%\`).
+**Important Note!!!**: Anaconda must be installed within the `%Userprofile%` directory (typically `C:\Users\%USERNAME%`).
 
 #### __Install Paraview (Version 5.10.1 for Python 3.9)__
 Install [Paraview](https://www.paraview.org/download/). If the installation directory differs from `C:\Program Files\ParaView 5.10.1-Windows-Python3.9-msvc2017-AMD64` you must create a copy of the `hernia-repair\config_base.py` file:
@@ -62,7 +62,7 @@ conda activate biomedisa
 ```
 
 #### __Configure the config file__
-Check all paths in the `config_base.py` file, if any path in this file needs to be adjusted, you must create a copy of the `hernia-repair\config_base.py` file:
+Check all paths in the `config_base.py` file. If any path in this file needs to be adjusted, you must create a copy of the `hernia-repair\config_base.py` file:
 ```
 copy %Userprofile%\git\hernia-repair\config_base.py %Userprofile%\git\hernia-repair\config.py
 ```
