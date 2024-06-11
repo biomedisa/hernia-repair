@@ -12,7 +12,7 @@
 Download and install [Git](https://github.com/git-for-windows/git/releases/download/v2.45.1.windows.1/Git-2.45.1-64-bit.exe).
 
 #### __Install Anaconda3__
-Download and install [Anaconda3](https://www.anaconda.com/products/individual#windows).
+Download and install [Anaconda3](https://www.anaconda.com/products/individual#windows).  
 **Important Note!!!**: Anaconda must be installed within the `%Userprofile%` directory (typically `C:\Users\%USERNAME%\`).
 
 #### __Install Paraview (Version 5.10.1 for Python 3.9)__
@@ -24,7 +24,8 @@ Choose *Windows Driver Type:* Standard
 Choose *Recommended/Beta:* Studio Driver
 
 ## __Setup HEDI__
-Clone HEDI repository. The repository should be in the directory: `%Userprofile%\git`.
+#### __Clone HEDI repository__
+The repository should be in the directory: `%Userprofile%\git`.
 Open the CMD shell and enter:
 ```
 mkdir git
