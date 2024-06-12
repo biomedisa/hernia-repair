@@ -17,15 +17,15 @@ def green_lagrange_strain(Ux,Uy,Uz):
     Uzz, Uzy, Uzx = np.gradient(Uz)
     # green-lagrange strain tensor
     E = np.zeros(Ux.shape + (3,3))
-    E[:,:,:,0,0] = Uxx**2 + 2*Uxx + Uyx**2 + Uzx**2
-    E[:,:,:,0,1] = Uxx*Uxy + Uxy + Uyy*Uyx + Uyx + Uzy*Uyx
-    E[:,:,:,0,2] = Uxx*Uxz + Uxz + Uyx*Uyz + Uzx*Uzz + Uzx
-    E[:,:,:,1,0] = Uxx*Uxy + Uxy + Uyx*Uyy + Uyx + Uzx*Uzy
-    E[:,:,:,1,1] = Uxy**2 + Uyy**2 + 2*Uyy + Uyz**2
-    E[:,:,:,1,2] = Uxz*Uxy + Uyz*Uyy + Uyz + Uzz*Uzy + Uzy
-    E[:,:,:,2,0] = Uxx*Uxz + Uxz + Uyx*Uyz + Uzx*Uzz + Uzx
-    E[:,:,:,2,1] = Uxy*Uxz + Uyy*Uyz + Uyz + Uzy*Uzz + Uzy
-    E[:,:,:,2,2] = Uxz**2 + Uyz**2 + Uzz**2 + 2*Uzz
+    E[:,:,:,0,0] = 2*Uxx + Uxx**2 + Uyx**2 + Uzx**2
+    E[:,:,:,0,1] = Uxy + Uyx + Uxx*Uxy + Uyx*Uyy + Uzx*Uzy
+    E[:,:,:,0,2] = Uxz + Uzx + Uxx*Uxz + Uyx*Uyz + Uzx*Uzz
+    E[:,:,:,1,0] = E[:,:,:,0,1]
+    E[:,:,:,1,1] = 2*Uyy + Uxy**2 + Uyy**2 + Uzy**2
+    E[:,:,:,1,2] = Uyz + Uzy + Uxy*Uxz + Uyy*Uyz + Uzy*Uzz
+    E[:,:,:,2,0] = E[:,:,:,0,2]
+    E[:,:,:,2,1] = E[:,:,:,1,2]
+    E[:,:,:,2,2] = 2*Uzz + Uxz**2 + Uyz**2 + Uzz**2
     E *= 0.5
     return E
 
