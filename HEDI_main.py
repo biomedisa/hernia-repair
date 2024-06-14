@@ -402,10 +402,6 @@ def hernia_analysis(rest=None, valsalva=None, threshold=15,
     # save image in evaluation directory
     path_to_result = f'{path_to_evaluation}/Combined_Results.png'
     plt.imsave(path_to_result, combined_img, dpi=300)
-
-    # show final result
-    if save_level==1:
-        shutil.rmtree(path_to_archive)
     open_file(path_to_result)
 
 ###############################################################################
