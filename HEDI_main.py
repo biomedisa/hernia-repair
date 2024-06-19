@@ -219,8 +219,7 @@ def hernia_analysis(rest=None, valsalva=None, threshold=15,
             observation_dict[observation]['data'], observation_dict[observation]['header'])
 
         # save result
-        if save_level==2:
-            save_data(observation_path[observation]['mask'], observation_dict[observation]['mask'])
+        save_data(observation_path[observation]['mask'], observation_dict[observation]['mask'])
 
     logger.info(f'{f" Time for Masks: {timedelta(step_time)} ":_^{consol_width}}\n\n')
 
