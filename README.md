@@ -95,7 +95,7 @@ Depending on your machine the application now runs for 4-20 min. All files are s
 
 ## Citation
 Please cite the following HEDI preprint:
-`Relle, J.J. et al. HEDI: First-Time Clinical Application and Results of a Biomechanical Evaluation and Visualisation Tool for Incisional Hernia Repair. Preprint at https://arxiv.org/abs/2307.01502 (2023).` https://arxiv.org/abs/2307.01502
+`Lösel, P.D. et al. HEDI: First-Time Clinical Application and Results of a Biomechanical Evaluation and Visualisation Tool for Incisional Hernia Repair. Preprint at https://arxiv.org/abs/2307.01502 (2023).` https://arxiv.org/abs/2307.01502
 
 ## License
 This project is covered under the **EUROPEAN UNION PUBLIC LICENCE v. 1.2 (EUPL)**.
