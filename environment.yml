@@ -233,6 +233,7 @@ dependencies:
   - zlib=1.2.12=h8ffe710_2
   - zlib-ng=2.0.6=h8ffe710_0
   - zstd=1.5.2=h6255e5f_4
+  - mpi4py
   - pip:
     - itk-core==5.2.0
     - itk-filtering==5.2.0
