@@ -20,7 +20,7 @@ git clone https://github.com/biomedisa/hernia-repair.git
 ```
 
 #### __Install Anaconda3__
-Download and install [Anaconda3](https://www.anaconda.com/products/individual#windows).  
+Download and install [Anaconda3](https://repo.anaconda.com/archive/).  
 **Important Note!!!**: Anaconda must be installed within the `%Userprofile%` directory (typically `C:\Users\%USERNAME%`).
 
 #### __Install Paraview (Version 5.10.1 for Python 3.9)__
@@ -31,9 +31,9 @@ copy %Userprofile%\git\hernia-repair\config_base.py %Userprofile%\git\hernia-rep
 and adjust the `paraview` entry in `config.py`.
 
 #### __Install NVIDIA Driver__
-Download and install the correct Nvidia driver [NVIDIA](https://www.nvidia.com/Download/Find.aspx?lang=en-us).  
-Choose *Windows Driver Type:* Standard  
-Choose *Recommended/Beta:* Studio Driver
+Use Windows Search: `Check for updates` and `View optional updates`  
+Windows automatically detects your GPU and installs the required drivers.  
+Alternatively, install them manually, e.g. Download and install [NVIDIA](https://www.nvidia.com/Download/Find.aspx?lang=en-us).
 
 ## __Setup HEDI__
 
@@ -51,7 +51,7 @@ call "%Userprofile%\anaconda3\Scripts\activate.bat"
 ```
 Create and activate the conda environment:
 ```
-conda env create -f environment.yml
+conda env create -f %Userprofile%\git\hernia-repair\environment.yml
 ```
 The .yml file contains all infos about the required packages
 needed to run HEDI.
@@ -62,7 +62,7 @@ conda activate biomedisa
 ```
 
 #### __Configure the config file__
-Check all paths in the `config_base.py` file. If any path in this file needs to be adjusted, you must create a copy of the `hernia-repair\config_base.py` file:
+Configuration paths are stored in the `config_base.py` file. If you want to adjust any path in this file, you must first create a copy of the `hernia-repair\config_base.py` file:
 ```
 copy %Userprofile%\git\hernia-repair\config_base.py %Userprofile%\git\hernia-repair\config.py
 ```
@@ -88,6 +88,16 @@ Lastly the user is asked to select a threshold value for the area of instability
 ![Alt Text](res/SelectThreshold.png)
 
 Depending on your machine the application now runs for 4-20 min. All files are stored in the above mentioned directory `%Userprofile%\Hernia_Analysis_Results\Patient_Name`. After completion, the final result is presented as an image.
+
+#### Remove Biomedisa Environment
+Deactivate Biomedisa environment (if activated):
+```
+conda deactivate
+```
+Remove the Biomedisa environment:
+```
+conda remove --name biomedisa --all
+```
 
 ## Authors
 * **Philipp D. Lösel**
