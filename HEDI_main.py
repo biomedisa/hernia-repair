@@ -452,7 +452,8 @@ if __name__ == "__main__":
         update_neural_network()
 
     # update HEDI and Biomedisa
-    update = mb.askquestion(title='Update', message='Update HEDI?')
+    #update = mb.askquestion(title='Update', message='Update HEDI?')
+    update = 'no'
     if update=='yes':
         # update neural network
         args.logger.info(f'{" Updating neural network ":-^{consol_width}}')
