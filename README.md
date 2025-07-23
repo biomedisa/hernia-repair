@@ -30,7 +30,7 @@ copy %Userprofile%\git\hernia-repair\config_base.py %Userprofile%\git\hernia-rep
 ```
 and adjust the `paraview` entry in `config.py`.
 
-#### __Install NVIDIA Driver__
+#### __Install NVIDIA Driver for GPU support__
 Use Windows Search: `Check for updates` and `View optional updates`  
 Windows automatically detects your GPU and installs the required drivers.  
 Alternatively, install them manually, e.g. Download and install [NVIDIA](https://www.nvidia.com/Download/Find.aspx?lang=en-us).
