@@ -1,4 +1,4 @@
-<img src="res/hedi_logo.svg" alt="hedi" width="223" height="236"></img>
+<img src="res/hedi_logo.svg" alt="hedi" width="223" height="236"></img>  
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17705516.svg)](https://doi.org/10.5281/zenodo.17705516)
 -----------
 - [Install Dependencies](#install-dependencies)
