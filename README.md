@@ -6,6 +6,9 @@
 - [Authors](#authors)
 - [Citation](#citation)
 - [License](#license)
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17705516.svg)](https://doi.org/10.5281/zenodo.17705516)
+
 ## __Install Dependencies__
 
 #### __Install Git__
