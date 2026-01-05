@@ -4,6 +4,7 @@
 - [Install Dependencies](#install-dependencies)
 - [Setup HEDI](#setup-hedi)
 - [How to use HEDI](#how-to-use-hedi)
+- [Command Line Usage](#command-line-usage)
 - [Authors](#authors)
 - [Citation](#citation)
 - [License](#license)
@@ -102,7 +103,7 @@ conda remove --name biomedisa --all
 ```
 
 ## __Command Line Usage__
-Download and extract the Test Case: https://biomedisa.info/media/test_patient.zip.  
+Download and extract the test case: https://biomedisa.info/media/test_patient.zip.  
 Activate Biomedisa environment:
 ```
 conda activate biomedisa
@@ -117,7 +118,7 @@ python "%Userprofile%\git\hernia-repair\HEDI_main.py" --rest=C:\Users\%USERNAME%
 * **Jacob J. Relle**
 
 ## Citation
-`Lösel, P.D. et al. Clinical application of HEDI for biomechanical evaluation and visualisation in incisional hernia repair. _Commun Med_ (2026).` https://doi.org/10.1038/s43856-025-01311-w
+`Lösel, P.D. et al. Clinical application of HEDI for biomechanical evaluation and visualisation in incisional hernia repair. Commun Med (2026).` https://doi.org/10.1038/s43856-025-01311-w
 
 ## License
 This project is covered under the **EUROPEAN UNION PUBLIC LICENCE v. 1.2 (EUPL)**.
