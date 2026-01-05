@@ -101,13 +101,23 @@ Remove the Biomedisa environment:
 conda remove --name biomedisa --all
 ```
 
+## __Command Line Usage__
+Download and extract the Test Case: https://biomedisa.info/media/test_patient.zip.  
+Activate Biomedisa environment:
+```
+conda activate biomedisa
+```
+Run HEDI:
+```
+python "%Userprofile%\git\hernia-repair\HEDI_main.py" --rest=C:\Users\%USERNAME%\Downloads\test_patient\rest --valsalva=C:\Users\%USERNAME%\Downloads\test_patient\valsalva
+```
+
 ## Authors
 * **Philipp D. Lösel**
 * **Jacob J. Relle**
 
 ## Citation
-Please cite the following HEDI preprint:
-`Lösel, P.D. et al. HEDI: First-Time Clinical Application and Results of a Biomechanical Evaluation and Visualisation Tool for Incisional Hernia Repair. Preprint at https://arxiv.org/abs/2307.01502 (2023).` https://arxiv.org/abs/2307.01502
+`Lösel, P.D. et al. Clinical application of HEDI for biomechanical evaluation and visualisation in incisional hernia repair. _Commun Med_ (2026).` https://doi.org/10.1038/s43856-025-01311-w
 
 ## License
 This project is covered under the **EUROPEAN UNION PUBLIC LICENCE v. 1.2 (EUPL)**.
