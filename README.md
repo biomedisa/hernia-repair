@@ -124,7 +124,7 @@ python "%Userprofile%\git\hernia-repair\HEDI_main.py" --rest=C:\Users\%USERNAME%
 * **Jacob J. Relle**
 
 ## Citation
-`Lösel, P.D. et al. Clinical application of HEDI for biomechanical evaluation and visualisation in incisional hernia repair. Commun Med (2026).` https://doi.org/10.1038/s43856-025-01311-w
+> Lösel, P. D. *et al.* Clinical application of HEDI for biomechanical evaluation and visualisation in incisional hernia repair. *Commun Med* (2026). https://doi.org/10.1038/s43856-025-01311-w
 
 ## License
 This project is covered under the **EUROPEAN UNION PUBLIC LICENCE v. 1.2 (EUPL)**.
