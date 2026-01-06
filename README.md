@@ -1,4 +1,5 @@
 <img src="res/hedi_logo.svg" alt="hedi" width="223" height="236"></img>
+HEDI is a tool that evaluates and visualizes abdominal wall instabilities, hernia size, and hernia volume utilising abdominal computed tomography (CT) in combination with the Valsalva manoeuver. For more information check out the HEDI paper: Lösel, P.D. et al. Clinical application of HEDI for biomechanical evaluation and visualisation in incisional hernia repair. _Commun Med_ (2026). https://doi.org/10.1038/s43856-025-01311-w
 -----------
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17705516.svg)](https://doi.org/10.5281/zenodo.17705516)
 - [Install Dependencies](#install-dependencies)
